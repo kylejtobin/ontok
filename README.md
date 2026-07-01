@@ -1,4 +1,4 @@
-# ONTOK — the Ontology Kernel
+# Ontology Kernel (ONTOK)
 
 <p align="center">
   <img src="img/ontok.png" alt="A glowing kernel of ten primitives (Entity, Event, State, Role, Relation, Claim, Evidence, Context, Concept, Rule) at the center, wrapped by a ring of domain ontologies (Patient, Position, Diagnosis, Instrument, Protein, Order, Document) and an outer ring of knowledge-system operations (ingestion, retrieval, revision, reasoning, consolidation, explanation, world modeling). Caption: domains specialize the kernel, they do not modify it." width="820">
