@@ -1,0 +1,14 @@
+{
+  "reportImportCycles": "none",
+  "reportImplicitStringConcatenation": "none",
+  "reportUnannotatedClassAttribute": "none",
+  "reportMissingTypeStubs": "none",
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "**/.venv",
+    ".claude",
+    "tests"
+  ]
+}

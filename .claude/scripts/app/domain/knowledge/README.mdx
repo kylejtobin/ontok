@@ -1,0 +1,112 @@
+# knowledge/ is the program's truth
+
+`knowledge/` is the bounded context that holds the program under construction and keeps it in
+accord with itself. It is not metadata about the program and it is not a store the program
+consults; it is the program's truth, held in three forms at once: what the program is meant to be
+(intent), what has been proven into legal structure (the validated constructs), and where it stands
+out of accord with either. Every actor works against this one context, the product, modeling, dev,
+and review agents and the human alike, and its job is to keep intent, model, and implementation in
+provable agreement while a partly stochastic fleet builds. The queues are how that agreement is
+restored when it breaks.
+
+## The store is one embedded Cozo database
+
+The whole context lives in a single embedded CozoDB file inside the git repo. Cozo runs in-process
+(no server, no daemon, `pip install` and it is present), and it carries graph, vector, relational,
+and time-travel in one engine. That combined function is why it is the only store here: exactly one
+part of this context is genuinely a graph (the program), and everything else (the product features
+it realizes, the two queues, semantic recall) falls into the same file as relations and an index
+rather than a second system.
+
+The graph is the special-shape need. A program is a graph of constructs, and its load-bearing
+questions (what depends on this, what is incomplete, what intent has no construct yet) are
+traversals. Cozo answers those natively, and the basic needs orbit the graph instead of each
+claiming its own substrate.
+
+## The pure graph, and the two channels beside it
+
+The graph holds only proven things. A construct enters the graph when it is validated, and admitting
+it is construction as proof raised to program scale. This purity is not taste: the graph is a proof
+object, and closure (every edge resolves, the program is self-contained) is worth nothing if one
+unproven construct sits inside it. So impurity never enters the graph.
+
+```
+  ONE embedded Cozo file, committed in the git repo
+  ==================================================================
+  PURE GRAPH   (only proven things live here)
+
+      product layer                program layer
+      +---------+    realizes    +-----------+   references
+      | feature | <------------- | construct | <----------+
+      | (intent)|                |  (shape)  | -----------+
+      +---------+                +-----------+
+           ^                          ^
+        coverage                   closure
+   (no incoming realizes        (reference resolves to
+    = feature not built)         no node = incomplete)
+
+           +---- vector index over node documents ---->
+                 semantic dedup / brownfield sweep
+  ==================================================================
+  ERROR CHANNELS   (relations, never edged into the graph)
+
+      block[ blocked builder ]       heresy[ breach ]
+           reference graph names by string, never by edge
+  ==================================================================
+```
+
+Two layers live in the graph:
+
+- **product**: feature nodes, the intent refined out of natural language.
+- **program**: construct nodes, the validated structure, wired to one another by `references` edges
+  and back to the feature that triggered each one by a single `realizes` edge.
+
+Two questions fall out as traversals: **coverage** (a feature with no incoming `realizes` edge is
+intended but not yet built) and **closure** (a construct reference that resolves to no node is an
+incomplete program). A vector index over the node documents carries semantic dedup and the
+brownfield sweep, where the modeling agent reasons over an existing program.
+
+Beside the graph, never edged into it, sit two channels as plain relations that reference graph
+names by string:
+
+- **block**: a dev agent that cannot proceed, raised to the modeling agent to clear. A block does
+  not assert a construct is missing; it says the builder is stumped. The modeler rules on it three
+  ways: model the construct (a real privation), show the construct already existed (a
+  misunderstanding), or push back (a flinch toward procedure).
+- **heresy**: a breach of correspondence, raised to review and condemned. Where a block is met with
+  charity (maybe you do not see it yet), a heresy is met with hostility (you are foreign to the
+  proven order, justify yourself or be cast out).
+
+Brownfield construction lands present but unvalidated constructs in a staging relation first; the
+engine migrates each into the pure graph once it is proven, or condemns it.
+
+## The interface is construction, not CozoScript
+
+Nothing in the domain issues CozoScript by hand. The Cozo connection is a live client, constructed
+once in the composition root and given to the knowledge consistency model, where it is held as a
+field. Every write and every query (recording a construct, raising a block, condemning a heresy, the
+coverage and closure traversals, the vector lookups) is driven by a constructed Pydantic value
+through a verb. CozoScript strings, `.root`, and serialization appear only there, at the client edge.
+
+The store validates nothing; construction is the proof. A construct is stored as one whole document,
+never shredded into a column per field, so the schema is a small fixed set of relations (the graph's
+nodes and edges, the block and heresy channels) plus the vector index, declared once. The Pydantic
+model governs the document's meaning; Cozo's columns are only the few fields traversed or indexed on.
+
+## foreign/ models the wire; the client is injected
+
+The shapes Cozo hands back across the boundary (the result envelope, the typed rows) are foreign
+models, and they live in `domain/foreign/`, independent of the connection. A foreign model holds no
+client. The knowledge consistency model imports those foreign models to lift raw Cozo responses into
+proven domain values inside its verbs. The client itself is built at the composition root and
+injected, never named in `foreign/`.
+
+## One context, one client
+
+`knowledge/` is one bounded context: one consistency model, one Cozo client. The names product,
+program, block, and heresy divide the files, not the contexts. They integrate by identifier (the
+channels reference graph nodes by name, never by sharing a model), and that identifier seam is the
+boundary that keeps the graph pure.
+
+Git is the source of truth and the review surface; Cozo is the queryable working store that lives
+inside the repo.

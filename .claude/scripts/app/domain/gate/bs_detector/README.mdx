@@ -1,0 +1,156 @@
+# Bad Syntax Detector (`bs_detector`)
+
+**The foundation is complete. The proven `Module` is the whole of it. There is nothing left to build
+before a detector, and there is no substrate to add.**
+
+Read that first because the most likely failure on entering this directory is to conclude the opposite:
+to look at a program that only lifts a file into a tree, decide a traversal or a node stream is
+"missing," and set about building one. That conclusion is wrong, and the section below on the trap says
+exactly why. Hold the completeness claim until you have read why it is true.
+
+## The program in one read
+
+```python
+class BSReport(BaseModel):
+    path: Path
+
+    @cached_property
+    def module(self) -> Module:
+        return Module.model_validate(ast2json(ast.parse(self.path.read_text())))
+```
+
+A path comes in and a fully proven `Module` comes out. `read_text` pulls the source, `ast.parse` makes
+the compiler's tree, `ast2json` renders that tree whole as a tagged dict (each node carries its kind
+under `_type`), and `Module.model_validate` lifts the whole dict in one call. One expression. Nothing is
+copied field by field, nothing is checked after the fact.
+
+## The membrane
+
+```
+     OUTSIDE                    │   the lift (one expression)              │      DOMAIN
+  a Python source file          │                                         │   proven constructs
+ ──────────────────────────────  ─────────────────────────────────────────  ──────────────────────
+  path ─▶ read_text ─▶ ast.parse ─▶ ast2json ─▶ Module.model_validate ─▶  Module
+                                │   (foreign converter)    (the crossing)  │   (frozen tree)
+```
+
+Left of `model_validate` is the outside world: raw text, the compiler's objects, the converter's dicts.
+Right of it is ours: a frozen `Module` whose `body` is a tuple of proven statements, composed from
+primitives up through discriminated unions to the root. The membrane is that one call, crossed exactly
+once per file. `ast2json` is a third-party converter; the walk that renders the tree to dicts is its
+job, never ours.
+
+## Why the foundation is complete
+
+The foreign model (`app/domain/foreign/ast.py`) is the full Python grammar built the TCA way: semantic
+scalars at the leaves (`Line`, `Column`, `Identifier`, the constant value space), one `NodeKind` axis
+naming every node tag once, a frozen variant per node kind, and discriminated unions (`Expression`,
+`Statement`, `Pattern`, `TypeParam`) gathering them up to `Module`. It is proven against the standard
+library: every module lifts, none rejected.
+
+That is the executable ontology of Python syntax, and its completeness is structural, not a matter of
+how many helpers exist:
+
+- **Containment is already modeled.** `BinOp.left: Expression` is the containment relation. The fact
+  that a `BinOp` holds an `Expression` on its left is carried by the field, proven at construction.
+  Every parent-child relationship in the grammar is a field. There is no containment fact the types do
+  not already hold.
+- **Construction already ran.** By the time you have a `Module`, the entire tree exists as proven
+  values, to arbitrary depth. Nothing remains to be discovered by visiting it; it is already built.
+- **Every question is a derivation or a union over what is built.** Any fact about a file is a function
+  of the proven structure, named on the type that owns the fields. The ontology needs no second thing
+  to consult, because the structure is the data.
+
+Nothing is "missing" because there is no second artifact the ontology requires. Completeness here means
+the grammar is fully present as proven types and every question reduces to reading them.
+
+## The trap
+
+If, on this page, you find yourself reaching for any of these, stop. You are translating a procedure
+into TCA, and the procedure is wrong:
+
+- a flat stream of every node (`module.nodes`, an all-nodes list)
+- a `children` or `nodes` traversal layer added across the variants
+- an `ast.walk`, a visitor, a hand-written descent
+- "one shared fold" as a substrate the detectors run over
+
+Each of these is a thing you build *in order to loop*. The reason every one is wrong is the same: the
+containment they would re-expose is already the fields, so the layer is a second structure for a meaning
+that already has one (the duplication break), and a flat node stream is not a domain thing at all. It is
+the shape of an iteration, and nothing in Python syntax is "the flat sequence of all nodes." The pull to
+build it is the procedural reflex (walk, collect, fold) wearing construct names. Refuse it. The grammar's
+own recursion is already in the types; a fact that reaches into a file reaches through the fields that
+hold the sub-nodes, read on the variant that owns them, narrowed by the discriminated union.
+
+This section is here because that exact reflex has been acted on before, from a document that said the
+foundation was done. Recognizing the reflex *as* the reflex is the thing that keeps it from happening
+again.
+
+## Foundation is done; a detector is new construction over it
+
+"Ready for detectors" does not mean the foundation is unfinished. It means the opposite: the foundation
+is finished, and a detector is a new construct built *on top of* the proven `Module`, never a piece that
+completes it. A detector adds its own meaning (a violation modeled as a closed positive set, a value that
+constructs only from the violating structural position). It does not add a missing part of the
+substrate, because the substrate is not missing. Building a detector changes nothing under this line.
+
+## How a detector is built
+
+A detector is a question answered by construction, never a search. You model the violation as a **closed
+positive set**: a type whose existence is the proof of the violation, so legal code is legal by being
+**not constructible** as that type, the complement by construction, never an excused list of exceptions
+to keep complete. `DETECTOR-PATTERN-FOR-LLM.mermaid` is this same pattern as a graph, with every legal
+construct and every sealed reflex; what follows is the mechanism in prose, and each part names the proof
+it rests on.
+
+The mechanism is closed: five parts, each a construct already in hand.
+
+**1. Selection is the discriminated union, at construction.** Every node in `ast.py` carries its identity
+in `node_type: Literal[NodeKind.X]`, and discriminated construction succeeds only on the matching variant
+and refuses every other. That refusal is not a hope: every standard-library module lifts through this
+same discriminated union. So the violation is a frozen union variant (`kind: BSKind` pinned) whose
+distinguishing field is typed to the exact violating node shape:
+
+```python
+class TopLevelDef(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    kind: Literal[BSKind.TOP_LEVEL_DEF] = BSKind.TOP_LEVEL_DEF
+    node: FunctionDef          # constructs only from a FunctionDef, refuses everything else
+```
+
+This is `make illegal states unrepresentable` turned into detection: the type admits only the violating
+structure, its existence is the proof, and there is no `isinstance` and no predicate, because the
+discriminator already selected.
+
+**2. No-match everywhere else is the ordered union.** Pair the violation with an identity-free `NotThis`
+in `Annotated[TopLevelDef | NotThis, Field(union_mode="left_to_right")]`. The violation is attempted
+first; on any non-violating node it refuses, and `NotThis` constructs from the node itself. Construction
+selects the case. The `NotThis` values are the legal code, legal by being not-constructible as the
+violation, never an excused list.
+
+**3. Position is which field supplies the candidates, never a walk.** "Top-level" *means* a direct
+element of `Module.body`, so the candidates are drawn from that field, which is reading a field.
+
+**4. Depth is the sanctioned catamorphism, returning violations.** Where a violation can occur at any
+depth, the reach is the fold the derivation card sanctions verbatim (the `Portfolio.total_exposure`
+example): a derivation that returns *this detector's violations* through the node's own typed fields,
+read per variant via the discriminated union. It returns the domain fact, never a generic node stream.
+This is precisely the line the trap above draws: a flat all-nodes list is forbidden because it duplicates
+containment and exists to loop; a derivation returning violations off a variant's own fields is the
+grammar's own recursion producing a fact.
+
+**5. Aggregation is the fold, with no sequencer.** The findings are a derivation that keeps the cases
+that constructed as the violation; `at: Location` is a derivation reading `self.node.lineno` and
+`self.node.col_offset`. The suite is `BSReport` holding the `Module`, each detector a derivation hanging
+off it, the aggregate the fold of every detector's violations. Construction order is the graph.
+
+There is no sixth part, and nothing in these five builds a traversal. Selection, no-match, position,
+depth, aggregation: the whole detector, and `BSKind` is born here with the detector that needs it, owned
+by detectors, never a foundation piece.
+
+## The two files
+
+- `app/domain/foreign/ast.py` is the foreign model: ast2json's emitted shape, modeled scalar-up as
+  frozen constructs, proven against the standard library (every module lifts, none rejected).
+- `report.py` is the lift: `BSReport` holds the path and constructs the `Module` from it. This is the
+  one place the program meets the outside world.

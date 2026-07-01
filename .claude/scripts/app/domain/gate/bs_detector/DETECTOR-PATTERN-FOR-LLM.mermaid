@@ -1,0 +1,110 @@
+flowchart TD
+
+%% ============================================================================
+%% BS DETECTOR CONSTRUCTION PATTERN  (FOR LLM) -- READ AS LAW.
+%% GREEN = the only legal path. BLUE = proven constructs you may author.
+%% RED = the procedural reflexes your training reaches for; each is SEALED and
+%% labelled with the TCA rule it breaks. Touch a red node and the design is wrong.
+%%
+%% THE FOUNDATION IS COMPLETE. The proven Module is the whole of it. Containment
+%% is ALREADY the fields (BinOp.left: Expression IS the relation), construction
+%% ALREADY ran to arbitrary depth. There is NO substrate to add, NO node stream
+%% to build, NO children/nodes traversal layer. If you reach for one you are
+%% translating procedure into TCA and you are wrong -- see the RED sealed nodes.
+%%
+%% THE ONE STRATEGY ("validation IS the scan"):
+%%   Model the VIOLATION as a closed positive set: a TYPE whose distinguishing
+%%   field is typed to the exact ast.py node shape, so DISCRIMINATED CONSTRUCTION
+%%   makes it construct ONLY from the violating position and REFUSE everything
+%%   else (proven: every standard-library module lifts through this same
+%%   discriminated union). Pair it with a no-match variant in an ordered union.
+%%   Construction selects. Legal code is legal by being NOT CONSTRUCTIBLE as the
+%%   violation, the complement by construction, never an excused spare-list.
+%% ============================================================================
+
+    %% ---------- 1. MEMBRANE : report.py (built, crossed once per file) ----------
+    subgraph MEMBRANE["1. MEMBRANE  (report.py, crossed once per file)"]
+        P["path: Path"]
+        AJ["ast.parse then ast2json(tree)<br/>THIRD-PARTY converter, the walk is ITS job, not ours"]
+        MV["Module.model_validate(dict)<br/>one call, lifts the whole tree"]
+        M(["Module: frozen, fully proven AST"])
+        P --> AJ --> MV --> M
+    end
+
+    %% ---------- 2. FOUNDATION : COMPLETE, nothing to build ----------
+    subgraph FND["2. FOUNDATION  (COMPLETE -- there is nothing to build here)"]
+        F0["The proven Module IS the whole foundation.<br/>Containment is the FIELDS, proven at construction.<br/>Construction ALREADY ran, to arbitrary depth.<br/>Every question is a derivation or a union over what is built.<br/>There is NO stream, NO children/nodes layer, NO traversal to add."]
+    end
+    M --> F0
+
+    %% ---------- 3. THE DETECTOR : closed positive set, per name ----------
+    subgraph DET["3. ONE DETECTOR  (gate/bs_detector per name)"]
+        G{{"PRE-FLIGHT GATE: state the closed positive set in ONE sentence,<br/>e.g. a module-level def in an unlicensed file.<br/>If you cannot, you have a PREDICATE hiding, not a type. STOP and model."}}
+        VT["closed-positive-set TYPE: the Violation (union variant)<br/>kind: BSKind pinned; the distinguishing field is TYPED to the exact<br/>ast.py node shape, so discriminated construction SUCCEEDS only on it<br/>and REFUSES all else; at: Location is a DERIVATION off the node;<br/>structural license (path/content/none) baked into what it admits"]
+        NM["no-match-as-value: NotThis<br/>identity-free variant a non-violating node resolves to, wraps the node"]
+        OU["ordered union: attempt Violation FIRST, NotThis LAST,<br/>union_mode left_to_right. CONSTRUCTION selects the case:<br/>the discriminator detects, no test runs, no isinstance ladder"]
+        POS["POSITION = which FIELD supplies the candidates.<br/>top-level = the elements of Module.body (reading a field, NOT a walk).<br/>DEPTH = the sanctioned catamorphism (the Portfolio.total_exposure fold):<br/>a derivation returning THIS detector's VIOLATIONS through its own typed<br/>fields, read per variant. It returns the FACT, never a generic node stream."]
+        FIND["derivation: violations, ONE returned expression:<br/>keep the cases that constructed as Violation;<br/>the NotThis values ARE the legal code, by construction, not excused"]
+        VERD["union Clean or Flagged when a verdict carries facts<br/>same-named derivation on each variant"]
+        OUT(["Violations for this file"])
+        G --> VT
+        VT --> OU
+        NM --> OU
+        OU --> POS
+        POS --> FIND
+        FIND --> OUT
+        FIND -.-> VERD
+    end
+    M --> VT
+    M --> POS
+
+    %% ---------- 4. SUITE : N detectors, no orchestrator ----------
+    subgraph SUITE["4. THE SUITE  (report.py)"]
+        RPT["BSReport holds Module; each detector is a DERIVATION hanging off it;<br/>aggregate = the FOLD of every detector's Violations.<br/>CONSTRUCTION ORDER is the graph, there is no sequencer."]
+    end
+    OUT --> RPT
+
+    %% ================= SEALED ESCAPES (your reflexes, all dead ends) =============
+    S1["FORBIDDEN: a flat node stream -- module.nodes, an all-nodes list.<br/>BREAKS one-meaning-one-structure: it DUPLICATES the containment the<br/>fields already carry, and exists only TO LOOP. Nothing in the domain is<br/>the flat sequence of all nodes. This is THE reflex; refuse it on sight."]
+    S2["FORBIDDEN: a children or nodes traversal layer across the variants.<br/>Containment is ALREADY the fields; this is a second structure for a<br/>meaning that already has one."]
+    A1["DESIGN A, REJECTED: find candidates, then  if is_bad(n)  decides.<br/>BREAKS validation-as-a-step: violation-hood escapes into the predicate.<br/>Construction must BE the check, not a recorder of one."]
+    A2["REJECTED: legal = everything EXCEPT a spare-list of exceptions.<br/>BREAKS make-illegal-states-unrepresentable: open, leaks the shape you<br/>forgot. The closed POSITIVE set has no list to keep complete."]
+    F1["FORBIDDEN: ast.walk or NodeVisitor or hand traversal"]
+    F2["FORBIDDEN: isinstance or match or type ladder -- the union already selected"]
+    F3["FORBIDDEN: is_bs returning bool -- a decision with facts is a union"]
+    F4["FORBIDDEN: for-loop appending into a list -- the construction is the build"]
+    F5["FORBIDDEN: detect free function or utils helper -- a fact of fields is a derivation"]
+    F6["FORBIDDEN: DetectorEngine or runner or pipeline -- order is the construction graph"]
+    F7["FORBIDDEN: dict or NamedTuple finding -- a finding is a Violation"]
+    F0 -.-> S1
+    F0 -.-> S2
+    OU -.-> A1
+    VT -.-> A2
+    POS -.-> F1
+    OU -.-> F2
+    FIND -.-> F3
+    FIND -.-> F4
+    DET -.-> F5
+    RPT -.-> F6
+    VT -.-> F7
+
+    %% ================= BUILD DISCIPLINE (margin notes, read EVERY build) =========
+    subgraph NOTES["BUILD DISCIPLINE  (read before and after every detector)"]
+        ND1["GATE.<br/>BEFORE code: can you state the closed positive set in ONE sentence?<br/>Is each meaning in exactly one construct?<br/>AFTER code: ~zero on the real baseline, AND does the sample corpus FAIL if you<br/>regress to flag-everything? Any no means STOP and model, not code."]
+        ND2["THE BASELINE IS THE CHECK, not a victory lap.<br/>Run the detector over src/app WHILE building. ~zero on clean code = model right;<br/>a flood = model wrong. A genuine new finding is SURFACED, never silenced.<br/>Only a run is evidence; never declare done on prose."]
+        ND3["SAMPLES PIN BOTH DIRECTIONS.<br/>The GOOD corpus must hold the near-misses a naive detector would flag<br/>(the legal, consumed shapes). It pins both polarities and the precision<br/>boundary, or it proves nothing."]
+        ND4["THE TOOLBOX (spine mechanisms).<br/>discriminated union = selection AT construction; ordered union = no-match-as-value;<br/>POSITION = which field supplies the candidates; DEPTH = the catamorphism returning<br/>violations; cached_property = aggregation without loops; structural licensing = path / content / none."]
+        ND5["MODEL ORDER, ONE MEANING.<br/>Lay the violation's meaning first (the world), THEN the construction that yields it.<br/>A meaning another construct already owns (containment IS the fields) is NOT<br/>re-modeled -- doing so is one of the four breaks."]
+        ND6["AUTONOMY and PROVENANCE.<br/>You cannot violate TCA. If TCA genuinely cannot express it, that is a<br/>conversation, not a silent deferral or a permission request.<br/>Detectors are re-derived FRESH over the proven Module, never copied."]
+    end
+
+    classDef legal fill:#0b3d0b,stroke:#3fae3f,color:#eaffea;
+    classDef proven fill:#06283d,stroke:#3f9fae,color:#eaffff;
+    classDef gate fill:#3d2f06,stroke:#ae8f3f,color:#fff7ea;
+    classDef forbid fill:#3d0b0b,stroke:#ae3f3f,color:#ffeaea;
+    classDef note fill:#10241a,stroke:#3f9f7a,color:#eafff5;
+    class P,AJ,MV legal;
+    class M,F0,VT,NM,OU,POS,FIND,VERD,OUT,RPT proven;
+    class G gate;
+    class S1,S2,A1,A2,F1,F2,F3,F4,F5,F6,F7 forbid;
+    class ND1,ND2,ND3,ND4,ND5,ND6 note;
