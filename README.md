@@ -1,5 +1,9 @@
 # ONTOK — the Ontology Kernel
 
+<p align="center">
+  <img src="img/ontok.png" alt="A glowing kernel of ten primitives (Entity, Event, State, Role, Relation, Claim, Evidence, Context, Concept, Rule) at the center, wrapped by a ring of domain ontologies (Patient, Position, Diagnosis, Instrument, Protein, Order, Document) and an outer ring of knowledge-system operations (ingestion, retrieval, revision, reasoning, consolidation, explanation, world modeling). Caption: domains specialize the kernel, they do not modify it." width="820">
+</p>
+
 ONTOK is a minimal conceptual kernel for machine knowledge systems. It is not an ontology of any domain and not a storage engine. It is the smallest trusted layer that sits *underneath* domain ontologies and knowledge stores: the fixed set of primitives from which arbitrary domains can be represented, extended, retrieved, revised, and reasoned over without each one reinventing identity, time, evidence, and context for itself.
 
 This repository declares that kernel and gives it a concrete, typed form.
