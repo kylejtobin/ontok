@@ -1,6 +1,11 @@
 # Ontology Kernel (ONTOK)
 
 <p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License: Apache 2.0"></a>
+  <img src="https://img.shields.io/badge/python-3.13%2B-blue" alt="Python 3.13+">
+</p>
+
+<p align="center">
   <img src="img/ontok.png" alt="A glowing kernel of ten primitives (Entity, Event, State, Role, Relation, Claim, Evidence, Context, Concept, Rule) at the center, wrapped by a ring of domain ontologies (Patient, Position, Diagnosis, Instrument, Protein, Order, Document) and an outer ring of knowledge-system operations (ingestion, retrieval, revision, reasoning, consolidation, explanation, world modeling). Caption: domains specialize the kernel, they do not modify it." width="820">
 </p>
 
@@ -93,3 +98,7 @@ Early. The ten primitives and their base are defined and importable. The kernel 
 ## Reading
 
 - [`docs/ontology_kernel.md`](docs/ontology_kernel.md) — the full argument: the problem, the research question, the primitives and their responsibilities, and the relationships to retrieval and storage.
+
+## License
+
+Apache License 2.0 — see [`LICENSE`](LICENSE).
