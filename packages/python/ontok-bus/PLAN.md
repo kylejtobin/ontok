@@ -4,11 +4,10 @@
 
 Planning only.
 
-- Future branch: `module/ontok-bus`
+- Branch: `module/ontok-bus`
 - Distribution: `ontok-bus`
 - Namespace: `ontok.bus`
-- This directory intentionally contains only this plan. Render the package skeleton
-  after the work is split onto its branch.
+- The package skeleton is rendered. Discovery has not run and no construct is approved.
 
 ## Telos
 

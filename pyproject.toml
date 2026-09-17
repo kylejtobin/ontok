@@ -45,9 +45,9 @@ pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
 [tool.importlinter]
-root_packages = ["ontok.core", "ontok.vsm", "ontok.scim", "ontok.st"]
+root_packages = ["ontok.core", "ontok.vsm", "ontok.scim", "ontok.st", "ontok.bus"]
 
 [[tool.importlinter.contracts]]
 name = "ONTOK modules follow workspace dependencies"
 type = "layers"
-layers = ["ontok.vsm | ontok.scim | ontok.st", "ontok.core"]
+layers = ["ontok.vsm | ontok.scim | ontok.st | ontok.bus", "ontok.core"]
