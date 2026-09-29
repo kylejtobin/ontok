@@ -1,0 +1,7 @@
+{
+  "version": "2.14.6",
+  "target": "linux-amd64",
+  "source": "https://github.com/nats-io/nats-server/releases/download/v2.14.6/nats-server-v2.14.6-linux-amd64.tar.gz",
+  "archive_sha256": "61c3d55f69f61ec616b75782250936445f2819e9e5f2ae6159b10a31abd2200c",
+  "binary_sha256": "2d0dc83e0547185a6820377114215d6a7c645f607aeb31728fffaf3d84e77c10"
+}
