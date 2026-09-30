@@ -1,4 +1,5 @@
 from ontok.core.action import Action as Action
+from ontok.core.causation import Causation as Causation
 from ontok.core.concept import Concept as Concept
 from ontok.core.context import Context as Context
 from ontok.core.context import States as States

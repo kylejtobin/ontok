@@ -10,13 +10,14 @@ ONTOK is a modular declarative semantic language for making organizational meani
 
 Do not infer ONTOK's semantics from implementation convenience. The module defines the language; a program refines it.
 
-ONTOK Core has exactly thirteen primitives:
+ONTOK Core has exactly fourteen primitives:
 
 ```text
 Node
 Connection
 Entity
 Relation
+Causation
 State
 Event
 Role
@@ -48,7 +49,7 @@ Do not introduce instance-level `type`, `kind`, `TypeId`, URI discriminator, or 
 
 ONTOK deliberately distinguishes reality, agency, meaning, and governance. Do not collapse those distinctions for implementation convenience.
 
-An `Event` is a durable memorial of an occurrence. Temporal sequence does not imply causation; `Causation` is a `Relation` between Events.
+An `Event` is a durable memorial of an occurrence. Temporal sequence does not imply causation; `Causation` is the `Connection` that says one Event is because of another.
 
 A `Concept` represents meaning and alignment. It is not a type registry. For example, a declaration such as `cust_no` may mean the Concept `Customer`, and independently developed Concepts may align with one another.
 
@@ -56,7 +57,7 @@ A `Concept` represents meaning and alignment. It is not a type registry. For exa
 
 ## Semantic Topology
 
-Semantic Topology is part of ONTOK Core's meaning capability, but it is not a thirteenth primitive.
+Semantic Topology is part of ONTOK Core's meaning capability, but it is not a fifteenth primitive.
 
 It is the evolving organizational structure formed among Concepts. Semantic relationships such as equivalence, broader/narrower meaning, relatedness, close matching, and overlap are represented through refinements of `Relation` whose endpoints are Concepts.
 

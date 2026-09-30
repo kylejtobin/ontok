@@ -1,6 +1,6 @@
 # ontok-core
 
-The universal ONTOK organizational type system: thirteen primitives that say what kinds of things an organization contains, realized as strict, frozen Pydantic models in the `ontok` namespace.
+The universal ONTOK organizational type system: fourteen primitives that say what kinds of things an organization contains, realized as strict, frozen Pydantic models in the `ontok` namespace.
 
 - **Import:** `ontok.core`
 - **Python:** 3.13 or later

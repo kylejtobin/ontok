@@ -23,11 +23,11 @@ verified:
 
 # ontok-core
 
-Core is the ONTOK language: thirteen primitives that say what kinds of things an organization contains. An organization refines them into its own kinds, and its programs construct facts that satisfy those kinds. Core depends on Pydantic and on nothing else, and knows no module, no transport, and no application. Read this page before any structural change and edit the section the change lands in, in the same commit as the code; Git is the history.
+Core is the ONTOK language: fourteen primitives that say what kinds of things an organization contains. An organization refines them into its own kinds, and its programs construct facts that satisfy those kinds. Core depends on Pydantic and on nothing else, and knows no module, no transport, and no application. Read this page before any structural change and edit the section the change lands in, in the same commit as the code; Git is the history.
 
 ## Constraints
 
-- Core has exactly thirteen primitives: `Node`, `Connection`, `Entity`, `Relation`, `State`, `Event`, `Role`, `Goal`, `Action`, `Work`, `Concept`, `Context`, `Rule`. Everything else in Core makes their construction complete: `NodeId`, `RelationId`, `Timestamp`, `PositiveDuration`, `Instant`, `Interval`, `TemporalExtent`, `States`.
+- Core has exactly fourteen primitives: `Node`, `Connection`, `Entity`, `Relation`, `Causation`, `State`, `Event`, `Role`, `Goal`, `Action`, `Work`, `Concept`, `Context`, `Rule`. Everything else in Core makes their construction complete: `NodeId`, `RelationId`, `Timestamp`, `PositiveDuration`, `Instant`, `Interval`, `TemporalExtent`, `States`.
 - The class is the kind and the value is the fact. A domain meaning is a refinement. No instance-level `type`, `kind`, `TypeId`, URI, or registry field exists.
 - Every Core declaration carries the python-development standard's mandatory configuration: `frozen=True`, `strict=True`, `validate_default=True`, `revalidate_instances="never"`, and `extra="forbid"` on every `BaseModel`. The primitives and the temporal values are `BaseModel`s; the identifiers and `States` are `RootModel`s.
 - The module is the specification. No separate specification artifact exists; a portable rendering is projected from the module when another realization needs one.
@@ -67,6 +67,7 @@ classDiagram
   class Connection { source: NodeId; target: NodeId }
   class Entity
   class Relation { id: RelationId }
+  class Causation
   class State
   class Event { occurred: TemporalExtent }
   class Role
@@ -84,12 +85,13 @@ classDiagram
   Node <|-- Context
   Node <|-- Rule
   Connection <|-- Relation
+  Connection <|-- Causation
   Entity <|-- State
   Entity <|-- Goal
   Entity <|-- Work
 ```
 
-Structure is `Node` and `Connection`. Reality is `Entity`, `Relation`, `State`, and `Event`. Agency is `Role`, `Goal`, `Action`, and `Work`. Meaning is `Concept` and `Context`. Governance is `Rule`. Each primitive's meaning is stated once, as its docstring.
+Structure is `Node` and `Connection`. Reality is `Entity`, `Relation`, `Causation`, `State`, and `Event`. Agency is `Role`, `Goal`, `Action`, and `Work`. Meaning is `Concept` and `Context`. Governance is `Rule`. Each primitive's meaning is stated once, as its docstring.
 
 ## Construction
 
@@ -105,11 +107,11 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **The class is the kind.** Domain semantics are refinements of the primitives, because a refinement is checked by the type system while a `type` field is checked by nothing. This rules out instance-level `type`, `kind`, `TypeId`, URI, and registry fields, and rules out any registry that maps names to classes.
 
-**Core has thirteen primitives and grows by modules.** Core holds only the semantics every organization shares, because a kernel that fits every organization must be small enough to refine without contradiction. A capability becomes part of ONTOK by composing the kernel in a module with a one-way dependency on Core. This rules out adding a primitive because a capability needs representation.
+**Core has fourteen primitives and grows by modules.** Core holds only the semantics every organization shares, because a kernel that fits every organization must be small enough to refine without contradiction. A capability becomes part of ONTOK by composing the kernel in a module with a one-way dependency on Core. This rules out adding a primitive because a capability needs representation.
 
 **Work is a primitive.** `Action` is declared work and `Work` is its persistent undertaking, because declaring a doing and undertaking it are different facts with different lifetimes: an `Action` is stated once and a `Work` persists while it is carried out. This rules out treating a declaration as its own execution.
 
-**An Event is an occurrence, not a cause.** `Event` carries when it occurred and nothing about why, because temporal sequence does not imply causation. Core declares no causal kind; a causal link is a `Relation` whose endpoints are `Event`s, declared by the module or organization that needs it. This rules out inferring cause from order.
+**An Event is an occurrence; Causation is a Connection between two.** `Event` carries when it occurred and nothing about why, and `Causation` says one occurrence is because of another, because temporal sequence does not imply causation, and a cause is a fact about two occurrences' identities that is exhausted by the pair, so it carries no identity of its own. This rules out inferring cause from order and rules out a cause stored inside the event it explains.
 
 **A Connection references its endpoints; a constituent is embedded.** `Connection` holds the `NodeId` of its source and target, while `Action` holds its `Role` and `Goal` whole, because a link joins two things that exist independently of it and is a fact about their identities, whereas a role and a goal constitute the action that declares them. `Relation` is a `Connection` with its own `RelationId`. This rules out a link that carries a copy of what it links, and rules out type parameters on any construct.
 
@@ -152,7 +154,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 | Term | Meaning |
 |------|---------|
-| Primitive | One of the thirteen kinds Core declares; everything an organization contains is a refinement of one. |
+| Primitive | One of the fourteen kinds Core declares; everything an organization contains is a refinement of one. |
 | Family | The grouping of primitives by what they distinguish: structure, reality, agency, meaning, governance. |
 | Kind | A class: a primitive or a refinement of one. |
 | Fact | A value: a constructed instance of a kind. |

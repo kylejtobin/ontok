@@ -6,7 +6,7 @@
 
 **A semantic language for writing the organization as software.**
 
-An organization already has a model of itself: what exists in it, what happens, who does what, through which office, toward which end, under which rules. That model lives in people, and every application rebuilds a fragment of it. ONTOK gives it one home. Core is thirteen primitives that say what kinds of things an organization contains. An organization refines them into its own kinds. Its programs construct facts that satisfy those kinds, and a fact exists only because it was proven.
+An organization already has a model of itself: what exists in it, what happens, who does what, through which office, toward which end, under which rules. That model lives in people, and every application rebuilds a fragment of it. ONTOK gives it one home. Core is fourteen primitives that say what kinds of things an organization contains. An organization refines them into its own kinds. Its programs construct facts that satisfy those kinds, and a fact exists only because it was proven.
 
 That is what makes the meaning software-addressable. Applications, agents, and models operate over the organization's own kinds instead of each inventing another model of them, and none of them has to become the authority that defines what the organization is.
 
@@ -15,12 +15,12 @@ That is what makes the meaning software-addressable. Applications, agents, and m
 | Family | Primitives | What they distinguish |
 |--------|------------|-----------------------|
 | Structure | `Node`, `Connection` | A distinct thing, and a link between two things that exist independently of it |
-| Reality | `Entity`, `Relation`, `State`, `Event` | A thing that persists, an identifiable association, a condition that goes on a thing, an occurrence |
+| Reality | `Entity`, `Relation`, `Causation`, `State`, `Event` | A thing that persists, an identifiable association, one occurrence being because of another, a condition that goes on a thing, an occurrence |
 | Agency | `Role`, `Goal`, `Action`, `Work` | An organizational capacity, an intended end, declared doing through a role toward a goal, the persistent undertaking of it |
 | Meaning | `Concept`, `Context` | What a declaration means, and a situation constituted by states |
 | Governance | `Rule` | A constraint on declared work within a situation |
 
-Everything else in Core makes those construct: `NodeId`, `Timestamp`, `Instant`, `Interval`, and `States`. There is no fourteenth primitive, no `type` field, and no registry. **The class is the kind. The value is the fact.**
+Everything else in Core makes those construct: `NodeId`, `Timestamp`, `Instant`, `Interval`, and `States`. There is no fifteenth primitive, no `type` field, and no registry. **The class is the kind. The value is the fact.**
 
 ## Refine, construct, refuse
 
