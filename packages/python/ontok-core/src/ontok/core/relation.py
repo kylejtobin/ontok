@@ -1,6 +1,6 @@
 from pydantic import ConfigDict, Field, RootModel
 
-from ontok.core.structure import Connection, Node
+from ontok.core.structure import Connection
 
 
 class RelationId(RootModel[str]):
@@ -15,7 +15,7 @@ class RelationId(RootModel[str]):
     )
 
 
-class Relation[SourceT: Node, TargetT: Node](Connection[SourceT, TargetT]):
+class Relation(Connection):
     """An identifiable domain association from one Node to another."""
 
     id: RelationId = Field(description="The identifier that distinguishes this Relation.")

@@ -17,7 +17,7 @@ class Node(BaseModel):
     id: NodeId = Field(description="The identifier that distinguishes this Node.")
 
 
-class Connection[SourceT: Node, TargetT: Node](BaseModel):
+class Connection(BaseModel):
     """A typed link declaring how Nodes relate within the organizational graph."""
 
     model_config = ConfigDict(
@@ -28,5 +28,5 @@ class Connection[SourceT: Node, TargetT: Node](BaseModel):
         revalidate_instances="never",
     )
 
-    source: SourceT = Field(description="The Node from which the Connection originates.")
-    target: TargetT = Field(description="The Node at which the Connection terminates.")
+    source: NodeId = Field(description="The Node from which the Connection originates.")
+    target: NodeId = Field(description="The Node at which the Connection terminates.")

@@ -58,14 +58,14 @@ C4Container
   }
 ```
 
-The primitives form five families, and refinement is the only relationship among them:
+The primitives form five families. Refinement is the only relationship among the kinds; a constituent is embedded, and a link's endpoints are referenced by identity:
 
 ```mermaid
 classDiagram
   class Node { id: NodeId }
-  class Connection~SourceT, TargetT~ { source: SourceT; target: TargetT }
+  class Connection { source: NodeId; target: NodeId }
   class Entity
-  class Relation~SourceT, TargetT~ { id: RelationId }
+  class Relation { id: RelationId }
   class State
   class Event { occurred: TemporalExtent }
   class Role
@@ -110,7 +110,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **An Event is an occurrence, not a cause.** `Event` carries when it occurred and nothing about why, because temporal sequence does not imply causation. Core declares no causal kind; a causal link is a `Relation` whose endpoints are `Event`s, declared by the module or organization that needs it. This rules out inferring cause from order.
 
-**A Connection embeds its endpoints and is parameterized by their kinds.** `Connection[SourceT, TargetT]` holds a proven source and a proven target, because a link constructs only from nodes that already exist, and the type parameters let a refinement name the kinds it links. `Relation` is a `Connection` with its own `RelationId`. This rules out a link that names an endpoint no fact proves.
+**A Connection references its endpoints; a constituent is embedded.** `Connection` holds the `NodeId` of its source and target, while `Action` holds its `Role` and `Goal` whole, because a link joins two things that exist independently of it and is a fact about their identities, whereas a role and a goal constitute the action that declares them. `Relation` is a `Connection` with its own `RelationId`. This rules out a link that carries a copy of what it links, and rules out type parameters on any construct.
 
 **A fact exists only because it was proven.** Every model is frozen, closed, and strict, because a refinement inherits configuration unchanged and the base is the only place that can guarantee, for every kind anyone will ever declare, that a fact cannot be coerced or mutated into existence. A kind whose input is text or a foreign shape constructs through a config or a foreign model at its boundary. This rules out lax coercion, mutation, partial copies, and tolerated extra input.
 
@@ -142,6 +142,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A `NodeId` is not a canonical lowercase UUIDv7 | Refused |
 | A `Timestamp` has no timezone | Refused |
 | A `NodeId` field is given an `int` | Refused |
+| A `Connection` is given a `Node` as an endpoint | Refused |
 | An `Interval` has a zero duration | Refused |
 | A `Context` has no `State` | Refused |
 | A module imports a module above it | The import-linter layers contract fails |
