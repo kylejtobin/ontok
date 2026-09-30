@@ -7,7 +7,7 @@
 
 | Distribution | Namespace | Owns | Depends on |
 |---|---|---|---|
-| `ontok-core` | `ontok.core` | the twelve primitives, which adopt the mandatory configuration in this work | — |
+| `ontok-core` | `ontok.core` | the twelve primitives, which adopt the mandatory configuration and drop their type parameters in this work | — |
 | `ontok-bus` | `ontok.bus` | provider-independent event, log, and delivery meaning; the provider contract; the clock and identity minting | `ontok-core` |
 | `ontok-nats` | `ontok.nats` | the NATS JetStream realization of every bus action that holds no application type | `ontok-bus`, `nats-py` |
 | `ontok-ex` | `ontok.ex` | executing `Work` over the bus | `ontok-core`, `ontok-bus` |
@@ -45,11 +45,12 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 - Every identified kind a program declares is a refinement of a Core primitive: its events refine `Event`, its reactions refine `Work`, and a reaction kind's action, role, and goal are refinements of `Action`, `Role`, and `Goal`.
 - A refinement inherits every parent field, configuration, and derivation unchanged and only adds facts. No refinement redeclares an inherited field.
 - Identityless facts and values are python-development constructs, not Core kinds, as Core's own `NodeId`, `Timestamp`, `Instant`, and `Interval` are. The retained event, the delivery, the attempt, a response's deferral and rejection, and every outcome are such facts.
+- In the application, Core primitives are not used raw where a narrower meaning exists. A library fact types an event as Core `Event` because no narrower meaning exists at its layer.
 - The skill's effect actions describe external effects. They are not Core `Action`s.
 - There is no `Event(Event)`. Core `Event` remains the universal occurrence, and Core `Work` remains the persistent undertaking.
 - The class is the kind. The only discriminator is an event's `event_type`, which is interchange identity: it travels on the wire and in subjects. A reaction kind's `work_type` is a value in its specification, not a class field. No other `type`, `kind`, `TypeId`, URI, or registry field exists.
 - Standard event-sourcing vocabulary is used unless a different meaning requires a different name.
-- Core adopts the mandatory configuration and changes in no other way.
+- Core adopts the mandatory configuration and drops its type parameters, and changes in no other way: `Connection(source: Node, target: Node)`, and `Relation(Connection)` adds `id: RelationId`. Refinements only add facts. The Core specification is updated with its realization.
 
 ### Construction is the program
 
@@ -75,7 +76,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 - An arrival is an ordered union of a delivery and `Unconstructible`. No construction failure is caught.
 - Transport facts, such as a delivery's token, never enter a reaction. The callback reads the token from its route.
 - Every action carries only the semantic input its effect needs.
-- An outcome couples its action when a later construction reads that action.
+- An outcome couples its action when a later construction reads that action. An outcome that authorizes a further effect derives that effect's action.
 - An action that follows an outcome union is derived through a failure-exhaustive ordered union: the strong variant requires the authorizing outcome, and the fallback authorizes nothing.
 - Each delivery reads what it needs from the log through interpreters nested in its terminal expression. The log is the state. There is no mutable consistency model and no current-state holder.
 - The clock and randomness are effects, read through interpreters.
@@ -100,6 +101,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
    - The hyphen follows NATS naming guidance, so the name is valid as both a subject token and a consumer name, and it never occurs in a Python identifier.
    - An event type is interchange identity: renaming the class does not change it.
 3. **Versioning.** An event type's shape never changes. A new shape is a new event type. Readers keep constructing every event type that exists in the log.
+   - The log holds the events of every program in the account. A consumer constructs only the kinds it declares, and every field of an undeclared kind may be ignored.
 4. **Stream.** Every publishable kind derives `stream`, a `StreamKey` naming what the event is about. A stream key is a canonical lowercase UUIDv7 or a lowercase hex digest. An event that is its own stream uses its own id.
 5. **Two acts of publication.**
    - An **originating** event is created by a source. It carries no causation.
@@ -199,7 +201,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
       - `token` through the alias `reply`;
       - `sequence` through an `AliasPath` into the message metadata;
       - `event` through the alias `data`, as `Json[<its event union> | UnknownEvent]`.
-    - `UnknownEvent` is an empty foreign model with `extra="ignore"`, last in that union: the log's contract lets a consumer ignore event types it does not construct.
+    - `UnknownEvent` is an empty foreign model in `ontok-nats`, with `extra="ignore"`, last in that union: decision 3 lets a consumer ignore every field of a kind it does not declare.
     - The bus arrival is the ordered union `Delivery | Unconstructible`, constructed from the route with `from_attributes=True` through `ArrivalConstructor`.
       - `Delivery(token, event, sequence)` holds the event as Core `Event`, and derives `retained`, `address`, and `streams`.
       - `Unconstructible(token)` derives no streams.
@@ -249,7 +251,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - the conclusion;
     - the dispose interpreter.
 
-    A crash at any point is followed by redelivery, and the causation addresses and the settling of contests make it converge.
+    Each kind's callback nests only the interpreters its declarations need. A crash at any point is followed by redelivery, and the causation addresses and the settling of contests make it converge.
 
 ### Reactions
 
@@ -271,7 +273,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - A join consumes two event types in one stream and reads the latest event of each.
     - Its variants take those readings by position.
     - `Joined` requires both retained. Each `Partial` variant requires one absent, and emits nothing.
-    - Because reads see the log as it is now, a lagging subscription can construct `Joined` at both arrivals. `Joined` therefore takes as its causation trigger the later of its two events by log sequence, an extremum over the two readings. Both arrivals produce the same publication, and the log keeps one.
+    - Because reads see the log as it is now, a lagging subscription can construct `Joined` at both arrivals. `Joined` therefore takes as its causation trigger the later of its two events by log sequence. It derives `later` as `(self.first, self.second)[max(0, min(1, self.second.sequence.root - self.first.sequence.root))]`: arithmetic, an extremum over `int`, and selection by an index proven to be 0 or 1 over a pair. The two sequences belong to different events, so their difference is never 0. Both arrivals produce the same publication, and the log keeps one.
     - A join across streams, or over more than two event types, is out of scope.
 44. **Causation.** An emitted event references its trigger and the reaction kind that derived it. Reactions are never published. Causation is a relation between events and is never inferred from temporal order.
 45. **Effects.**
@@ -402,6 +404,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 |---|---|---|
 | every `BaseModel` primitive and finished value | owned `BaseModel` with `frozen=True`, `extra="forbid"`, `strict=True`, `validate_default=True`, `revalidate_instances="never"` | pydantic.md mandatory configuration |
 | every `RootModel` scalar and collection | semantic `RootModel` with `frozen=True`, `strict=True`, `validate_default=True`, `revalidate_instances="never"` | pydantic.md mandatory configuration |
+| `Connection(source, target)`, `Relation(Connection)` | concept models whose endpoints are `Node`, with no type parameter | construction.md: every field is a whitelisted construct; concept-model.md: a refinement inherits every field unchanged |
 
 ### `ontok-bus`
 
@@ -418,7 +421,6 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `Minted(at, id, emitted)` | value object | exhausted by field equality | `value.py` |
 | `EmittedIdentities` | collection of exactly 1,000 `NodeId`s | position selects an id | `value.py` |
 | `Retained(event, sequence)` | concept model; `event` is Core `Event`; derives `address` | a durable fact | `log.py` |
-| `UnknownEvent` | foreign model with `extra="ignore"` | the log's contract lets a consumer ignore event types it does not construct | `log.py` |
 | `Origination(event, expectation)` | action; derives `address` | one intended external effect | `publication.py` |
 | `AppendBatch(expectation, events)` | action; `events` from 0 to 1,000; derives `lead` and `reads` | one intended external effect | `publication.py` |
 | `LeadEvent`, `NoEvents` | ordered union built from the batch; each derives `reads` | decision 13 proves the sole refusal | `publication.py` |
@@ -447,6 +449,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `NatsSettings` | config, prefix `ONTOK_NATS_`: URL, user, and password as `SecretStr` | deployment input | `config.py` |
 | `StreamSpecification` | value object | exhausted by field equality | `stream.py` |
 | the publish acknowledgement, the batch acknowledgement, the wrong-last-sequence error, the other API errors, the JetStream message metadata, the direct-get status | foreign models | another system's differing representation | `model.py` |
+| `UnknownEvent` | foreign model with `extra="ignore"` | an undeclared kind is another program's representation; decision 3 permits ignoring its fields | `model.py` |
 | `OriginateInterpreter`, `AppendBatchInterpreter`, `EnsureSubscriptionInterpreter`, `DeleteSubscriptionInterpreter`, `DisposeInterpreter` | effect interpreters, one per action meaning; each composes its subject at the client call and catches only its documented errors | one action, one imported capability | `interpreter.py` |
 
 ### `ontok-ex`
@@ -464,7 +467,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 
 Each application declares, because each holds its own types:
 - its event-type `StrEnum`, its events, its event union, and that union's `TypeAdapter`;
-- its delivery route, `DeliveryRoute`, nesting the provider's metadata foreign model and the bus's `UnknownEvent`;
+- its delivery route, `DeliveryRoute`, nesting the provider's metadata foreign model and `UnknownEvent`;
 - its `ReadLatestInterpreter` and `ReadAddressInterpreter`, over direct-get reply foreign models that hold its event union;
 - its reaction kinds, their variants, and their `Action`, `Role`, and `Goal` refinements;
 - each kind's response union with its `TypeAdapter`;
@@ -475,7 +478,7 @@ Each application declares, because each holds its own types:
 
 ## Order
 
-1. **`ontok-core`.** The mandatory configuration on every primitive and finished value.
+1. **`ontok-core`.** The mandatory configuration on every primitive and finished value, the type parameters removed from `Connection` and `Relation`, and `spec/ontok-core.xml` updated with them.
 2. **`ontok-bus`,** with every declaration in its construct table.
 3. **`ontok-nats`.**
    - The realization in decisions 57 to 65.
