@@ -53,6 +53,16 @@ class DeliveryToken(RootModel[str]):
     root: str = Field(pattern=r"^\S+$")
 
 
+class ClaimRefusal(RootModel[str]):
+    """Memory's account of why an append's claim did not hold."""
+
+    model_config = ConfigDict(
+        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
+    )
+
+    root: str = Field(min_length=1)
+
+
 class FailureReason(RootModel[str]):
     """A provider's or a capability's account of why an effect did not complete."""
 

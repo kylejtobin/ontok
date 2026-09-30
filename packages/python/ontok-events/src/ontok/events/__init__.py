@@ -29,7 +29,9 @@ from ontok.events.recording import NoLead as NoLead
 from ontok.events.recording import NotDurable as NotDurable
 from ontok.events.recording import Origination as Origination
 from ontok.events.recording import Settled as Settled
+from ontok.events.recording import Unsettled as Unsettled
 from ontok.events.recording import Written as Written
+from ontok.events.type import ClaimRefusal as ClaimRefusal
 from ontok.events.type import DeliveryToken as DeliveryToken
 from ontok.events.type import Disposition as Disposition
 from ontok.events.type import EventTypeName as EventTypeName

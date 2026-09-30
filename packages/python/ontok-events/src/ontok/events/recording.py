@@ -4,8 +4,8 @@ from pydantic import AliasPath, BaseModel, ConfigDict, Field, TypeAdapter
 
 from ontok.core import Event
 from ontok.events.memory import ReadAddress, Readings, Retained
-from ontok.events.type import Disposition, FailureReason
-from ontok.events.value import Absent, Address, AddressConstructor, Expectation
+from ontok.events.type import ClaimRefusal, Disposition, FailureReason
+from ontok.events.value import Absent, Address, AddressConstructor, Expectation, Unavailable
 
 
 class Origination(BaseModel):
@@ -123,7 +123,7 @@ class Written(BaseModel):
 
 
 class Contested(BaseModel):
-    """Memory's answer that the append's claim did not hold."""
+    """Memory's answer that the append's claim did not hold, and its account of why."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -134,6 +134,7 @@ class Contested(BaseModel):
     )
 
     append: AnyAppend
+    refusal: ClaimRefusal
 
     @property
     def reads(self) -> tuple[ReadAddress, ...]:
@@ -160,24 +161,6 @@ class AppendUnavailable(BaseModel):
 
 
 Answer = Written | Contested | AppendUnavailable
-
-
-class Appended(BaseModel):
-    """The occurrences were remembered."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    written: Written = Field(validation_alias=AliasPath("answer"))
-
-    @property
-    def disposition(self) -> Disposition:
-        return self.written.append.disposition
 
 
 class AlreadyPresent(BaseModel):
@@ -218,8 +201,8 @@ class Conflict(BaseModel):
         return Disposition.RETRY
 
 
-class NotDurable(BaseModel):
-    """The answer or the settling read was unavailable; nothing is known to be remembered."""
+class Unsettled(BaseModel):
+    """The claim did not hold and the settling read was unavailable; nothing is known."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -229,17 +212,57 @@ class NotDurable(BaseModel):
         revalidate_instances="never",
     )
 
+    contested: Contested = Field(validation_alias=AliasPath("answer"))
+    unavailable: Unavailable = Field(validation_alias=AliasPath("readings", "root", 0))
+
     @property
     def disposition(self) -> Disposition:
         return Disposition.RETRY
 
 
+class NotDurable(BaseModel):
+    """The provider did not complete the append; nothing is known to be remembered."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    unavailable: AppendUnavailable = Field(validation_alias=AliasPath("answer"))
+
+    @property
+    def disposition(self) -> Disposition:
+        return Disposition.RETRY
+
+
+class Appended(BaseModel):
+    """The occurrences were remembered."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    written: Written = Field(validation_alias=AliasPath("answer"))
+
+    @property
+    def disposition(self) -> Disposition:
+        return self.written.append.disposition
+
+
 Durability = Annotated[
-    Appended | AlreadyPresent | Conflict | NotDurable, Field(union_mode="left_to_right")
+    AlreadyPresent | Conflict | Unsettled | NotDurable | Appended,
+    Field(union_mode="left_to_right"),
 ]
-DurabilityConstructor: TypeAdapter[Appended | AlreadyPresent | Conflict | NotDurable] = TypeAdapter(
-    Durability
-)
+DurabilityConstructor: TypeAdapter[
+    AlreadyPresent | Conflict | Unsettled | NotDurable | Appended
+] = TypeAdapter(Durability)
 
 
 class Settled(BaseModel):
