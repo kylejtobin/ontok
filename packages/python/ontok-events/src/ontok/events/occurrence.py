@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
 from ontok.core import Causation, NodeId
-from ontok.events.value import AnyProvenance
+from ontok.events.value import Provenance
 
 
 class Lineage(BaseModel):
@@ -16,7 +16,7 @@ class Lineage(BaseModel):
     )
 
     id: NodeId
-    provenance: AnyProvenance
+    provenance: Provenance
 
     @property
     def causation(self) -> tuple[Causation, ...]:

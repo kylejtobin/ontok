@@ -22,7 +22,7 @@ sources:
 
 # ontok-nats
 
-NATS is the backend. It carries memory, delivery, and acknowledgement for [ontok-events](./ontok-events.md) on one JetStream stream, and nothing about the organization lives here: no kind, no rule, no meaning. The module holds the provider's configuration, its vocabulary as foreign models, the subjects and headers that realize an address and a claim, and one interpreter per Events action that names no application type. The application's read and settle interpreters are declared by the application over this module's foreign models, because they construct the application's own events. Read this page before any structural change and edit the section the change lands in, in the same commit as the code; Git is the history.
+NATS is the backend. It carries memory, delivery, and acknowledgement for [ontok-events](./ontok-events.md) on one JetStream stream, and nothing about the organization lives here: no kind, no rule, no meaning. The module holds the provider's configuration, its vocabulary as foreign models, the subjects and headers that realize an address and a claim, and one interpreter per Events action that names no application type: append, ensure, delete, acknowledge. The application's read and settle interpreters are declared by the application over this module's foreign models, because they construct the application's own events. Read this page before any structural change and edit the section the change lands in, in the same commit as the code; Git is the history.
 
 ## Constraints
 
@@ -56,7 +56,7 @@ C4Container
     Container(stream, "stream", "Python", "StreamSpecification, the required EVENTS stream as a value")
     Container(subject, "subject", "Python", "The subjects and filter subjects an address, a claim, and a subscription realize")
     Container(model, "model", "Python", "Foreign models: acknowledgements, API errors, message metadata, direct-get replies, MessageBody, EndOfBatch")
-    Container(interpreter, "interpreter", "Python", "Originate, Append, EnsureSubscription, DeleteSubscription, Acknowledge")
+    Container(interpreter, "interpreter", "Python", "Append, EnsureSubscription, DeleteSubscription, Acknowledge")
   }
   ContainerQueue(server, "NATS JetStream", "nats:2.14.6-alpine", "EVENTS: file storage, limits retention with no limits, deny delete and purge, allow direct, allow atomic")
   Rel(interpreter, server, "One client, bound at the application's composition root")
@@ -92,8 +92,7 @@ The server's replies, lifted whole, with `extra` matching each source contract: 
 
 One per Events action meaning; each holds its action and the one client, composes its subject and headers at the call, and translates only its documented failures into the action's unavailable outcome. `CancelledError`, `KeyboardInterrupt`, and `SystemExit` propagate; anything else is a defect.
 
-- **`OriginateInterpreter`** publishes the event's JSON on its subject with `Nats-Expected-Last-Subject-Sequence: 0`, adding `Nats-Expected-Last-Subject-Sequence-Subject: event.<about>.>` with the sequence for `ExpectSequence`. A publish acknowledgement is `Written`; API error 10071, wrong last sequence, is `Contested`; every other documented failure is `AppendUnavailable`.
-- **`AppendInterpreter`** publishes each event with `Nats-Batch-Id`, `Nats-Batch-Sequence` from 1, the claim's headers on the first, and `Nats-Batch-Commit: 1` on the last, which is a request whose reply acknowledges the whole batch. `nats-py` has no batch call, so the interpreter sets the headers itself. An append of no events makes no call and is `Written`. Answers as for origination.
+- **`AppendInterpreter`** publishes each event with `Nats-Batch-Id`, `Nats-Batch-Sequence` from 1, the claim's headers on the first (`Nats-Expected-Last-Subject-Sequence: 0` on its own subject, and for `ExpectSequence` `Nats-Expected-Last-Subject-Sequence-Subject: event.<about>.>` with the sequence), and `Nats-Batch-Commit: 1` on the last, which is a request whose reply acknowledges the whole batch. `nats-py` has no batch call, so the interpreter sets the headers itself. An append of no events makes no call and is `Written`. A publish acknowledgement is `Written`; API error 10071, wrong last sequence, is `Contested` carrying its description as the refusal; every other documented failure is `AppendUnavailable`.
 - **`EnsureSubscriptionInterpreter`** creates, through the consumer API, a durable push consumer named `<work_type>`, with the subscription's filter subjects, deliver subject `_INBOX.ontok.<work_type>`, deliver group `<work_type>`, explicit acknowledgement, `max_ack_pending` 1, acknowledgement wait 30 seconds, unlimited deliveries, deliver-all, no flow control. Creating it again with the same configuration is `SubscriptionEnsured`; a documented failure is `EnsureUnavailable`.
 - **`DeleteSubscriptionInterpreter`** deletes that consumer: `SubscriptionDeleted`, or `Unavailable`.
 - **`AcknowledgeInterpreter`** publishes to the delivery token: `+ACK` for Complete, `-NAK` for Retry, `+TERM` for Reject; `Acknowledged`, or `Unavailable`.

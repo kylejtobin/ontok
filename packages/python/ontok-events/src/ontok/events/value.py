@@ -6,7 +6,7 @@ from ontok.core import NodeId
 from ontok.events.type import EventTypeName, FailureReason, LogSequence, Ordinal, WorkTypeName
 
 
-class Provenance(BaseModel):
+class PolicyProvenance(BaseModel):
     """How a policy's emission came to be: the responsibility, its one cause, and its position."""
 
     model_config = ConfigDict(
@@ -47,7 +47,7 @@ class ConjunctionProvenance(BaseModel):
         return (self.first, self.second)
 
 
-AnyProvenance = Provenance | ConjunctionProvenance
+Provenance = PolicyProvenance | ConjunctionProvenance
 
 
 class OriginAddress(BaseModel):
@@ -79,7 +79,7 @@ class EmissionAddress(BaseModel):
 
     about: NodeId
     event_type: EventTypeName
-    provenance: AnyProvenance
+    provenance: Provenance
 
 
 Address = Annotated[EmissionAddress | OriginAddress, Field(union_mode="left_to_right")]

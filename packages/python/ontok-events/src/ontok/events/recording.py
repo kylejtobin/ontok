@@ -8,33 +8,6 @@ from ontok.events.type import ClaimRefusal, Disposition, FailureReason
 from ontok.events.value import Absent, Address, AddressConstructor, Expectation, Unavailable
 
 
-class Origination(BaseModel):
-    """The effect of committing one originating occurrence to memory under a claim."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    event: Event
-    expectation: Expectation
-
-    @property
-    def address(self) -> Address:
-        return AddressConstructor.validate_python(self.event, from_attributes=True)
-
-    @property
-    def reads(self) -> tuple[ReadAddress, ...]:
-        return (ReadAddress(address=self.address),)
-
-    @property
-    def disposition(self) -> Disposition:
-        return Disposition.COMPLETE
-
-
 class Lead(BaseModel):
     """The first occurrence of an append, whose address answers for the whole batch."""
 
@@ -78,7 +51,8 @@ LeadingConstructor: TypeAdapter[Lead | NoLead] = TypeAdapter(Leading)
 
 
 class Append(BaseModel):
-    """The effect of committing a response's emissions to memory atomically under one claim."""
+    """The effect of committing occurrences to memory atomically under one claim: a response's
+    emissions, or a source's one originating occurrence."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -101,9 +75,6 @@ class Append(BaseModel):
         return self.lead.reads
 
 
-AnyAppend = Origination | Append
-
-
 class Written(BaseModel):
     """Memory's answer that every occurrence of the append landed."""
 
@@ -115,7 +86,7 @@ class Written(BaseModel):
         revalidate_instances="never",
     )
 
-    append: AnyAppend
+    append: Append
 
     @property
     def reads(self) -> tuple[ReadAddress, ...]:
@@ -133,7 +104,7 @@ class Contested(BaseModel):
         revalidate_instances="never",
     )
 
-    append: AnyAppend
+    append: Append
     refusal: ClaimRefusal
 
     @property
@@ -152,7 +123,7 @@ class AppendUnavailable(BaseModel):
         revalidate_instances="never",
     )
 
-    append: AnyAppend
+    append: Append
     reason: FailureReason
 
     @property
@@ -239,7 +210,8 @@ class NotDurable(BaseModel):
 
 
 class Appended(BaseModel):
-    """The occurrences were remembered."""
+    """What remains when the answer carried neither refusal nor failure: the occurrences were
+    remembered."""
 
     model_config = ConfigDict(
         frozen=True,

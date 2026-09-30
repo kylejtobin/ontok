@@ -14,7 +14,6 @@ from ontok.events.memory import SomeUnavailable as SomeUnavailable
 from ontok.events.occurrence import Lineage as Lineage
 from ontok.events.recording import AlreadyPresent as AlreadyPresent
 from ontok.events.recording import Answer as Answer
-from ontok.events.recording import AnyAppend as AnyAppend
 from ontok.events.recording import Append as Append
 from ontok.events.recording import Appended as Appended
 from ontok.events.recording import AppendUnavailable as AppendUnavailable
@@ -27,7 +26,6 @@ from ontok.events.recording import Leading as Leading
 from ontok.events.recording import LeadingConstructor as LeadingConstructor
 from ontok.events.recording import NoLead as NoLead
 from ontok.events.recording import NotDurable as NotDurable
-from ontok.events.recording import Origination as Origination
 from ontok.events.recording import Settled as Settled
 from ontok.events.recording import Unsettled as Unsettled
 from ontok.events.recording import Written as Written
@@ -42,7 +40,6 @@ from ontok.events.type import WorkTypeName as WorkTypeName
 from ontok.events.value import Absent as Absent
 from ontok.events.value import Address as Address
 from ontok.events.value import AddressConstructor as AddressConstructor
-from ontok.events.value import AnyProvenance as AnyProvenance
 from ontok.events.value import ConjunctionProvenance as ConjunctionProvenance
 from ontok.events.value import EmissionAddress as EmissionAddress
 from ontok.events.value import EveryType as EveryType
@@ -51,6 +48,7 @@ from ontok.events.value import Expectation as Expectation
 from ontok.events.value import ExpectSequence as ExpectSequence
 from ontok.events.value import OfType as OfType
 from ontok.events.value import OriginAddress as OriginAddress
+from ontok.events.value import PolicyProvenance as PolicyProvenance
 from ontok.events.value import Provenance as Provenance
 from ontok.events.value import ReadScope as ReadScope
 from ontok.events.value import Unavailable as Unavailable

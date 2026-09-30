@@ -74,7 +74,7 @@ class FailureReason(RootModel[str]):
 
 
 class Disposition(StrEnum):
-    """What an acknowledgement says about a delivery."""
+    """What remains for an append's author: nothing, another attempt, or a terminal refusal."""
 
     COMPLETE = "complete"
     RETRY = "retry"
