@@ -6,12 +6,12 @@ An organization's memory and its work upon it, in ONTOK: occurrences about entit
 - **Python:** 3.14 or later
 - **Depends on:** `ontok-core`, `pydantic>=2.9,<3`; a provider realizes its actions
 - **Status:** pre-alpha
-- **Architecture:** [wiki/architecture/ontok-events.md](https://github.com/kyzobuild/ontok/blob/main/wiki/architecture/ontok-events.md)
+- **Architecture:** [wiki/architecture/ontok-events.md](https://github.com/kylejtobin/ontok/blob/main/wiki/architecture/ontok-events.md)
 
 ## Install
 
 ```bash
-pip install "ontok-events @ git+https://github.com/kyzobuild/ontok.git#subdirectory=packages/python/ontok-events"
+pip install "ontok-events @ git+https://github.com/kylejtobin/ontok.git#subdirectory=packages/python/ontok-events"
 ```
 
 ## Package

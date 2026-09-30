@@ -26,9 +26,9 @@ import-names = ["ontok.__MODULE_NAME__"]
 import-namespaces = ["ontok"]
 
 [project.urls]
-Homepage = "https://github.com/kyzobuild/ontok"
-Repository = "https://github.com/kyzobuild/ontok"
-Issues = "https://github.com/kyzobuild/ontok/issues"
+Homepage = "https://github.com/kylejtobin/ontok"
+Repository = "https://github.com/kylejtobin/ontok"
+Issues = "https://github.com/kylejtobin/ontok/issues"
 Specification = "__SPECIFICATION_URL__"
 
 [build-system]

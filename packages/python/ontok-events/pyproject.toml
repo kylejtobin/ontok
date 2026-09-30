@@ -21,10 +21,10 @@ import-names = ["ontok.events"]
 import-namespaces = ["ontok"]
 
 [project.urls]
-Homepage = "https://github.com/kyzobuild/ontok"
-Repository = "https://github.com/kyzobuild/ontok"
-Issues = "https://github.com/kyzobuild/ontok/issues"
-Architecture = "https://github.com/kyzobuild/ontok/blob/main/wiki/architecture/ontok-events.md"
+Homepage = "https://github.com/kylejtobin/ontok"
+Repository = "https://github.com/kylejtobin/ontok"
+Issues = "https://github.com/kylejtobin/ontok/issues"
+Architecture = "https://github.com/kylejtobin/ontok/blob/main/wiki/architecture/ontok-events.md"
 
 [build-system]
 requires = ["uv_build>=0.12.12,<0.13"]

@@ -37,7 +37,7 @@ def _sample_tokens() -> TemplateTokens:
         status="1 - Planning",
         keywords=("ontok", "sample"),
         dependencies=("ontok-core>=0.1.0,<0.2.0",),
-        specification_url="https://github.com/kyzobuild/ontok/blob/main/spec/ontok-sample.xml",
+        specification_url="https://github.com/kylejtobin/ontok/blob/main/spec/ontok-sample.xml",
     )
 
 
@@ -134,9 +134,9 @@ def test_rendered_package_metadata_contract(tmp_path: Path) -> None:
         ],
         dependencies=list(tokens.dependencies),
         urls=ProjectUrls(
-            Homepage="https://github.com/kyzobuild/ontok",
-            Repository="https://github.com/kyzobuild/ontok",
-            Issues="https://github.com/kyzobuild/ontok/issues",
+            Homepage="https://github.com/kylejtobin/ontok",
+            Repository="https://github.com/kylejtobin/ontok",
+            Issues="https://github.com/kylejtobin/ontok/issues",
             Specification=tokens.specification_url,
         ),
         import_names=[f"ontok.{tokens.module_name.root}"],

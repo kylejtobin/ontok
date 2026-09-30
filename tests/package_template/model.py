@@ -49,7 +49,7 @@ class TemplateTokens(BaseModel):
     ]
     keywords: tuple[str, ...] = Field(min_length=1)
     dependencies: tuple[str, ...] = ()
-    specification_url: str = Field(pattern=r"^https://github\.com/kyzobuild/ontok/.+$")
+    specification_url: str = Field(pattern=r"^https://github\.com/kylejtobin/ontok/.+$")
 
     @cached_property
     def replacements(self) -> dict[str, str]:

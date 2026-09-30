@@ -85,7 +85,7 @@ Core is deliberately small and grows by modules. A capability becomes part of ON
 Core is a Python 3.13+ package in the `ontok` namespace and is installed from this repository:
 
 ```bash
-pip install "ontok-core @ git+https://github.com/kyzobuild/ontok.git#subdirectory=packages/python/ontok-core"
+pip install "ontok-core @ git+https://github.com/kylejtobin/ontok.git#subdirectory=packages/python/ontok-core"
 ```
 
 - Status: alpha. The primitives are settled; the surface around them is not.
