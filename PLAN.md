@@ -14,7 +14,7 @@
 
 - `ontok-bus` is a rendered skeleton. `ontok-nats` does not exist yet.
 - `ontok-ex` holds a data-directory config, its test, and a bundled NATS server from earlier planning. The config and its test are removed. The server, its license, and its manifest move to `ontok-nats` and are not used by this build.
-- Every declaration below is routed through the python-development skill's construct selection, with the rule that proves it. Every provider behavior it depends on is confirmed against the NATS Server v2.14.6 source, the NATS documentation, or the `nats-py` source, as recorded below.
+- The design is settled. No discovery phase precedes the build. Every declaration below is routed through the python-development skill's construct selection, with the rule that proves it. Every provider behavior it depends on is confirmed against the NATS Server v2.14.6 source, the NATS documentation, or the `nats-py` source, as recorded below.
 
 ## Telos
 
@@ -135,31 +135,28 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `Origination(event, expectation)` appends one originating event and derives its `address`.
     - `AppendBatch(expectation, events)` appends a reaction's emitted events atomically: every event lands or none does.
       - The expectation applies to the first event. Every later event expects `ExpectAny`.
-      - `events` holds from 1 to 1,000 events, the provider's atomic batch limit.
-      - It derives `address`, the first event's, a selection by a proven key.
-13. **Nothing to append.** A response derives `append` as the ordered union `AppendBatch | NoEmissions` through `AppendConstructor`.
-    - The strong variant reads the response's `expectation` and `events`. The events are constructed instances, so its only refusal is an empty tuple, which is what `NoEmissions` means.
-    - `NoEmissions(disposition)` reads the response's disposition.
-    - The append interpreter consumes this closed action family. For `NoEmissions` it makes no call and returns it.
-14. **The provider's answer** is one of:
+      - `events` holds from 0 to 1,000 events, the provider's atomic batch limit.
+13. **The settling read.** Each append action derives `reads`, the address reads that settle a contest over it.
+    - `Origination` derives one `ReadAddress` of its event's address.
+    - `AppendBatch` derives `lead` through the ordered union `LeadEvent | NoEvents`, constructed from the batch with `from_attributes=True`. `LeadEvent` reads the first event through `AliasPath("events", 0)` and derives one `ReadAddress` of its address. The events are constructed instances, so its only refusal is an empty tuple, which is what `NoEvents`, deriving no reads, means. `AppendBatch.reads` is its lead's reads.
+    - Because a batch is atomic, one address answers for the whole batch.
+14. **The provider's answer** couples its append action and is one of three:
     - `Written(append, sequences)`: every event landed;
     - `Contested(append)`: an expectation failed;
-    - `Unavailable(reason)`: the provider did not complete the append;
-    - `NoEmissions`: there was nothing to append.
+    - `Unavailable(reason)`: the provider did not complete the append.
+
+    An empty batch makes no provider call and is `Written` with no sequences: an atomic commit needs a message.
 15. **Settling a contest.** `AppendAnswer(answer)` derives its authorized address reads through the ordered union `ContestedAppend | UncontestedAppend`.
-    - `ContestedAppend` requires a `Contested` answer and authorizes one `ReadAddress` of its append's `address`. The answer is a constructed instance, so its only refusal is an answer that is not `Contested`, which is what `UncontestedAppend`, authorizing nothing, means.
-    - Because a batch is atomic, one address answers for the whole batch.
+    - `ContestedAppend` requires a `Contested` answer and authorizes its append's `reads`. The answer is a constructed instance, so its only refusal is an answer that is not `Contested`, which is what `UncontestedAppend`, authorizing nothing, means.
     - `AppendSettlement(answer, readings)` derives `outcome` through this ordered union:
 
-| Outcome | Constructs when | Disposition |
+| Outcome | Constructs when | Meaning |
 |---|---|---|
-| `Written` | the answer was `Written` | Complete |
-| `AlreadyPresent(append, existing)` | the answer was `Contested` and the address read is `Retained` | Complete |
-| `Conflict(append)` | the answer was `Contested` and the address read is `Absent` | Retry |
-| `NoEmissions` | the answer was `NoEmissions` | its own |
-| `AppendUnavailable` | anything else: the answer or the address read was unavailable | Retry |
+| `Written` | the answer was `Written` | the events were appended |
+| `AlreadyPresent(append, existing)` | the answer was `Contested` and the address read is `Retained` | this publication is already on the log; this is success |
+| `Conflict(append)` | the answer was `Contested` and the address read is `Absent` | another event holds the position the expectation required |
+| `AppendUnavailable` | anything else | the answer or the address read was unavailable |
 
-    - Only reaction variants and `EffectsHeld` derive events, and both derive Complete, so an appended batch that landed is Complete.
     - A retry never appends a second copy, even when other events have landed in the stream since the first attempt.
 16. There is no deduplication window. Idempotence holds for the life of the log.
 17. **Events do not embed their prior.** Succession is enforced by `ExpectSequence`. The state-transition shape with a `prior` field is the in-memory fold a reaction uses to decide what to emit, never a wire shape.
@@ -198,21 +195,22 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 ### Delivery
 
 26. **A delivery is the provider handing one event to one subscription,** possibly more than once.
-    - The application's delivery route is the ordered union `DeliveryRoute | UnconstructibleRoute`, constructed from the provider's message with `from_attributes=True`.
-      - `DeliveryRoute` carries the token, the event as the application's event union, and the log sequence.
-      - `UnconstructibleRoute` carries only the token.
-      - Every refusal of `DeliveryRoute` means the message holds no event of this program.
+    - The application's delivery route is one model, `DeliveryRoute`, constructed from the provider's message with `from_attributes=True`:
+      - `token` through the alias `reply`;
+      - `sequence` through an `AliasPath` into the message metadata;
+      - `event` through the alias `data`, as `Json[<its event union> | UnknownEvent]`.
+    - `UnknownEvent` is an empty foreign model with `extra="ignore"`, last in that union: the log's contract lets a consumer ignore event types it does not construct.
     - The bus arrival is the ordered union `Delivery | Unconstructible`, constructed from the route with `from_attributes=True` through `ArrivalConstructor`.
       - `Delivery(token, event, sequence)` holds the event as Core `Event`, and derives `retained`, `address`, and `streams`.
       - `Unconstructible(token)` derives no streams.
-      - The only refusal of `Delivery` over a constructed route is a route with no event.
+      - `Delivery.event` refuses only an `UnknownEvent`, which is what `Unconstructible` means.
 27. **Dispositions, exactly three:**
 
 | Disposition | Meaning | Derived by |
 |---|---|---|
-| Complete | every consequence of the event is durable | `Written`, `AlreadyPresent`, or a `NoEmissions` of a reaction variant or a projection |
-| Retry | deliver again | a deferral, unavailable effects, a `Conflict`, or an `AppendUnavailable` |
-| Reject | the delivery is terminal | a rejection |
+| Complete | every consequence of the event is durable | a response authorizing Complete whose append was `Written` or `AlreadyPresent` |
+| Retry | deliver again | a response authorizing Retry, or an append that was a `Conflict` or `AppendUnavailable` |
+| Reject | the delivery is terminal | a response authorizing Reject whose append was `Written` |
 
 28. **The provider keeps its own record of rejections** for operators. The bus reads no rejection record.
 29. **Failures.** Every transport interpreter translates its documented nonfatal failures into `Unavailable`, so every transport outcome is a union that includes it. The clock and minting have no documented failures, so their outcomes are plain. The application's effect outcomes are each a union of its own success variants and `Unavailable`. Anything else is a defect.
@@ -228,16 +226,19 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `Rejected`, requiring an `Unconstructible` arrival.
 
     Exactly one variant constructs. A reaction that refuses for any other reason constructs nothing, and the process crashes as a defect.
-34. **Every response variant derives** its `append` and its `disposition`:
-    - a reaction variant that emits derives its `expectation` and `events`, and `append` through `AppendConstructor`;
-    - a reaction variant that emits nothing, a projection, `Deferred`, and `Rejected` derive `append` as `NoEmissions`;
+34. **Every response variant derives** its `batch` and its `disposition`:
+    - a reaction variant that emits derives its `batch` from its `expectation` and `events`;
+    - a reaction variant that emits nothing, a projection, `Deferred`, and `Rejected` derive a `batch` with no events;
     - a reaction variant and a projection derive Complete, `Deferred` derives Retry, and `Rejected` derives Reject.
 35. **Performing effects.** For a kind with effects, the application declares `PerformEffects(response)`, which carries the response as its idempotency key and requests the effects it derives.
     - The application's effect interpreter executes them through its one capability and returns `Performed(action, outcomes)`.
     - `Performed` derives its `completeness` through the ordered union `EffectsHeld | EffectsUnavailable`. `EffectsHeld` requires every outcome to be a success variant. The outcomes are constructed instances, so its only refusal is an `Unavailable` outcome, which is what `EffectsUnavailable` means.
-    - `EffectsHeld` derives the response's `append`. `EffectsUnavailable` derives `NoEmissions` with Retry.
+    - `EffectsHeld` derives the response's `batch` and disposition. `EffectsUnavailable` derives a `batch` with no events and Retry.
 36. **Effects precede emissions.** An emission announces a consequence, so the effect outcome authorizes it.
-37. **The final disposition** is the settlement outcome's disposition, from the table in decision 15.
+37. **The final disposition.** `Conclusion(authorized, settlement)` holds the disposition the response authorized and the append's settlement, and derives `disposition` through the ordered union `Durable | NotDurable`.
+    - `Durable` requires a `Written` or `AlreadyPresent` outcome and reads `authorized`.
+    - `NotDurable` derives Retry. The settlement is a constructed instance, so `Durable` refuses only a `Conflict` or `AppendUnavailable` outcome, both of which mean Retry.
+    - The authorized disposition is a scalar, so no application type enters the bus, and the append action carries no authority.
 38. **The terminal fact is `Disposed`.** The callback constructs `Dispose(token, disposition)` from the route's token and the final disposition. The dispose interpreter publishes it.
 39. **The terminal expression** nests, by data dependency:
     - the clock and minting interpreters;
@@ -245,6 +246,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - the attempt and its response;
     - for a kind with effects, the effect interpreter;
     - the append interpreter and the address-read interpreter;
+    - the conclusion;
     - the dispose interpreter.
 
     A crash at any point is followed by redelivery, and the causation addresses and the settling of contests make it converge.
@@ -309,7 +311,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 ### Provider contract
 
 53. **The bus defines each operation as an action with a constructed outcome:**
-    - `Origination` and the append family `AppendBatch | NoEmissions`;
+    - `Origination` and `AppendBatch`;
     - `ReadLatest` and `ReadAddress`;
     - `EnsureSubscription` and `DeleteSubscription`;
     - `Dispose`;
@@ -416,13 +418,14 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `Minted(at, id, emitted)` | value object | exhausted by field equality | `value.py` |
 | `EmittedIdentities` | collection of exactly 1,000 `NodeId`s | position selects an id | `value.py` |
 | `Retained(event, sequence)` | concept model; `event` is Core `Event`; derives `address` | a durable fact | `log.py` |
+| `UnknownEvent` | foreign model with `extra="ignore"` | the log's contract lets a consumer ignore event types it does not construct | `log.py` |
 | `Origination(event, expectation)` | action; derives `address` | one intended external effect | `publication.py` |
-| `AppendBatch(expectation, events)` | action; `events` from 1 to 1,000; derives `address` | one intended external effect | `publication.py` |
-| `NoEmissions(disposition)` | action; the append family is `AppendBatch \| NoEmissions` with `AppendConstructor` | decision 13 proves the sole refusal; one interpreter consumes a closed action family | `publication.py` |
-| `Written(append, sequences)`, `Contested(append)` | concept models; the answer is `Written \| Contested \| Unavailable \| NoEmissions` | outcomes coupling the action a later construction reads | `publication.py` |
+| `AppendBatch(expectation, events)` | action; `events` from 0 to 1,000; derives `lead` and `reads` | one intended external effect | `publication.py` |
+| `LeadEvent`, `NoEvents` | ordered union built from the batch; each derives `reads` | decision 13 proves the sole refusal | `publication.py` |
+| `Written(append, sequences)`, `Contested(append)` | concept models; the answer is `Written \| Contested \| Unavailable`; `Contested` derives its append's `reads` | outcomes coupling the action a later construction reads | `publication.py` |
 | `AppendAnswer(answer)`, `ContestedAppend`, `UncontestedAppend` | concept model and ordered union; derives `reads` | decision 15 proves the sole refusal | `publication.py` |
 | `AppendSettlement(answer, readings)` | concept model; derives `outcome` | a durable fact | `publication.py` |
-| `AlreadyPresent(append, existing)`, `Conflict(append)`, `AppendUnavailable` | concept models; the outcome is the ordered union in decision 15; each derives `disposition` | each attempt's refusals mean the next | `publication.py` |
+| `AlreadyPresent(append, existing)`, `Conflict(append)`, `AppendUnavailable` | concept models; the outcome is the ordered union in decision 15 | each attempt's refusals mean the next | `publication.py` |
 | `ReadLatest(stream, scope)`, `ReadAddress(address)` | actions | one intended external effect | `read.py` |
 | the read outcome `Retained \| Absent \| Unavailable` | union | alternatives with different facts | `read.py` |
 | `Readings` with `AllRead \| SomeUnavailable` | collection and ordered union | order carries meaning; decision 20 proves the sole refusal | `read.py` |
@@ -430,6 +433,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `EnsureSubscription`, `DeleteSubscription` | actions | one intended external effect | `subscription.py` |
 | `SubscriptionEnsured`, `SubscriptionDeleted` | concept models coupling their subscription; each outcome is a union with `Unavailable` | outcomes a later construction reads | `subscription.py` |
 | `Delivery(token, event, sequence)` | concept model; `event` is Core `Event`; derives `retained`, `address`, `streams` | a durable fact | `delivery.py` |
+| `Conclusion(authorized, settlement)` with `Durable \| NotDurable` | concept model and ordered union; derives `disposition` | decision 37 proves the sole refusal | `delivery.py` |
 | the arrival `Delivery \| Unconstructible` with `ArrivalConstructor` | ordered union | decision 26 proves the sole refusal | `delivery.py` |
 | `Dispose(token, disposition)` | action; the outcome is `Disposed \| Unavailable` | one intended external effect | `delivery.py` |
 | `ReadClock`, `MintIdentity(at)` | actions | one intended external effect | `identity.py` |
@@ -443,7 +447,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `NatsSettings` | config, prefix `ONTOK_NATS_`: URL, user, and password as `SecretStr` | deployment input | `config.py` |
 | `StreamSpecification` | value object | exhausted by field equality | `stream.py` |
 | the publish acknowledgement, the batch acknowledgement, the wrong-last-sequence error, the other API errors, the JetStream message metadata, the direct-get status | foreign models | another system's differing representation | `model.py` |
-| `OriginateInterpreter`, `AppendInterpreter`, `EnsureSubscriptionInterpreter`, `DeleteSubscriptionInterpreter`, `DisposeInterpreter` | effect interpreters, one per action meaning; each composes its subject at the client call and catches only its documented errors | one action, one imported capability | `interpreter.py` |
+| `OriginateInterpreter`, `AppendBatchInterpreter`, `EnsureSubscriptionInterpreter`, `DeleteSubscriptionInterpreter`, `DisposeInterpreter` | effect interpreters, one per action meaning; each composes its subject at the client call and catches only its documented errors | one action, one imported capability | `interpreter.py` |
 
 ### `ontok-ex`
 
@@ -452,7 +456,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `ReactionSpecification`, `JoinSpecification`, `ProjectionSpecification` | concept models holding the kind's `Action`; each derives `event_types`, `subscription`, and `scopes` | a durable fact holding a concept | `specification.py` |
 | `Inquiry(specification, arrival)` | transformation; derives `reads` | constructed inputs determine one output | `attempt.py` |
 | `Attempt(inquiry, minted, readings)` | concept model | a durable fact | `attempt.py` |
-| `Deferred`, `Rejected` | concept models; each derives `append` and `disposition` | variants with different facts | `response.py` |
+| `Deferred`, `Rejected` | concept models; each derives `batch` and `disposition` | variants with different facts | `response.py` |
 | `Reaction(Work)` | concept model adding `work_type`, `at`, `emitted` | a refinement that only adds facts | `reaction.py` |
 | `Projection(Reaction)` | concept model | every projection is a reaction | `reaction.py` |
 
@@ -460,7 +464,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 
 Each application declares, because each holds its own types:
 - its event-type `StrEnum`, its events, its event union, and that union's `TypeAdapter`;
-- its delivery route, `DeliveryRoute | UnconstructibleRoute`, nesting the provider's metadata foreign model;
+- its delivery route, `DeliveryRoute`, nesting the provider's metadata foreign model and the bus's `UnknownEvent`;
 - its `ReadLatestInterpreter` and `ReadAddressInterpreter`, over direct-get reply foreign models that hold its event union;
 - its reaction kinds, their variants, and their `Action`, `Role`, and `Goal` refinements;
 - each kind's response union with its `TypeAdapter`;
