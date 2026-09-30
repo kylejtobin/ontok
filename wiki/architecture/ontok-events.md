@@ -54,7 +54,7 @@ C4Container
   System_Boundary(events, "ontok-events") {
     Container(occurrence, "occurrence", "Python", "Address, Provenance, Lineage")
     Container(memory, "memory", "Python", "Retained, History, the reads, Readings")
-    Container(recording, "recording", "Python", "Expectation, Origination, Append, the answers, Settled, durability")
+    Container(recording, "recording", "Python", "Expectation, Append, the answers, Settled, durability")
     Container(responsibility, "responsibility", "Python", "Responsibility and its kinds, Subscription, ensure and delete")
     Container(work, "work", "Python", "Policy, Conjunction, Projection")
     Container(delivery, "delivery", "Python", "Delivery, Unconstructible, Consultation, Occasion, Deferred, Rejected, Acknowledge")
