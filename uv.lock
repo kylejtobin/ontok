@@ -5,6 +5,7 @@ requires-python = ">=3.14"
 [manifest]
 members = [
     "ontok-core",
+    "ontok-eventcatalog",
     "ontok-events",
     "ontok-nats",
     "ontok-workspace",
@@ -305,6 +306,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "pydantic", specifier = ">=2.9,<3" }]
+
+[[package]]
+name = "ontok-eventcatalog"
+version = "0.0.0"
+source = { editable = "packages/python/ontok-eventcatalog" }
+dependencies = [
+    { name = "ontok-events" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ontok-events", editable = "packages/python/ontok-events" },
+    { name = "pydantic", specifier = ">=2.9,<3" },
+]
 
 [[package]]
 name = "ontok-events"
