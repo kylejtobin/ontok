@@ -42,7 +42,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
 ### One ontology
 
-- Every identified kind a program declares is a refinement of a Core primitive: its events refine `Event`, its reactions refine `Work`, and a reaction kind's action, role, and goal are refinements of `Action`, `Role`, and `Goal`.
+- Every identified kind a program declares is a refinement of a Core primitive: its events refine `Event`, its reactions refine `Work` through `Policy` or `Projection`, and a reaction kind's action, role, and goal are refinements of `Action`, `Role`, and `Goal`.
 - A refinement inherits every parent field, configuration, and derivation unchanged and only adds facts. No refinement redeclares an inherited field.
 - Identityless facts and values are python-development constructs, not Core kinds, as Core's own `NodeId`, `Timestamp`, `Instant`, and `Interval` are. The retained event, the delivery, the attempt, a response's deferral and rejection, and every outcome are such facts.
 - In the application, Core primitives are not used raw where a narrower meaning exists. A library fact types an event as Core `Event` because no narrower meaning exists at its layer.
@@ -109,7 +109,8 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 6. **Publication identity.** An originating event's publication identity is its id. An emitted event's publication identity is its causation.
 7. **Node ids.**
    - Minting reads randomness, so it is an effect. The minting interpreter composes UUIDv7s from a millisecond timestamp and 74 random bits drawn from its capability. Python 3.13 has no `uuid7`.
-   - `MintIdentity(at)` returns `Minted(at, id, emitted)`: the reaction's or source's id, and `EmittedIdentities`, exactly 1,000 ids, each the minted id with a position from 0 to 999 in its low 16 bits.
+   - `MintIdentity(at)` returns `Minted(at, id)`: a source's or a projection's id.
+   - `MintEmissionIdentities(at)` returns `EmissionMinted(at, id, emitted)`: a policy's id, and `EmittedIdentities`, exactly 1,000 ids, each the minted id with a position from 0 to 999 in its low 16 bits.
    - An emitted event's id is `emitted` at its position, a selection by a proven key.
    - A retry mints a different id. Its emissions carry new ids but share the same causation, so they share a publication identity with the first attempt.
 8. **Occurrence.** A delivery reads the clock once. Its reaction, and every event it emits, occurs at that instant.
@@ -130,7 +131,6 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 | Expectation | Holds when |
 |---|---|
 | `ExpectAny` | nothing is at the event's own address |
-| `ExpectNoStream` | the stream holds no event |
 | `ExpectSequence(sequence)` | the latest event in the stream has that sequence |
 
 12. **Two append actions.**
@@ -161,12 +161,16 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
     - A retry never appends a second copy, even when other events have landed in the stream since the first attempt.
 16. There is no deduplication window. Idempotence holds for the life of the log.
-17. **Events do not embed their prior.** Succession is enforced by `ExpectSequence`. The state-transition shape with a `prior` field is the in-memory fold a reaction uses to decide what to emit, never a wire shape.
+17. **Events carry state, not their prior.** Succession is enforced by `ExpectSequence`.
+    - Every event in a stream carries the complete state of that stream after it, as a value object.
+    - A policy's prior state is the state on the latest event in its trigger's stream, read through `EveryType`.
+    - The policy constructs its successor state from that prior and its trigger, in the state-transition shape, and the event it emits into that stream carries the successor state.
+    - The state-transition shape with a `prior` field is in memory, never a wire shape.
 
 ### Reads
 
 18. **The latest read.** `ReadLatest(stream, scope)` names a stream and a scope. The scope is `OfType(event_type)`, which reads the latest event of one type in the stream, or `EveryType`, which reads the latest event in the stream. `ReadAddress(address)` names one address.
-    - The outcome is `Retained(event, sequence)`, the event and its log sequence, and derives the event's `address`.
+    - The outcome is `Retained(event, sequence)`, the event and its log sequence.
     - When nothing matches, the outcome is `Absent(stream)`.
     - On provider failure, the outcome is `Unavailable(reason)`.
 19. **Reads see the log as it is now.** The provider has no latest read as of an earlier sequence.
@@ -185,11 +189,11 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 23. **Order:** one event at a time, in log order across all of the reaction kind's consumed types.
 24. **Storage is infrastructure,** declared by the deployment and not created by the program. `ontok-nats` states the required stream specification, and its conformance suite verifies a deployment against it.
 25. **The specification** of a reaction kind is declared once, at the composition root, and is the single home of the kind's `work_type`, its consumed event types, its start point, and its `Action`.
-    - A `ReactionSpecification(work_type, event_types, start, action)` is for a reaction that emits.
+    - A `PolicySpecification(work_type, event_types, start, action)` is for a policy.
     - A `JoinSpecification(work_type, first, second, start, action)` is for a join. It derives `event_types` from its two types.
     - A `ProjectionSpecification(work_type, event_types, start, action)` is for a projection.
     - Each derives `subscription` and `scopes`, the reads every delivery of that kind requires:
-      - `EveryType` for a reaction;
+      - `EveryType` for a policy;
       - `OfType` for `first`, then for `second`, for a join;
       - none for a projection.
     - The action is the kind's single `Action` refinement instance, with its `Role` and `Goal` refinement instances, each with a fixed UUIDv7 id.
@@ -203,7 +207,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
       - `event` through the alias `data`, as `Json[<its event union> | UnknownEvent]`.
     - `UnknownEvent` is an empty foreign model in `ontok-nats`, with `extra="ignore"`, last in that union: decision 3 lets a consumer ignore every field of a kind it does not declare.
     - The bus arrival is the ordered union `Delivery | Unconstructible`, constructed from the route with `from_attributes=True` through `ArrivalConstructor`.
-      - `Delivery(token, event, sequence)` holds the event as Core `Event`, and derives `retained`, `address`, and `streams`.
+      - `Delivery(token, event, sequence)` holds the event as Core `Event`, and derives `address` and `streams`.
       - `Unconstructible(token)` derives no streams.
       - `Delivery.event` refuses only an `UnknownEvent`, which is what `Unconstructible` means.
 27. **Dispositions, exactly three:**
@@ -243,7 +247,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - The authorized disposition is a scalar, so no application type enters the bus, and the append action carries no authority.
 38. **The terminal fact is `Disposed`.** The callback constructs `Dispose(token, disposition)` from the route's token and the final disposition. The dispose interpreter publishes it.
 39. **The terminal expression** nests, by data dependency:
-    - the clock and minting interpreters;
+    - the clock interpreter, and the emission-minting interpreter for a policy or the minting interpreter for a projection;
     - the read interpreter over the inquiry's reads;
     - the attempt and its response;
     - for a kind with effects, the effect interpreter;
@@ -255,10 +259,11 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
 ### Reactions
 
-40. **A reaction kind is a refinement of `Reaction(Work)`.**
-    - `Reaction` adds `work_type`, `at`, and `emitted` to `Work`, and inherits `id` and `action` unchanged.
+40. **A reaction kind is a refinement of `Policy(Reaction)` or `Projection(Reaction)`.**
+    - `Reaction(Work)` adds `work_type` and `at`, and inherits `id` and `action` unchanged.
+    - `Policy(Reaction)` adds `emitted`. A policy derives events from events, and a join is a policy.
     - Its fields are constructed from the attempt through `AliasPath`s:
-      - `id`, `at`, and `emitted` from the minted identity;
+      - `id` and `at` from the minted identity, and a policy's `emitted` from its emission identities;
       - `action` and `work_type` from the inquiry's specification;
       - its trigger, as the delivered event, typed as the event kinds the variant reacts to;
       - the readings it declares, by position.
@@ -267,7 +272,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `expectation` and `events`, for a variant that emits;
     - the application's effect actions, for a kind with effects.
 42. **Emission expectations.**
-    - A reaction reads the latest event of any type in its trigger's stream. Its batch's first event is its emission into that stream and expects that event's sequence.
+    - A policy reads the latest event of any type in its trigger's stream. Its batch's first event is its emission into that stream and expects that event's sequence.
     - A batch whose first event goes to another stream, and every join batch, expects `ExpectAny`.
 43. **Joins.**
     - A join consumes two event types in one stream and reads the latest event of each.
@@ -301,59 +306,67 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - for each reaction kind, its specification, its subscription through the `EnsureSubscription` interpreter, and its callback, registered with the client's push binding on the fixed deliver subject with manual acknowledgement.
 
     The callback's input is the delivery route. Its body is the delivery's terminal expression.
-51. **Rules and contexts** are domain facts a reaction reads through its fields. They are never scheduler state. Evaluating them is not an execution concern of this work.
+
+    Registration does not depend on the ensure outcome: the deliver subject is fixed, so the callback is bound whether or not the consumer exists. The startup expression's result is each kind's `SubscriptionEnsured | Unavailable`. An unavailable ensure leaves that kind without deliveries, and restarting the process is the deployment's liveness.
+51. **A source publishes through one terminal expression** at its composition root, nesting by data dependency:
+    - the clock interpreter and the minting interpreter;
+    - the source's event, and `Origination(event, expectation)`, with `ExpectAny` or with `ExpectSequence` from a `ReadLatest` nested ahead of it;
+    - the originate interpreter and its `AppendAnswer`;
+    - the address-read interpreter over the answer's reads;
+    - `AppendSettlement`, whose outcome is the publication's result.
+52. **Rules and contexts** are domain facts a reaction reads through its fields. They are never scheduler state. Evaluating them is not an execution concern of this work.
 
 ### Idempotence and ownership
 
-52. Idempotence has one home per layer:
+53. Idempotence has one home per layer:
     - the bus owns idempotent appends and the settling of contests;
     - `ontok-ex` owns causation for every emitted event;
     - the domain owns pure construction.
 
 ### Provider contract
 
-53. **The bus defines each operation as an action with a constructed outcome:**
+54. **The bus defines each operation as an action with a constructed outcome:**
     - `Origination` and `AppendBatch`;
     - `ReadLatest` and `ReadAddress`;
     - `EnsureSubscription` and `DeleteSubscription`;
     - `Dispose`;
-    - `ReadClock` and `MintIdentity`.
+    - `ReadClock`, `MintIdentity`, and `MintEmissionIdentities`.
 
     A provider implements the append, subscription, and dispose actions as effect interpreters. The read interpreters construct application events, so the application declares them over the provider's foreign models. The bus implements the clock and minting itself.
-54. Contracts accept and return constructed events, never SDK objects. There is no generic publish or subscribe surface.
-55. **A bus provider offers:**
+55. Contracts accept and return constructed events, never SDK objects. There is no generic publish or subscribe surface.
+56. **A bus provider offers:**
     - conditional append on an exact address and on a whole stream;
     - atomic batch append;
     - the latest read of one type or of every type in a stream, and of one exact address;
     - durable ordered push subscriptions on a fixed deliver address with a deliver group and explicit disposition.
 
     A provider without them is not a bus provider. The bus does not simulate what a provider lacks.
-56. Provider configuration and policy stay in the provider package. Provider framing is serialized at the crossing that owns it: a provider interpreter's client call, and the application's route and read interpreters, which nest the provider's foreign models.
+57. Provider configuration and policy stay in the provider package. Provider framing is serialized at the crossing that owns it: a provider interpreter's client call, and the application's route and read interpreters, which nest the provider's foreign models.
 
 ### NATS realization
 
-57. **Subjects.**
+58. **Subjects.**
     - An originating event's subject is `event.<stream>.<event_type>.<id>`.
     - An emitted event's subject is `event.<stream>.<event_type>.<work_type>.<trigger>.<position>`.
-58. **Stream specification:**
+59. **Stream specification:**
     - the stream `EVENTS` per account, holding `event.>`;
     - file storage;
     - limits retention with no limits;
     - `deny_delete` and `deny_purge`;
     - `allow_direct`;
     - `allow_atomic`.
-59. **Conditional publish headers:**
+60. **Conditional publish headers:**
     - `ExpectAny` sends `Nats-Expected-Last-Subject-Sequence: 0` on the event's exact subject;
-    - `ExpectNoStream` and `ExpectSequence` add `Nats-Expected-Last-Subject-Sequence-Subject: event.<stream>.>`, with `0` or the sequence.
-60. **Atomic batches.** Each event is published with `Nats-Batch-Id`, `Nats-Batch-Sequence` from 1, and, on the last, `Nats-Batch-Commit: 1`. The commit is a request, and its reply is the acknowledgement for the whole batch. `nats-py` has no batch call, so the interpreter sets these headers itself.
-61. **Answers.** A publish acknowledgement is `Written`. API error `10071`, wrong last sequence, is `Contested`. Every other documented failure is `Unavailable`.
-62. **Reads** are requests to `$JS.API.DIRECT.GET.EVENTS` in the body form, `{"last_by_subj": "<subject>"}`:
+    - `ExpectSequence` adds `Nats-Expected-Last-Subject-Sequence-Subject: event.<stream>.>`, with the sequence.
+61. **Atomic batches.** Each event is published with `Nats-Batch-Id`, `Nats-Batch-Sequence` from 1, and, on the last, `Nats-Batch-Commit: 1`. The commit is a request, and its reply is the acknowledgement for the whole batch. `nats-py` has no batch call, so the interpreter sets these headers itself.
+62. **Answers.** A publish acknowledgement is `Written`. API error `10071`, wrong last sequence, is `Contested`. Every other documented failure is `Unavailable`.
+63. **Reads** are requests to `$JS.API.DIRECT.GET.EVENTS` in the body form, `{"last_by_subj": "<subject>"}`:
     - `OfType` reads `event.<stream>.<event_type>.>`;
     - `EveryType` reads `event.<stream>.>`;
     - `ReadAddress` reads the address's exact subject.
 
     A 404 status is `Absent`.
-63. **Consumer settings:**
+64. **Consumer settings:**
     - a durable push consumer named with the reaction kind's `work_type`;
     - `filter_subjects` of `event.*.<event_type>.>` for each consumed event type;
     - the deliver subject `_INBOX.ontok.<work_type>`;
@@ -366,11 +379,11 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - no flow control.
 
     `EnsureSubscription` creates it through the JetStream consumer API. The composition root binds the callback with the client's `subscribe_bind` and manual acknowledgement, which subscribes with the deliver group as its queue.
-64. **Dispositions** are publishes to the delivery token:
+65. **Dispositions** are publishes to the delivery token:
     - Complete publishes `+ACK`;
     - Retry publishes `-NAK`;
     - Reject publishes `+TERM`.
-65. **A program identity has exactly these permissions,** and no stream administration:
+66. **A program identity has exactly these permissions,** and no stream administration:
     - publish on `event.>`;
     - publish on `$JS.API.INFO`;
     - publish on `$JS.API.STREAM.INFO.EVENTS`;
@@ -414,13 +427,13 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `StartPoint`, `Disposition` | `StrEnum` scalars | a uniform closed vocabulary | `type.py` |
 | `Causation(work_type, trigger, position)` | value object; `trigger` is the trigger's `NodeId` | value object references an identified concept by its identity scalar | `value.py` |
 | `OriginAddress`, `EmissionAddress`, and `Address` with `AddressConstructor` | value objects and an ordered union | decision 9 proves the sole refusal | `value.py` |
-| `ExpectAny`, `ExpectNoStream`, `ExpectSequence`, and `Expectation` | value objects and a union built in code | alternatives with different facts | `value.py` |
+| `ExpectAny`, `ExpectSequence`, and `Expectation` | value objects and a union built in code | alternatives with different facts | `value.py` |
 | `OfType`, `EveryType`, and the read scope | value objects and a union built in code | alternatives with different facts | `value.py` |
 | `Absent(stream)`, `Unavailable(reason)`, `Disposed` | value objects | exhausted by field equality | `value.py` |
 | `Unconstructible(token)` | value object; derives no streams | exhausted by field equality | `value.py` |
-| `Minted(at, id, emitted)` | value object | exhausted by field equality | `value.py` |
+| `Minted(at, id)`, `EmissionMinted(at, id, emitted)` | value objects | exhausted by field equality | `value.py` |
 | `EmittedIdentities` | collection of exactly 1,000 `NodeId`s | position selects an id | `value.py` |
-| `Retained(event, sequence)` | concept model; `event` is Core `Event`; derives `address` | a durable fact | `log.py` |
+| `Retained(event, sequence)` | concept model; `event` is Core `Event` | a durable fact | `log.py` |
 | `Origination(event, expectation)` | action; derives `address` | one intended external effect | `publication.py` |
 | `AppendBatch(expectation, events)` | action; `events` from 0 to 1,000; derives `lead` and `reads` | one intended external effect | `publication.py` |
 | `LeadEvent`, `NoEvents` | ordered union built from the batch; each derives `reads` | decision 13 proves the sole refusal | `publication.py` |
@@ -434,13 +447,13 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `Subscription(work_type, event_types, start)` | value object | exhausted by field equality | `subscription.py` |
 | `EnsureSubscription`, `DeleteSubscription` | actions | one intended external effect | `subscription.py` |
 | `SubscriptionEnsured`, `SubscriptionDeleted` | concept models coupling their subscription; each outcome is a union with `Unavailable` | outcomes a later construction reads | `subscription.py` |
-| `Delivery(token, event, sequence)` | concept model; `event` is Core `Event`; derives `retained`, `address`, `streams` | a durable fact | `delivery.py` |
+| `Delivery(token, event, sequence)` | concept model; `event` is Core `Event`; derives `address` and `streams` | a durable fact | `delivery.py` |
 | `Conclusion(authorized, settlement)` with `Durable \| NotDurable` | concept model and ordered union; derives `disposition` | decision 37 proves the sole refusal | `delivery.py` |
 | the arrival `Delivery \| Unconstructible` with `ArrivalConstructor` | ordered union | decision 26 proves the sole refusal | `delivery.py` |
 | `Dispose(token, disposition)` | action; the outcome is `Disposed \| Unavailable` | one intended external effect | `delivery.py` |
-| `ReadClock`, `MintIdentity(at)` | actions | one intended external effect | `identity.py` |
+| `ReadClock`, `MintIdentity(at)`, `MintEmissionIdentities(at)` | actions | one intended external effect | `identity.py` |
 | `ClockInterpreter` | effect interpreter; its capability is the standard library's `datetime` class | one action, one imported capability | `interpreter.py` |
-| `MintInterpreter` | effect interpreter; its capability is `random.SystemRandom`; composes the UUIDv7s as outcome construction | one action, one imported capability | `interpreter.py` |
+| `MintInterpreter`, `MintEmissionIdentitiesInterpreter` | effect interpreters; each one's capability is `random.SystemRandom`; each composes its UUIDv7s as outcome construction | one interpreter per action meaning, one imported capability | `interpreter.py` |
 
 ### `ontok-nats`
 
@@ -456,12 +469,13 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 
 | Declaration | Construct | Rule | File |
 |---|---|---|---|
-| `ReactionSpecification`, `JoinSpecification`, `ProjectionSpecification` | concept models holding the kind's `Action`; each derives `event_types`, `subscription`, and `scopes` | a durable fact holding a concept | `specification.py` |
+| `PolicySpecification`, `JoinSpecification`, `ProjectionSpecification` | concept models holding the kind's `Action`; each derives `event_types`, `subscription`, and `scopes` | a durable fact holding a concept | `specification.py` |
 | `Inquiry(specification, arrival)` | transformation; derives `reads` | constructed inputs determine one output | `attempt.py` |
 | `Attempt(inquiry, minted, readings)` | concept model | a durable fact | `attempt.py` |
 | `Deferred`, `Rejected` | concept models; each derives `batch` and `disposition` | variants with different facts | `response.py` |
-| `Reaction(Work)` | concept model adding `work_type`, `at`, `emitted` | a refinement that only adds facts | `reaction.py` |
-| `Projection(Reaction)` | concept model | every projection is a reaction | `reaction.py` |
+| `Reaction(Work)` | concept model adding `work_type` and `at` | a refinement that only adds facts | `reaction.py` |
+| `Policy(Reaction)` | concept model adding `emitted` | every policy is a reaction; only policies emit | `reaction.py` |
+| `Projection(Reaction)` | concept model | every projection is a reaction; it emits nothing | `reaction.py` |
 
 ### The application
 
@@ -481,7 +495,7 @@ Each application declares, because each holds its own types:
 1. **`ontok-core`.** The mandatory configuration on every primitive and finished value, the type parameters removed from `Connection` and `Relation`, and `spec/ontok-core.xml` updated with them.
 2. **`ontok-bus`,** with every declaration in its construct table.
 3. **`ontok-nats`.**
-   - The realization in decisions 57 to 65.
+   - The realization in decisions 58 to 66.
    - The stream specification as a value.
    - The bundled server, license, and manifest moved in, unused.
    - A test fixture that starts `nats:2.14.6-alpine@sha256:ad7a43eb7e3337c3c38ce5d784d1461791f95f730f252d2b25eee699752a0ca3` through testcontainers, with accounts, a scoped program identity, and the `EVENTS` stream.
@@ -489,7 +503,7 @@ Each application declares, because each holds its own types:
    - The conformance suite against that server, covering:
      - routing by event type;
      - idempotent appends under each expectation, including a retry after another event has landed in the stream;
-     - conflicts under `ExpectNoStream` and `ExpectSequence`;
+     - a conflict under `ExpectSequence`;
      - an atomic batch landing whole or not at all;
      - a contested batch settling as already present;
      - the latest read of one type, of every type, and of an exact address, and `Absent`;
