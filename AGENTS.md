@@ -86,7 +86,7 @@ ontok-vsm   → ontok.vsm
 ontok-scim  → ontok.scim
 ```
 
-Use strict Pydantic models. Preserve immutability and `extra="forbid"` unless the semantics explicitly require otherwise. Prefer construction-time invalidity over conventions documented only in prose.
+Every model carries the mandatory configuration of the python-development standard, inherited unchanged by every refinement. Prefer construction-time invalidity over conventions documented only in prose.
 
 Tests should prove semantic invariants, not merely exercise lines of code.
 

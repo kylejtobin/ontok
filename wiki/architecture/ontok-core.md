@@ -29,7 +29,7 @@ Core is the ONTOK language: thirteen primitives that say what kinds of things an
 
 - Core has exactly thirteen primitives: `Node`, `Connection`, `Entity`, `Relation`, `State`, `Event`, `Role`, `Goal`, `Action`, `Work`, `Concept`, `Context`, `Rule`. Everything else in Core makes their construction complete: `NodeId`, `RelationId`, `Timestamp`, `PositiveDuration`, `Instant`, `Interval`, `TemporalExtent`, `States`.
 - The class is the kind and the value is the fact. A domain meaning is a refinement. No instance-level `type`, `kind`, `TypeId`, URI, or registry field exists.
-- Every Core declaration is a frozen Pydantic model with `extra="forbid"`: the primitives and the temporal values as `BaseModel`, the identifiers and `States` as `RootModel`.
+- Every Core declaration carries the python-development standard's mandatory configuration: `frozen=True`, `strict=True`, `validate_default=True`, `revalidate_instances="never"`, and `extra="forbid"` on every `BaseModel`. The primitives and the temporal values are `BaseModel`s; the identifiers and `States` are `RootModel`s.
 - The module is the specification. No separate specification artifact exists; a portable rendering is projected from the module when another realization needs one.
 - Core imports no ONTOK package. The workspace's import-linter layers contract places every module above `ontok.core`.
 - Python 3.13 or later; `pydantic>=2.9,<3`.
@@ -112,7 +112,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **A Connection embeds its endpoints and is parameterized by their kinds.** `Connection[SourceT, TargetT]` holds a proven source and a proven target, because a link constructs only from nodes that already exist, and the type parameters let a refinement name the kinds it links. `Relation` is a `Connection` with its own `RelationId`. This rules out a link that names an endpoint no fact proves.
 
-**Facts are frozen and closed.** Every model is `frozen=True` with `extra="forbid"`, because a fact never changes and a value carrying an undeclared field is a fact of a different kind. This rules out mutation, partial copies, and tolerated extra input.
+**A fact exists only because it was proven.** Every model is frozen, closed, and strict, because a refinement inherits configuration unchanged and the base is the only place that can guarantee, for every kind anyone will ever declare, that a fact cannot be coerced or mutated into existence. A kind whose input is text or a foreign shape constructs through a config or a foreign model at its boundary. This rules out lax coercion, mutation, partial copies, and tolerated extra input.
 
 **Time is a temporal extent.** An occurrence occupies an `Instant` or an `Interval`; a `Timestamp` carries its timezone and a `PositiveDuration` is strictly positive, because an occurrence takes a point or a positive span on the timeline and never zero. This rules out naive datetimes and zero-length intervals.
 
@@ -141,6 +141,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A constructed fact is assigned to | Refused |
 | A `NodeId` is not a canonical lowercase UUIDv7 | Refused |
 | A `Timestamp` has no timezone | Refused |
+| A `NodeId` field is given an `int` | Refused |
 | An `Interval` has a zero duration | Refused |
 | A `Context` has no `State` | Refused |
 | A module imports a module above it | The import-linter layers contract fails |
