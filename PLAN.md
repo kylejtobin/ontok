@@ -9,10 +9,11 @@
 |---|---|---|---|
 | `ontok-core` | `ontok.core` | the twelve primitives, which adopt the mandatory configuration and drop their type parameters in this work | — |
 | `ontok-bus` | `ontok.bus` | provider-independent event, log, and delivery meaning; the provider contract; the clock and identity minting | `ontok-core` |
-| `ontok-nats` | `ontok.nats` | the NATS JetStream realization of every bus action that holds no application type | `ontok-bus`, `nats-py` |
+| `ontok-nats` | `ontok.nats` | the NATS JetStream realization of every bus action that holds no application type | `ontok-bus`, `nats-py`, `pydantic-settings` |
 | `ontok-ex` | `ontok.ex` | executing `Work` over the bus | `ontok-core`, `ontok-bus` |
 
 - `ontok-bus` is a rendered skeleton. `ontok-nats` does not exist yet.
+- The workspace requires Python 3.14, because the minting capability is the standard library's `uuid.uuid7`.
 - `ontok-ex` holds a data-directory config, its test, and a bundled NATS server from earlier planning. The config and its test are removed. The server, its license, and its manifest move to `ontok-nats` and are not used by this build.
 - The design is settled. No discovery phase precedes the build. Every declaration below is routed through the python-development skill's construct selection, with the rule that proves it. Every provider behavior it depends on is confirmed against the NATS Server v2.14.6 source, the NATS documentation, or the `nats-py` source, as recorded below.
 
@@ -75,7 +76,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 - Consumption is a push subscription whose callback is registered once at the composition root. There is no receive loop.
 - An arrival is an ordered union of a delivery and `Unconstructible`. No construction failure is caught.
 - Transport facts, such as a delivery's token, never enter a reaction. The callback reads the token from its route.
-- Every action carries only the semantic input its effect needs.
+- Every action carries every semantic input its effect needs. A completed immutable value may also be an effect input, so that the outcome coupling the action carries it forward.
 - An outcome couples its action when a later construction reads that action. An outcome that authorizes a further effect derives that effect's action.
 - An action that follows an outcome union is derived through a failure-exhaustive ordered union: the strong variant requires the authorizing outcome, and the fallback authorizes nothing.
 - Each delivery reads what it needs from the log through interpreters nested in its terminal expression. The log is the state. There is no mutable consistency model and no current-state holder.
@@ -101,16 +102,16 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
    - The hyphen follows NATS naming guidance, so the name is valid as both a subject token and a consumer name, and it never occurs in a Python identifier.
    - An event type is interchange identity: renaming the class does not change it.
 3. **Versioning.** An event type's shape never changes. A new shape is a new event type. Readers keep constructing every event type that exists in the log.
-   - The log holds the events of every program in the account. A consumer constructs only the kinds it declares, and every field of an undeclared kind may be ignored.
+   - The log holds the events of every program in the account. A consumer constructs only the kinds it declares; a delivered body that is not one of them is `Unconstructible`.
 4. **Stream.** Every publishable kind derives `stream`, a `StreamKey` naming what the event is about. A stream key is a canonical lowercase UUIDv7 or a lowercase hex digest. An event that is its own stream uses its own id.
 5. **Two acts of publication.**
    - An **originating** event is created by a source. It carries no causation.
    - An **emitted** event is derived by a reaction. It carries `causation: Causation`, which holds the reaction kind's `work_type`, the `trigger` (the id of the event that caused it), and its `position` among the reaction's emissions.
 6. **Publication identity.** An originating event's publication identity is its id. An emitted event's publication identity is its causation.
 7. **Node ids.**
-   - Minting reads randomness, so it is an effect. The minting interpreter composes UUIDv7s from a millisecond timestamp and 74 random bits drawn from its capability. Python 3.13 has no `uuid7`.
-   - `MintIdentity(at)` returns `Minted(at, id)`: a source's or a projection's id.
-   - `MintEmissionIdentities(at)` returns `EmissionMinted(at, id, emitted)`: a policy's id, and `EmittedIdentities`, exactly 1,000 independently minted UUIDv7s, one for each position from 0 to 999.
+   - Minting reads randomness, so it is an effect. The minting interpreters' capability is the standard library's `uuid.uuid7`, which composes a UUIDv7 from the current millisecond and random bits. Its reply lifts through `Uuid`, the source-owned scalar over the standard library's `UUID`, and is serialized at the interpreter into `NodeId`.
+   - `MintIdentity` carries nothing and returns `Minted(id)`: a source's or a projection's id.
+   - `MintEmissionIdentities` carries nothing and returns `EmissionMinted(id, emitted)`: a policy's id, and `EmittedIdentities`, exactly 1,000 independently minted UUIDv7s, one for each position from 0 to 999.
    - An emitted event's id is `emitted` at its position, a selection by a proven key.
    - A retry mints a different id. Its emissions carry new ids but share the same causation, so they share a publication identity with the first attempt.
 8. **Occurrence.** A delivery reads the clock once. Its reaction, and every event it emits, occurs at that instant.
@@ -135,29 +136,31 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
 12. **Two append actions.**
     - `Origination(event, expectation)` appends one originating event and derives its `address`.
-    - `AppendBatch(expectation, events)` appends a reaction's emitted events atomically: every event lands or none does.
+    - `AppendBatch(expectation, events, authorized)` appends a reaction's emitted events atomically: every event lands or none does.
       - The expectation applies to the first event. Every later event expects `ExpectAny`.
       - `events` holds from 0 to 1,000 events, the provider's atomic batch limit.
+      - `authorized` is the disposition the authorizing response derived. The effect does not send it; it is a completed value carried so that the settlement's disposition follows from the written batch.
 13. **The settling read.** Each append action derives `reads`, the address reads that settle a contest over it.
     - `Origination` derives one `ReadAddress` of its event's address.
-    - `AppendBatch` derives `lead` through the ordered union `LeadEvent | NoEvents`, constructed from the batch with `from_attributes=True`. `LeadEvent` reads the first event through `AliasPath("events", 0)` and derives one `ReadAddress` of its address. The events are constructed instances, so its only refusal is an empty tuple, which is what `NoEvents`, deriving no reads, means. `AppendBatch.reads` is its lead's reads.
+    - `AppendBatch` derives `lead` through the ordered union `Lead | NoLead`, constructed from the batch with `from_attributes=True`. `Lead` reads the first event through `AliasPath("events", 0)` and derives one `ReadAddress` of its address. The events are constructed instances, so its only refusal is an empty tuple, which is what `NoLead`, deriving no reads, means. `AppendBatch.reads` is its lead's reads.
     - Because a batch is atomic, one address answers for the whole batch.
 14. **The provider's answer** couples its append action and is one of three:
-    - `Written(append, sequences)`: every event landed;
+    - `Written(append)`: every event landed;
     - `Contested(append)`: an expectation failed;
     - `Unavailable(reason)`: the provider did not complete the append.
 
-    An empty batch makes no provider call and is `Written` with no sequences: an atomic commit needs a message.
+    An empty batch makes no provider call and is `Written`: an atomic commit needs a message.
 15. **Settling a contest.** `AppendAnswer(answer)` derives its authorized address reads through the ordered union `ContestedAppend | UncontestedAppend`.
     - `ContestedAppend` requires a `Contested` answer and authorizes its append's `reads`. The answer is a constructed instance, so its only refusal is an answer that is not `Contested`, which is what `UncontestedAppend`, authorizing nothing, means.
-    - `AppendSettlement(answer, readings)` derives `outcome` through this ordered union:
+    - The address-read interpreter's action is the `AppendAnswer`. It executes the answer's `reads` and returns `AppendSettlement(answer, readings)`, coupling its action.
+    - `AppendSettlement` derives `outcome` through this ordered union, constructed from the settlement with `from_attributes=True`; each strong variant holds its proof through an `AliasPath`:
 
-| Outcome | Constructs when | Meaning |
-|---|---|---|
-| `Written` | the answer was `Written` | the events were appended |
-| `AlreadyPresent(append, existing)` | the answer was `Contested` and the address read is `Retained` | this publication is already on the log; this is success |
-| `Conflict(append)` | the answer was `Contested` and the address read is `Absent` | another event holds the position the expectation required |
-| `AppendUnavailable` | anything else | the answer or the address read was unavailable |
+| Outcome | Holds | Constructs when | Meaning |
+|---|---|---|---|
+| `Appended(written)` | the `Written` answer | the answer was `Written` | the events were appended |
+| `AlreadyPresent(contested, existing)` | the `Contested` answer and the `Retained` address read | the answer was `Contested` and the address holds an event | this publication is already on the log; this is success |
+| `Conflict(contested, absent)` | the `Contested` answer and the `Absent` address read | the answer was `Contested` and the address is empty | another event holds the position the expectation required |
+| `AppendUnavailable` | nothing | anything else | the answer or the address read was unavailable |
 
     - A retry never appends a second copy, even when other events have landed in the stream since the first attempt.
 16. There is no deduplication window. Idempotence holds for the life of the log.
@@ -179,7 +182,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 ### Subscriptions
 
 21. **A subscription is a reaction kind's standing interest** in every event type it consumes, together with its progress.
-    - It is the value `Subscription(work_type, event_types)`.
+    - It is the value `Subscription(work_type, event_types)`, with at least one event type.
     - Each reaction kind has exactly one.
     - It exists independently of any process.
     - Its name and its deliver group are the reaction kind's `work_type`, so each delivery reaches exactly one running instance.
@@ -192,6 +195,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - A `PolicySpecification(work_type, event_types, action)` is for a policy.
     - A `JoinSpecification(work_type, first, second, action)` is for a join. It derives `event_types` from its two types.
     - A `ProjectionSpecification(work_type, event_types, action)` is for a projection.
+    - `event_types` holds at least one type.
     - Each derives `subscription`.
     - The action is the kind's single `Action` refinement instance, with its `Role` and `Goal` refinement instances, each with a fixed UUIDv7 id.
 
@@ -201,22 +205,22 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - The application's delivery route is one model, `DeliveryRoute`, constructed from the provider's message with `from_attributes=True`:
       - `token` through the alias `reply`;
       - `sequence` through an `AliasPath` into the message metadata;
-      - `event` through the alias `data`, as `Json[<its event union> | UnknownEvent]`.
-    - `UnknownEvent` is an empty foreign model in `ontok-nats`, with `extra="ignore"`, last in that union: decision 3 lets a consumer ignore every field of a kind it does not declare.
+      - `event` through the alias `data`, as the ordered union `Json[<its event union>] | MessageBody`.
+    - `MessageBody` is the source-owned scalar over the message's bytes, declared in `ontok-nats`. Every refusal of the program's event union, whether an undeclared type, a malformed event, or a body that is not JSON, means the body is not one of this program's events, which is what `MessageBody` means. The arrival refuses it, and nothing retains it.
     - The bus arrival is the ordered union `Delivery | Unconstructible`, constructed from the route with `from_attributes=True` through `ArrivalConstructor`.
       - `Delivery(token, event, sequence)` holds the event as Core `Event`, and derives `address` and `streams`.
       - `Unconstructible(token)` derives no streams.
-      - `Delivery.event` refuses only an `UnknownEvent`, which is what `Unconstructible` means.
+      - `Delivery.event` refuses only a `MessageBody`, which is what `Unconstructible` means.
 27. **Dispositions, exactly three:**
 
 | Disposition | Meaning | Derived by |
 |---|---|---|
-| Complete | every consequence of the event is durable | a response authorizing Complete whose append was `Written` or `AlreadyPresent` |
-| Retry | deliver again | a response authorizing Retry, or an append that was a `Conflict` or `AppendUnavailable` |
-| Reject | the delivery is terminal | a response authorizing Reject whose append was `Written` |
+| Complete | every consequence of the event is durable | a batch authorizing Complete that was `Appended` or `AlreadyPresent` |
+| Retry | deliver again | a batch authorizing Retry, or a `Conflict` or `AppendUnavailable` |
+| Reject | the delivery is terminal | a batch authorizing Reject that was `Appended` |
 
 28. **The provider keeps its own record of rejections** for operators. The bus reads no rejection record.
-29. **Failures.** Every transport interpreter translates its documented nonfatal failures into `Unavailable`, so every transport outcome is a union that includes it. The clock and minting have no documented failures, so their outcomes are plain. The application's effect outcomes are each a union of its own success variants and `Unavailable`. Anything else is a defect.
+29. **Failures.** Every transport interpreter translates its documented nonfatal failures into an unavailable variant: `Unavailable(reason)`, or one coupling its action where a later construction reads that action. Every transport outcome is a union that includes one. The clock and minting have no documented failures, so their outcomes are plain. The application's effect outcomes are each a union of its own success variants and `Unavailable`. Anything else is a defect.
 30. **The acknowledgement wait bounds the whole delivery.** A delivery that runs longer is redelivered while it runs, and idempotence absorbs the repetition.
 
 ### The delivery's facts
@@ -227,7 +231,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `ProjectionInquiry(specification, arrival)` derives no reads.
 
     An `Unconstructible` arrival has no streams, so it authorizes no reads. Each inquiry's reads are one action meaning, so each is executed by one read interpreter.
-32. **`Attempt(inquiry, minted, readings)`** is one delivery attempt: the inquiry, the delivery's minted instant and ids, and the readings of its inquiry.
+32. **`Attempt(inquiry, at, minted, readings)`** is one delivery attempt: the inquiry, the delivery's instant and minted ids, and the readings of its inquiry. It derives `id` from its minted identity, and `action` and `work_type` from its inquiry's specification, so that a reaction constructs its inherited fields from the attempt by name.
 33. **The response** is constructed from the attempt through the `TypeAdapter` the application declares beside the reaction kind's response union. That union is a plain union:
     - the reaction kind's own variants, each requiring a `Delivery` arrival, its trigger's event types, and `AllRead` readings;
     - `Deferred`, requiring `SomeUnavailable` readings;
@@ -235,18 +239,18 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
     Exactly one variant constructs. A reaction that refuses for any other reason constructs nothing, and the process crashes as a defect.
 34. **Every response variant derives** its `batch` and its `disposition`:
-    - a reaction variant that emits derives its `batch` from its `expectation` and `events`;
-    - a reaction variant that emits nothing, a projection, `Deferred`, and `Rejected` derive a `batch` with no events;
+    - a reaction variant that emits derives its `batch` from its `expectation`, its `events`, and its `disposition` as `authorized`;
+    - a reaction variant that emits nothing, a projection, `Deferred`, and `Rejected` derive a `batch` with no events and their `disposition` as `authorized`;
     - a reaction variant and a projection derive Complete, `Deferred` derives Retry, and `Rejected` derives Reject.
 35. **Performing effects.** For a kind with effects, the application declares `PerformEffects(response)`, which carries the response as its idempotency key and requests the effects it derives.
     - The application's effect interpreter executes them through its one capability and returns `Performed(action, outcomes)`.
     - `Performed` derives its `completeness` through the ordered union `EffectsHeld | EffectsUnavailable`. `EffectsHeld` requires every outcome to be a success variant. The outcomes are constructed instances, so its only refusal is an `Unavailable` outcome, which is what `EffectsUnavailable` means.
-    - `EffectsHeld` derives the response's `batch` and disposition. `EffectsUnavailable` derives a `batch` with no events and Retry.
+    - `EffectsHeld` derives the response's `batch` and disposition. `EffectsUnavailable` derives a `batch` with no events, authorizing Retry, and Retry.
 36. **Effects precede emissions.** An emission announces a consequence, so the effect outcome authorizes it.
-37. **The final disposition.** `Conclusion(authorized, settlement)` holds the disposition the response authorized and the append's settlement, and derives `disposition` through the ordered union `Durable | NotDurable`.
-    - `Durable` requires a `Written` or `AlreadyPresent` outcome and reads `authorized`.
-    - `NotDurable` derives Retry. The settlement is a constructed instance, so `Durable` refuses only a `Conflict` or `AppendUnavailable` outcome, both of which mean Retry.
-    - The authorized disposition is a scalar, so no application type enters the bus, and the append action carries no authority.
+37. **The final disposition.** `Conclusion(settlement)` holds the batch's settlement and derives `disposition` through the ordered union `DurableAppended | DurablePresent | NotDurable`, constructed from the conclusion with `from_attributes=True`.
+    - `DurableAppended` holds the batch through `AliasPath("settlement", "outcome", "written", "append")`, and `DurablePresent` through `AliasPath("settlement", "outcome", "contested", "append")`. Each derives its batch's `authorized`.
+    - `NotDurable` derives Retry. The settlement is a constructed instance, so the strong variants refuse only a `Conflict` or `AppendUnavailable` outcome, both of which mean Retry.
+    - The batch is typed `AppendBatch`, and only a delivery constructs a conclusion.
 38. **The terminal fact is `Disposed`.** The callback constructs `Dispose(token, disposition)` from the route's token and the final disposition. The dispose interpreter publishes it.
 39. **The terminal expression** nests, by data dependency:
     - the clock interpreter, and the emission-minting interpreter for a policy or the minting interpreter for a projection;
@@ -257,16 +261,16 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - the conclusion;
     - the dispose interpreter.
 
-    Each kind's callback nests only the interpreters its declarations need. A crash at any point is followed by redelivery, and the causation addresses and the settling of contests make it converge.
+    Each kind's callback nests only the interpreters its declarations need. Pure facts, such as the arrival and the inquiry, are constructed from the route at each use. Every effect outcome couples its action, so each interpreter executes once and later facts read its action through the outcome. A crash at any point is followed by redelivery, and the causation addresses and the settling of contests make it converge.
 
 ### Reactions
 
 40. **A reaction kind is a refinement of `Policy(Reaction)` or `Projection(Reaction)`.**
     - `Reaction(Work)` adds `work_type` and `at`, and inherits `id` and `action` unchanged.
     - `Policy(Reaction)` adds `emitted`. A policy derives events from events, and a join is a policy.
-    - Its fields are constructed from the attempt through `AliasPath`s:
-      - `id` and `at` from the minted identity, and a policy's `emitted` from its emission identities;
-      - `action` and `work_type` from the inquiry's specification;
+    - Its inherited fields, `id` and `action`, and its added fields, `work_type` and `at`, construct by name from the attempt's same-named fields and derivations. An inherited field carries no alias.
+    - Its own fields construct through `AliasPath`s:
+      - a policy's `emitted`, from the minted identities;
       - its trigger, as the delivered event, typed as the event kinds the variant reacts to;
       - the readings it declares, by position.
 41. **Derivations,** each a transformation on the reaction:
@@ -331,7 +335,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
 54. **The bus defines each operation as an action with a constructed outcome:**
     - `Origination` and `AppendBatch`;
-    - `ReadLatest` and `ReadAddress`;
+    - `ReadLatest`, `ReadAddress`, and `ReadStream`;
     - `EnsureSubscription` and `DeleteSubscription`;
     - `Dispose`;
     - `ReadClock`, `MintIdentity`, and `MintEmissionIdentities`.
@@ -341,7 +345,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 56. **A bus provider offers:**
     - conditional append on an exact address and on a whole stream;
     - atomic batch append;
-    - the latest read of one type or of every type in a stream, and of one exact address;
+    - the latest read of one type or of every type in a stream, of one exact address, and the whole history of a stream in log order;
     - durable ordered push subscriptions on a fixed deliver address with a deliver group and explicit disposition.
 
     A provider without them is not a bus provider. The bus does not simulate what a provider lacks.
@@ -368,7 +372,8 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `OfType` reads `event.<stream>.<event_type>.>`;
     - `EveryType` reads `event.<stream>.>`;
     - `ReadAddress` reads the address's exact subject.
-    - `ReadStream` pages through a batched direct get, `{"seq": <next>, "next_by_subj": "event.<stream>.>", "batch": <n>}`, from sequence 1. The first page requests one message. Each later page requests the `Nats-Num-Pending` of the previous reply and starts after its last sequence, and the history ends at a `204 EOB` with no pending messages.
+    - `ReadStream` pages through a batched direct get, `{"seq": <next>, "next_by_subj": "event.<stream>.>", "batch": <n>}`, from sequence 1. A batched get answers with one reply per message and then `204 EOB` on the request's reply subject, and the client's `request` returns one reply, so the interpreter subscribes an inbox, publishes each page's request with that inbox as its reply, and constructs from the replies it receives until the `EOB`. The first page requests one message. Each later page requests the `Nats-Num-Pending` of the previous `EOB` and starts after its `Nats-Last-Sequence`, and the history ends at an `EOB` with no pending messages.
+    - A reply's header text constructs `LogSequence` through `model_validate_json`.
 
     A 404 status is `Absent`.
 64. **Consumer settings:**
@@ -437,40 +442,41 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `OfType`, `EveryType`, and the read scope | value objects and a union built in code | alternatives with different facts | `value.py` |
 | `Absent(stream)`, `Unavailable(reason)`, `Disposed` | value objects | exhausted by field equality | `value.py` |
 | `Unconstructible(token)` | value object; derives no streams | exhausted by field equality | `value.py` |
-| `Minted(at, id)`, `EmissionMinted(at, id, emitted)` | value objects | exhausted by field equality | `value.py` |
+| `Minted(id)`, `EmissionMinted(id, emitted)` | value objects | exhausted by field equality | `value.py` |
 | `EmittedIdentities` | collection of exactly 1,000 `NodeId`s | position selects an id | `value.py` |
 | `Retained(event, sequence)` | concept model; `event` is Core `Event` | a durable fact | `log.py` |
-| `Origination(event, expectation)` | action; derives `address` | one intended external effect | `publication.py` |
-| `AppendBatch(expectation, events)` | action; `events` from 0 to 1,000; derives `lead` and `reads` | one intended external effect | `publication.py` |
-| `LeadEvent`, `NoEvents` | ordered union built from the batch; each derives `reads` | decision 13 proves the sole refusal | `publication.py` |
-| `Written(append, sequences)`, `Contested(append)` | concept models; the answer is `Written \| Contested \| Unavailable`; `Contested` derives its append's `reads` | outcomes coupling the action a later construction reads | `publication.py` |
+| `Origination(event, expectation)` | action; derives `address` and `reads` | one intended external effect | `publication.py` |
+| `AppendBatch(expectation, events, authorized)` | action; `events` from 0 to 1,000; derives `lead` and `reads` | one intended external effect; a completed value may be an effect input | `publication.py` |
+| `Lead`, `NoLead` | ordered union built from the batch; each derives `reads` | decision 13 proves the sole refusal | `publication.py` |
+| `Written(append)`, `Contested(append)` | concept models; the answer is `Written \| Contested \| Unavailable`; `Contested` derives its append's `reads` | outcomes coupling the action a later construction reads | `publication.py` |
 | `AppendAnswer(answer)`, `ContestedAppend`, `UncontestedAppend` | concept model and ordered union; derives `reads` | decision 15 proves the sole refusal | `publication.py` |
-| `AppendSettlement(answer, readings)` | concept model; derives `outcome` | a durable fact | `publication.py` |
-| `AlreadyPresent(append, existing)`, `Conflict(append)`, `AppendUnavailable` | concept models; the outcome is the ordered union in decision 15 | each attempt's refusals mean the next | `publication.py` |
+| `AppendSettlement(answer, readings)` | concept model returned by the address-read interpreter; derives `outcome` | an outcome coupling its action | `publication.py` |
+| `Appended(written)`, `AlreadyPresent(contested, existing)`, `Conflict(contested, absent)`, `AppendUnavailable` | concept models holding their proofs through `AliasPath`; the outcome is the ordered union in decision 15 | each attempt's refusals mean the next | `publication.py` |
 | `ReadLatest(stream, scope)`, `ReadAddress(address)`, `ReadStream(stream)` | actions | one intended external effect | `read.py` |
 | the read outcome `Retained \| Absent \| Unavailable`, and the history outcome `History \| Absent \| Unavailable` | unions | alternatives with different facts | `read.py` |
 | `History` | collection of `Retained`, at least one, in log order; derives `latest` | order carries meaning; a fold's input | `read.py` |
 | `Readings` with `AllRead \| SomeUnavailable` | collection and ordered union | order carries meaning; decision 20 proves the sole refusal | `read.py` |
-| `Subscription(work_type, event_types)` | value object | exhausted by field equality | `subscription.py` |
+| `Subscription(work_type, event_types)` | value object; `event_types` has at least one member | exhausted by field equality; invalid combinations have no representation | `subscription.py` |
 | `EnsureSubscription`, `DeleteSubscription` | actions | one intended external effect | `subscription.py` |
 | `SubscriptionEnsured`, `EnsureUnavailable`, `SubscriptionDeleted` | concept models coupling their subscription; the ensure outcome is `SubscriptionEnsured \| EnsureUnavailable`; the delete outcome is `SubscriptionDeleted \| Unavailable` | outcomes a later construction reads | `subscription.py` |
 | `StartupSubscriptions` | collection of ensure outcomes in specification order | the startup expression's terminal fact | `subscription.py` |
 | `Delivery(token, event, sequence)` | concept model; `event` is Core `Event`; derives `address` and `streams` | a durable fact | `delivery.py` |
-| `Conclusion(authorized, settlement)` with `Durable \| NotDurable` | concept model and ordered union; derives `disposition` | decision 37 proves the sole refusal | `delivery.py` |
+| `Conclusion(settlement)` with `DurableAppended \| DurablePresent \| NotDurable` | concept model and ordered union; derives `disposition` | decision 37 proves each refusal | `delivery.py` |
 | the arrival `Delivery \| Unconstructible` with `ArrivalConstructor` | ordered union | decision 26 proves the sole refusal | `delivery.py` |
 | `Dispose(token, disposition)` | action; the outcome is `Disposed \| Unavailable` | one intended external effect | `delivery.py` |
-| `ReadClock`, `MintIdentity(at)`, `MintEmissionIdentities(at)` | actions | one intended external effect | `identity.py` |
+| `ReadClock`, `MintIdentity`, `MintEmissionIdentities` | actions carrying nothing | one intended external effect | `identity.py` |
+| `Uuid` | source-owned scalar over the standard library's `UUID`, serialized at the interpreter | a source-owned scalar meaning | `identity.py` |
 | `ClockInterpreter` | effect interpreter; its capability is the standard library's `datetime` class | one action, one imported capability | `interpreter.py` |
-| `MintInterpreter`, `MintEmissionIdentitiesInterpreter` | effect interpreters; each one's capability is `random.SystemRandom`; each composes its UUIDv7s as outcome construction | one interpreter per action meaning, one imported capability | `interpreter.py` |
+| `MintInterpreter`, `MintEmissionIdentitiesInterpreter` | effect interpreters; each one's capability is the standard library's `uuid.uuid7` | one interpreter per action meaning, one imported capability | `interpreter.py` |
 
 ### `ontok-nats`
 
 | Declaration | Construct | Rule | File |
 |---|---|---|---|
-| `NatsSettings` | config, prefix `ONTOK_NATS_`: URL, user, and password as `SecretStr` | deployment input | `config.py` |
+| `NatsSettings` | config, prefix `ONTOK_NATS_`: `url` as the semantic scalar `NatsUrl`, and `user` and `password` as `SecretStr`; the package declares `pydantic-settings>=2,<3` | deployment input; non-secret fields are semantic scalars | `config.py` |
 | `StreamSpecification` | value object | exhausted by field equality | `stream.py` |
-| the publish acknowledgement, the batch acknowledgement, the wrong-last-sequence error, the other API errors, the JetStream message metadata, the direct-get status | foreign models | another system's differing representation | `model.py` |
-| `UnknownEvent` | foreign model with `extra="ignore"` | an undeclared kind is another program's representation; decision 3 permits ignoring its fields | `model.py` |
+| the publish acknowledgement, the batch acknowledgement, the wrong-last-sequence error, the other API errors, the JetStream message metadata, the direct-get reply and its `EOB` | foreign models; header text lifts as source-owned text and constructs `LogSequence` through `model_validate_json` | another system's differing representation | `model.py` |
+| `MessageBody` | source-owned scalar over the message's bytes | a source-owned scalar meaning; the arrival refuses it | `model.py` |
 | `OriginateInterpreter`, `AppendBatchInterpreter`, `EnsureSubscriptionInterpreter`, `DeleteSubscriptionInterpreter`, `DisposeInterpreter` | effect interpreters, one per action meaning; each composes its subject at the client call and catches only its documented errors | one action, one imported capability | `interpreter.py` |
 
 ### `ontok-ex`
@@ -479,7 +485,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 |---|---|---|---|
 | `PolicySpecification`, `JoinSpecification`, `ProjectionSpecification` | concept models holding the kind's `Action`; each derives `event_types` and `subscription` | a durable fact holding a concept | `specification.py` |
 | `PolicyInquiry`, `JoinInquiry`, `ProjectionInquiry` | transformations; each derives `reads` | constructed inputs determine one output | `attempt.py` |
-| `Attempt(inquiry, minted, readings)` | concept model | a durable fact | `attempt.py` |
+| `Attempt(inquiry, at, minted, readings)` | concept model; derives `id`, `action`, and `work_type` | a durable fact whose derivations name the reaction's inherited fields | `attempt.py` |
 | `Deferred`, `Rejected` | concept models; each derives `batch` and `disposition` | variants with different facts | `response.py` |
 | `Reaction(Work)` | concept model adding `work_type` and `at` | a refinement that only adds facts | `reaction.py` |
 | `Policy(Reaction)` | concept model adding `emitted` | every policy is a reaction; only policies emit | `reaction.py` |
@@ -489,7 +495,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 
 Each application declares, because each holds its own types:
 - its event-type `StrEnum`, its events, its event union, and that union's `TypeAdapter`;
-- its delivery route, `DeliveryRoute`, nesting the provider's metadata foreign model and `UnknownEvent`;
+- its delivery route, `DeliveryRoute`, nesting the provider's metadata foreign model and `MessageBody`;
 - its `ReadLatestInterpreter`, `ReadAddressInterpreter`, and `ReadStreamInterpreter`, over direct-get reply foreign models that hold its event union;
 - its startup egress route;
 - its reaction kinds, their variants, and their `Action`, `Role`, and `Goal` refinements;
@@ -545,6 +551,7 @@ Each application declares, because each holds its own types:
 
 ## Final gates
 
+- The workspace and every package require Python 3.14; ruff targets `py314` and basedpyright `3.14`.
 - Ruff check and format.
 - basedpyright strict.
 - import-linter, with `ontok.nats` and `ontok.ex` added to `root_packages` and to the layers:
@@ -595,7 +602,6 @@ CloudEvents, AsyncAPI, and W3C Trace Context are projections and interoperabilit
 - Do not catch programming defects.
 - Do not publish reactions.
 - Do not pass a delivery token or any other transport fact into a reaction.
-- Do not carry a fact in an action that its effect does not need.
 - Do not stage a callback local; nest the terminal expression.
 - Do not hash to derive identity.
 - Do not read class metadata.
