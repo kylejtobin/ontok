@@ -1,54 +1,37 @@
 <p align="center">
-  <img src="img/ontok-hero.png" width="880" alt="ONTOK — Write the organization as software. Independently modeled systems arranged around a shared semantic kernel.">
+  <img src="img/ontok-hero.webp" width="880" alt="ONTOK — Write the organization as software. Independently modeled systems arranged around a shared semantic kernel.">
 </p>
 
 # ONTOK
 
-**ONTOK is a semantic language that makes organizational meaning explicit, portable, and executable.**
+**A semantic language for writing the organization as software.**
 
-Organizations refine its kernel into their own kinds. Programs construct facts that satisfy those kinds. Software then operates over the same organizational meaning rather than inventing another model of it.
+An organization already has a model of itself: what exists in it, what happens, who does what, through which office, toward which end, under which rules. That model lives in people, and every application rebuilds a fragment of it. ONTOK gives it one home. Core is thirteen primitives that say what kinds of things an organization contains. An organization refines them into its own kinds. Its programs construct facts that satisfy those kinds, and a fact exists only because it was proven.
 
-You import the language and refine it into the organization you actually have.
+That is what makes the meaning software-addressable. Applications, agents, and models operate over the organization's own kinds instead of each inventing another model of them, and none of them has to become the authority that defines what the organization is.
 
----
+## Core
 
-## The types do organizational work
+| Family | Primitives | What they distinguish |
+|--------|------------|-----------------------|
+| Structure | `Node`, `Connection` | A distinct thing, and a link between two things that exist independently of it |
+| Reality | `Entity`, `Relation`, `State`, `Event` | A thing that persists, an identifiable association, a condition that goes on a thing, an occurrence |
+| Agency | `Role`, `Goal`, `Action`, `Work` | An organizational capacity, an intended end, declared doing through a role toward a goal, the persistent undertaking of it |
+| Meaning | `Concept`, `Context` | What a declaration means, and a situation constituted by states |
+| Governance | `Rule` | A constraint on declared work within a situation |
 
-ONTOK Core is deliberately small. Its primitives distinguish things software routinely collapses together.
+Everything else in Core makes those construct: `NodeId`, `Timestamp`, `Instant`, `Interval`, and `States`. There is no fourteenth primitive, no `type` field, and no registry. **The class is the kind. The value is the fact.**
 
-An `Entity` persists. A `State` is a condition that goes on an Entity. An `Event` occurs.
-
-Organizational agency has structure too:
-
-```python
-class Action(Node):
-    role: Role
-    goal: Goal
-
-
-class Work(Entity):
-    action: Action
-```
-
-An `Action` is a declared doing: through this organizational capacity, toward this intended end.
-
-`Work` is the persistent undertaking of that declaration.
-
-Governance composes from the same model:
+## Refine, construct, refuse
 
 ```python
-class Rule(Node):
-    context: Context
-    doing: Action
-```
+from datetime import UTC, datetime
 
-A `Context` is a situation constituted by States. A `Rule` constrains declared Action within that situation.
+from pydantic import ValidationError
 
-These are application components, not labels attached to application data.
+from ontok.core import Action, Entity, Event, Goal, Instant, NodeId, Role, State, Timestamp
 
-A domain refines them into the kinds it actually needs:
 
-```python
 class Customer(Entity): ...
 
 
@@ -63,184 +46,51 @@ class AccountReviewed(Goal): ...
 
 
 class ReviewAccount(Action): ...
+
+
+class ReviewCompleted(Event):
+    account: Customer
+
+
+review = ReviewAccount(
+    id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b"),
+    role=AccountManager(id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2c")),
+    goal=AccountReviewed(id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2d")),
+)
+
+completed = ReviewCompleted(
+    id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2e"),
+    occurred=Instant(at=Timestamp(datetime.now(UTC))),
+    account=Customer(id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2f")),
+)
+
+try:
+    ReviewCompleted(id=NodeId("not an identifier"), occurred=completed.occurred, account=completed.account)
+except ValidationError:
+    ...  # no such fact exists
 ```
 
-**The class is the kind. The value is the fact.**
+A kind is a subclass that adds the fields it carries. A fact is a constructed value: every field proven, nested facts proven first, an existing fact accepted as prior proof. A `ValidationError` is not an error in the program; it is the absence of a fact. Nothing is checked afterward because nothing invalid got in.
 
-The Python realization uses strict, immutable Pydantic models, so those facts participate in ordinary program construction and validation rather than living in a separate semantic store.
+Every Core model is frozen, closed to undeclared fields, and strict, and every refinement inherits that unchanged. Ordinary Python, ordinary Pydantic, and the facts are ordinary program values.
 
-The complete Core is still only:
+## The module is the specification
 
-```text
-Structure    Node · Connection
-Reality      Entity · Relation · State · Event
-Agency       Role · Goal · Action · Work
-Meaning      Concept · Context
-Governance   Rule
+ONTOK is not defined by Python. Its meaning is stated once, in each module: the class is the kind, its docstring is what it means, its fields are what it requires. The Python realization is that statement made executable, and any other realization or interchange form is projected from it.
+
+Core is deliberately small and grows by modules. A capability becomes part of ONTOK by composing the kernel in a module that depends on Core one way, never by adding to Core.
+
+## Use it
+
+Core is a Python 3.13+ package in the `ontok` namespace and is installed from this repository:
+
+```bash
+pip install "ontok-core @ git+https://github.com/kyzobuild/ontok.git#subdirectory=packages/python/ontok-core"
 ```
 
-This is not an enterprise data model.
-
-A bank, manufacturer, hospital, retailer, or software company should define its own domain ontology by refining this grammar.
-
----
-
-## Local models can stay local
-
-Now consider a normal brownfield enterprise.
-
-One team has already invested heavily in an ontology-backed graph in AWS Neptune. Another has independently built a Microsoft Fabric Ontology for the same company.
-
-Both contain real business knowledge:
-
-```text
-AWS Neptune                 Microsoft Fabric
-
-Customer                    Member
-Account                     FinancialAccount
-Transaction                 Payment
-Merchant                    Counterparty
-```
-
-Their names differ. Their shapes differ. Their cardinalities, granularity, lifecycle assumptions, and relationships may differ.
-
-Neither model needs to be wrong.
-
-And neither needs to become the canonical replacement for the other.
-
-ONTOK Semantic Topology is designed to represent the organizational relationships among those independently developed meanings:
-
-```text
-Neptune.Customer
-       │
-       └──── equivalent / close ──── Fabric.Member
-
-
-Neptune.Transaction
-       │
-       └──── broader ─────────────── Fabric.Payment
-
-
-Neptune.Merchant
-       │
-       └──── overlap ─────────────── Fabric.Counterparty
-```
-
-A relationship may also be true only within a particular `Context`.
-
-The local ontologies remain local. Their identities and useful distinctions survive.
-
-What becomes explicit is **how the organization understands their relationship**.
-
-That semantic topology can evolve as systems change, concepts split or converge, acquisitions introduce new vocabularies, and previously assumed equivalences stop being true.
-
-ONTOK does not solve semantic disagreement by forcing convergence.
-
-It makes the disagreement, correspondence, and context representable.
-
----
-
-## One kernel, different capabilities
-
-ONTOK grows through modules rather than by turning Core into a universal model.
-
-```text
-                         Core
-                          │
-            ┌─────────────┼─────────────┐
-            ▼             ▼             ▼
-           ST             VSM           SCIM
-       semantic         value         identity
-       topology         streams
-```
-
-`ontok-st` develops the evolving relationships among independently defined Concepts.
-
-`ontok-vsm` represents value-stream structure and performed work.
-
-`ontok-scim` aligns standardized identity structures with the broader organizational model.
-
-Organizations can build their own modules the same way.
-
-A capability becomes part of ONTOK by composing the semantic kernel, not by adding every useful business concept to it.
-
----
-
-## Why this matters for AI
-
-Most organizations have always depended on an implicit semantic layer.
-
-People know that `Member` in one system is roughly `Customer` somewhere else. They know which definition of `Account` applies in a particular conversation. They know why a policy applies in one situation and not another.
-
-People have been the semantic middleware.
-
-As applications, agents, and models perform more organizational work directly, that implicit layer becomes a runtime dependency. A model cannot reliably inherit years of organizational context simply because the relevant systems are connected to it.
-
-ONTOK makes the meaning software-addressable.
-
-Models can interpret, classify, discover candidate relationships, and reason over organizational facts.
-
-They do not need to become the authority that defines those facts or owns the program's control flow.
-
----
-
-## Specification and realization
-
-ONTOK is not defined by Python.
-
-Its modules have implementation-independent specifications describing their semantics, refinements, constraints, and dependencies.
-
-```text
-ONTOK specification
-        │
-        ▼
- semantic contract
-        │
-        ▼
-language realization
-        │
-        ▼
- ordinary software
-```
-
-The current specifications are expressed in XML.
-
-Python is the first realization, using Pydantic to make ONTOK kinds and facts ordinary typed program values.
-
-External standards and platforms can participate where useful. RDF, OWL, SHACL, SKOS, SCIM, graph databases, Fabric Ontology, and other representations can exchange or project ONTOK semantics without becoming ONTOK's programming model.
-
-**The specification defines the language. A realization makes it usable.**
-
----
-
-## Explore the project
-
-The repository contains the implementation-independent specifications, Python realization, modules, examples, tests, and design documentation.
-
-The Python workspace lives under:
-
-```text
-packages/python/
-```
-
-The shortest paths into the architecture are:
-
-```text
-ontok-core    the semantic kernel
-ontok-st      semantic topology
-ontok-vsm     value streams
-ontok-scim    identity
-```
-
-Start with Core if you want to understand the language.
-
-Look at ST if your organization already has multiple schemas, graphs, ontologies, or vocabularies describing overlapping business reality.
-
-ONTOK does not require those systems to become one system.
-
-It gives them a language in which their meaning can become explicit, related, validated, and operated on as software.
-
-**Write the organization as software.**
+- Status: alpha. The primitives are settled; the surface around them is not.
+- [How Core is composed and why](wiki/architecture/ontok-core.md), stated as it is.
+- [The ontological organization](docs/The-Ontological-Organization-Foundational-Thesis.md), the thesis behind it.
 
 ## License
 
