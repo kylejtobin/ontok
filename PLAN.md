@@ -86,7 +86,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 ### Pydantic substrate
 
 - Every semantic value is a strict, frozen Pydantic construction with the skill's mandatory configuration for its category.
-- No `dict`, untyped header map, metadata bag, or `bytes` payload carries meaning.
+- Past the route, no `dict`, untyped header map, metadata bag, or `bytes` payload carries meaning.
 - Serialization occurs exactly once, at the provider binding, as the JSON of the event.
 - In a union that is not discriminated and is constructed from raw input, every variant except the last carries a fact no other variant carries. Only the final variant may be empty, because an empty model has no refusal.
 - No program code reads class metadata.
@@ -152,7 +152,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     An empty batch makes no provider call and is `Written`: an atomic commit needs a message.
 15. **Settling a contest.** `AppendAnswer(answer)` derives its authorized address reads through the ordered union `ContestedAppend | UncontestedAppend`.
     - `ContestedAppend` requires a `Contested` answer and authorizes its append's `reads`. The answer is a constructed instance, so its only refusal is an answer that is not `Contested`, which is what `UncontestedAppend`, authorizing nothing, means.
-    - The address-read interpreter's action is the `AppendAnswer`. It executes the answer's `reads` and returns `AppendSettlement(answer, readings)`, coupling its action.
+    - The settle interpreter's action is the `AppendAnswer`: settling an answer is one action meaning. It executes each of the answer's `reads` through the provider's direct get and returns `AppendSettlement(answer, readings)`, coupling its action, so the callback never holds the answer to pass it twice. It constructs application events, so the application declares it.
     - `AppendSettlement` derives `outcome` through this ordered union, constructed from the settlement with `from_attributes=True`; each strong variant holds its proof through an `AliasPath`:
 
 | Outcome | Holds | Constructs when | Meaning |
@@ -165,9 +165,8 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - A retry never appends a second copy, even when other events have landed in the stream since the first attempt.
 16. There is no deduplication window. Idempotence holds for the life of the log.
 17. **Events do not embed their prior.** Succession is enforced by `ExpectSequence`.
-    - A stream's state is the fold of its history, a transformation on the history collection; no event stores it.
-    - A policy reads its trigger's stream history through `ReadStream`, folds it into its prior state, and constructs its successor in the state-transition shape.
-    - The state-transition shape with a `prior` field is in memory, never a wire shape.
+    - A stream's state is the fold of its history: the state-transition chain in which each event succeeds the state before it. No event stores it, and the chain is in memory, never a wire shape.
+    - A policy reads its trigger's stream history through `ReadStream` and folds it. The folded state already contains the trigger, and the policy derives its emissions from that state. The emitted events become the next steps of the same chain when they are folded in turn, so there is one transition, not a fold and a separate successor.
 
 ### Reads
 
@@ -177,7 +176,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - On provider failure, the outcome is `Unavailable(reason)`.
     - A history read's outcome is `History`, the collection of the stream's events as `Retained` in log order with at least one member, or `Absent(stream)`, or `Unavailable(reason)`. `History` derives `latest`, its last member, a selection by a proven key.
 19. **Reads see the log as it is now.** The provider has no latest read as of an earlier sequence.
-20. **Readings.** A read interpreter executes a tuple of authorized reads and returns `Readings`, the collection of their outcomes in the same order. Readings derive their `completeness` through the ordered union `AllRead | SomeUnavailable`. `AllRead` requires every outcome to be `Retained`, `History`, or `Absent`. The outcomes are constructed instances, so its only refusal is an `Unavailable` outcome, which is what `SomeUnavailable` means.
+20. **Readings.** Each read executes through its own interpreter, one per action meaning. `Readings` is the collection of their outcomes in the order of the reads, constructed at the composition root from each interpreter's outcome. Readings derive their `completeness` through the ordered union `AllRead | SomeUnavailable`. `AllRead` requires every outcome to be `Retained`, `History`, or `Absent`. The outcomes are constructed instances, so its only refusal is an `Unavailable` outcome, which is what `SomeUnavailable` means.
 
 ### Subscriptions
 
@@ -230,7 +229,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `JoinInquiry(specification, arrival)` derives, for each of the arrival's streams, a `ReadLatest` of `OfType(first)`, then of `OfType(second)`;
     - `ProjectionInquiry(specification, arrival)` derives no reads.
 
-    An `Unconstructible` arrival has no streams, so it authorizes no reads. Each inquiry's reads are one action meaning, so each is executed by one read interpreter.
+    An `Unconstructible` arrival has no streams, so it authorizes no reads. Each inquiry's reads share one action meaning, so the callback executes each through that meaning's interpreter and constructs `Readings` from the outcomes.
 32. **`Attempt(inquiry, at, minted, readings)`** is one delivery attempt: the inquiry, the delivery's instant and minted ids, and the readings of its inquiry. It derives `id` from its minted identity, and `action` and `work_type` from its inquiry's specification, so that a reaction constructs its inherited fields from the attempt by name.
 33. **The response** is constructed from the attempt through the `TypeAdapter` the application declares beside the reaction kind's response union. That union is a plain union:
     - the reaction kind's own variants, each requiring a `Delivery` arrival, its trigger's event types, and `AllRead` readings;
@@ -254,10 +253,10 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 38. **The terminal fact is `Disposed`.** The callback constructs `Dispose(token, disposition)` from the route's token and the final disposition. The dispose interpreter publishes it.
 39. **The terminal expression** nests, by data dependency:
     - the clock interpreter, and the emission-minting interpreter for a policy or the minting interpreter for a projection;
-    - the read interpreter over the inquiry's reads;
+    - the read interpreter over each of the inquiry's reads, and the readings;
     - the attempt and its response;
     - for a kind with effects, the effect interpreter;
-    - the append interpreter and the address-read interpreter;
+    - the append interpreter and the settle interpreter;
     - the conclusion;
     - the dispose interpreter.
 
@@ -315,13 +314,12 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
     The callback is registered once at the composition root. The deliver subject is fixed, so registration holds whether or not the consumer exists.
 
-    The startup expression evaluates each kind's `EnsureSubscription` and constructs its terminal fact, `StartupSubscriptions`, the collection of each kind's ensure outcome in specification order. The ensure outcome is `SubscriptionEnsured(subscription)` or `EnsureUnavailable(subscription, reason)`, coupling the subscription because the startup fact reads it. The application's startup egress route projects that fact. An unavailable ensure authorizes nothing further, and that kind receives no deliveries.
+    The startup expression evaluates each kind's `EnsureSubscription` and constructs its terminal fact, `StartupSubscriptions`, the collection of each kind's ensure outcome in specification order. The ensure outcome is `SubscriptionEnsured(subscription)` or `EnsureUnavailable(subscription, reason)`, coupling the subscription because the startup fact reads it. That fact is the value of the startup expression, which is what the process's entry evaluates to. An unavailable ensure authorizes nothing further, and that kind receives no deliveries; what the deployment does with the fact is its liveness, which is out of scope.
 51. **A source publishes through one terminal expression** at its composition root, nesting by data dependency:
     - the clock interpreter and the minting interpreter;
     - the source's event, and `Origination(event, expectation)`, with `ExpectAny` or with `ExpectSequence` from a `ReadLatest` nested ahead of it;
     - the originate interpreter and its `AppendAnswer`;
-    - the address-read interpreter over the answer's reads;
-    - `AppendSettlement`, whose outcome is the publication's result.
+    - the settle interpreter, whose `AppendSettlement` outcome is the publication's result.
 52. **Rules and contexts** are domain facts a reaction reads through its fields. They are never scheduler state. Evaluating them is not an execution concern of this work.
 
 ### Idempotence and ownership
@@ -416,6 +414,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 - **Acknowledgement payloads.** `nats-py` acknowledges with `+ACK`, `-NAK`, and `+TERM` on the message's reply subject.
 - **Push binding.** `nats-py`'s `subscribe_bind` binds a callback to an existing consumer's deliver subject and subscribes with the consumer's `deliver_group` as its queue. `ConsumerConfig` carries `filter_subjects`, `deliver_subject`, `deliver_group`, `max_ack_pending`, `ack_wait`, and `deliver_policy`.
 - **Batched history reads.** `JSApiMsgGetRequest` carries `batch` with `next_by_subj`, which may be a wildcard (`jetstream_api.go` lines 673 to 695). Each batched reply carries `Nats-Num-Pending` and `Nats-Last-Sequence`, and a batch ends with `204 EOB`, which also carries `Nats-Num-Pending` (`stream.go` lines 5916 to 5918). A batch stops early at `max_bytes`, which defaults to the server's maximum pending size.
+- **One reply per request.** `nats-py`'s `request` returns the first reply to its inbox, as its documentation states, so a multi-reply batched get is read through a subscription on an inbox that the request names as its reply.
 - **Terminate advisory.** A terminate publishes on `$JS.EVENT.ADVISORY.CONSUMER.MSG_TERMINATED.<stream>.<consumer>` for operators.
 
 ## Constructs
@@ -450,12 +449,12 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `Lead`, `NoLead` | ordered union built from the batch; each derives `reads` | decision 13 proves the sole refusal | `publication.py` |
 | `Written(append)`, `Contested(append)` | concept models; the answer is `Written \| Contested \| Unavailable`; `Contested` derives its append's `reads` | outcomes coupling the action a later construction reads | `publication.py` |
 | `AppendAnswer(answer)`, `ContestedAppend`, `UncontestedAppend` | concept model and ordered union; derives `reads` | decision 15 proves the sole refusal | `publication.py` |
-| `AppendSettlement(answer, readings)` | concept model returned by the address-read interpreter; derives `outcome` | an outcome coupling its action | `publication.py` |
+| `AppendSettlement(answer, readings)` | concept model returned by the settle interpreter; derives `outcome` | an outcome coupling its action | `publication.py` |
 | `Appended(written)`, `AlreadyPresent(contested, existing)`, `Conflict(contested, absent)`, `AppendUnavailable` | concept models holding their proofs through `AliasPath`; the outcome is the ordered union in decision 15 | each attempt's refusals mean the next | `publication.py` |
 | `ReadLatest(stream, scope)`, `ReadAddress(address)`, `ReadStream(stream)` | actions | one intended external effect | `read.py` |
 | the read outcome `Retained \| Absent \| Unavailable`, and the history outcome `History \| Absent \| Unavailable` | unions | alternatives with different facts | `read.py` |
 | `History` | collection of `Retained`, at least one, in log order; derives `latest` | order carries meaning; a fold's input | `read.py` |
-| `Readings` with `AllRead \| SomeUnavailable` | collection and ordered union | order carries meaning; decision 20 proves the sole refusal | `read.py` |
+| `Readings` with `AllRead \| SomeUnavailable` | collection and ordered union | the declared order of the reads carries meaning; decision 20 proves the sole refusal | `read.py` |
 | `Subscription(work_type, event_types)` | value object; `event_types` has at least one member | exhausted by field equality; invalid combinations have no representation | `subscription.py` |
 | `EnsureSubscription`, `DeleteSubscription` | actions | one intended external effect | `subscription.py` |
 | `SubscriptionEnsured`, `EnsureUnavailable`, `SubscriptionDeleted` | concept models coupling their subscription; the ensure outcome is `SubscriptionEnsured \| EnsureUnavailable`; the delete outcome is `SubscriptionDeleted \| Unavailable` | outcomes a later construction reads | `subscription.py` |
@@ -496,8 +495,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 Each application declares, because each holds its own types:
 - its event-type `StrEnum`, its events, its event union, and that union's `TypeAdapter`;
 - its delivery route, `DeliveryRoute`, nesting the provider's metadata foreign model and `MessageBody`;
-- its `ReadLatestInterpreter`, `ReadAddressInterpreter`, and `ReadStreamInterpreter`, over direct-get reply foreign models that hold its event union;
-- its startup egress route;
+- its `ReadLatestInterpreter`, `ReadStreamInterpreter`, and `SettleAppendInterpreter`, over direct-get reply foreign models that hold its event union;
 - its reaction kinds, their variants, and their `Action`, `Role`, and `Goal` refinements;
 - each kind's response union with its `TypeAdapter`;
 - its effect actions, their outcome unions, and their interpreters;
