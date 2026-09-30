@@ -55,7 +55,7 @@ C4Container
     Container(config, "config", "Python", "NatsSettings")
     Container(stream, "stream", "Python", "StreamSpecification, the required EVENTS stream as a value")
     Container(subject, "subject", "Python", "The subjects and filter subjects an address, a claim, and a subscription realize")
-    Container(model, "model", "Python", "Foreign models: acknowledgements, API errors, message metadata, direct-get replies, MessageBody, EndOfBatch")
+    Container(model, "model", "Python", "Foreign models: acknowledgements, API errors, message metadata, direct-get replies, EndOfBatch")
     Container(interpreter, "interpreter", "Python", "Append, EnsureSubscription, DeleteSubscription, Acknowledge")
   }
   ContainerQueue(server, "NATS JetStream", "nats:2.14.6-alpine", "EVENTS: file storage, limits retention with no limits, deny delete and purge, allow direct, allow atomic")
@@ -86,7 +86,7 @@ A step that fails stops the run before the next. The conformance suite runs step
 
 ### Foreign models
 
-The server's replies, lifted whole, with `extra` matching each source contract: the publish acknowledgement and the batch acknowledgement; the API error with `code`, `err_code`, and `description`; the JetStream message metadata, from which a delivery's log sequence lifts through an `AliasPath`; the direct-get reply, whose `Nats-Sequence` header text constructs `LogSequence` through `model_validate_json`; `EndOfBatch`, the `204 EOB` reply with `Nats-Num-Pending` and `Nats-Last-Sequence`; and `MessageBody`, the source-owned scalar over a message's bytes that the application's route names as the fallback of its event union.
+The server's replies, lifted whole, with `extra` matching each source contract: the publish acknowledgement and the batch acknowledgement; the API error with `code`, `err_code`, and `description`; the JetStream message metadata, from which a delivery's log sequence lifts through an `AliasPath`; the direct-get reply, whose `Nats-Sequence` header text constructs `LogSequence` through `model_validate_json`; `EndOfBatch`, the `204 EOB` reply with `Nats-Num-Pending` and `Nats-Last-Sequence`. The application's route names `ontok.events.MessageBody` as the fallback of its event union; it is not this module's.
 
 ### Interpreters
 

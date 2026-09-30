@@ -1,6 +1,4 @@
-from typing import Annotated
-
-from pydantic import AliasPath, BaseModel, ConfigDict, Field, RootModel, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 from ontok.core import Event, NodeId
 from ontok.events.type import LogSequence
@@ -84,43 +82,9 @@ HistoryReading = History | Absent | Unavailable
 Reading = Retained | History | Absent | Unavailable
 
 
-class AllRead(BaseModel):
-    """Every read answered from memory."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    readings: tuple[Retained | History | Absent, ...] = Field(validation_alias=AliasPath("root"))
-
-
-class SomeUnavailable(BaseModel):
-    """At least one read did not complete."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-
-Completeness = Annotated[AllRead | SomeUnavailable, Field(union_mode="left_to_right")]
-CompletenessConstructor: TypeAdapter[AllRead | SomeUnavailable] = TypeAdapter(Completeness)
-
-
 class Readings(RootModel[tuple[Reading, ...]]):
     """The outcomes of a consultation's reads, in the declared order of the reads."""
 
     model_config = ConfigDict(
         frozen=True, strict=True, validate_default=True, revalidate_instances="never"
     )
-
-    @property
-    def completeness(self) -> Completeness:
-        return CompletenessConstructor.validate_python(self, from_attributes=True)

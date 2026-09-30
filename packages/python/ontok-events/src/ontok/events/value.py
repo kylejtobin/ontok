@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, RootModel, TypeAdapter
 
 from ontok.core import NodeId
 from ontok.events.type import EventTypeName, FailureReason, LogSequence, Ordinal, WorkTypeName
@@ -142,6 +142,14 @@ class EveryType(BaseModel):
 
 
 ReadScope = OfType | EveryType
+
+
+class MessageBody(RootModel[bytes]):
+    """The body of an arrival that is not one of this program's occurrences; never read."""
+
+    model_config = ConfigDict(
+        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
+    )
 
 
 class Absent(BaseModel):

@@ -1,19 +1,12 @@
-"""Readings are complete only when no read failed; an address proves an occurrence's kind."""
+"""An address proves an occurrence's kind, and lineage its causes."""
 
 from ontok.events import (
     AddressConstructor,
-    AllRead,
     EmissionAddress,
-    FailureReason,
     Lineage,
-    LogSequence,
     Ordinal,
     OriginAddress,
     PolicyProvenance,
-    Readings,
-    Retained,
-    SomeUnavailable,
-    Unavailable,
     WorkTypeName,
 )
 
@@ -34,16 +27,6 @@ def shipped() -> OrderShipped:
             work_type=WorkTypeName("shop-Fulfilment"), cause=placed().id, position=Ordinal(0)
         ),
     )
-
-
-def test_readings_with_one_failed_read_among_successes_are_incomplete() -> None:
-    retained = Retained(event=placed(), sequence=LogSequence(1))
-    readings = Readings((retained, Unavailable(reason=FailureReason("timeout")), retained))
-    assert isinstance(readings.completeness, SomeUnavailable)
-
-
-def test_readings_of_nothing_are_complete() -> None:
-    assert isinstance(Readings(()).completeness, AllRead)
 
 
 def test_an_occurrence_without_provenance_is_originating_and_one_with_it_is_derived() -> None:

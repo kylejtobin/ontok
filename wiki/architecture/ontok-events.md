@@ -66,10 +66,8 @@ The module's constructs, by family:
 
 ```mermaid
 classDiagram
-  class Responsibility { work_type: WorkTypeName }
-  class PolicyResponsibility { consumes: tuple~EventTypeName~ }
-  class ConjunctionResponsibility { first: EventTypeName; second: EventTypeName }
-  class ProjectionResponsibility { consumes: tuple~EventTypeName~ }
+  class Responsibility { work_type: WorkTypeName; consumes: tuple~EventTypeName~ }
+  class ConjunctionResponsibility { work_type: WorkTypeName; first: EventTypeName; second: EventTypeName }
   class Policy
   class Conjunction
   class Projection
@@ -77,17 +75,15 @@ classDiagram
   class ConjunctionProvenance { work_type; first: NodeId; second: NodeId; position: Ordinal }
   class Retained { event: Event; sequence: LogSequence }
   class History
-  class Delivery { token: DeliveryToken; retained: Retained }
-  class Unconstructible { token: DeliveryToken }
+  class Delivery { token: DeliveryToken; event: Event; sequence: LogSequence }
+  class Unconstructible { token: DeliveryToken; body: MessageBody }
   class Consultation { work; arrival }
   class Occasion { consultation; consulted: Readings; at: Timestamp }
   class MintedOccasion { emitted: EmittedIdentities }
   class Append { expectation; events: tuple~Event~; disposition }
   class Settled { answer; readings: Readings }
   Action <|-- Responsibility
-  Responsibility <|-- PolicyResponsibility
-  Responsibility <|-- ConjunctionResponsibility
-  Responsibility <|-- ProjectionResponsibility
+  Action <|-- ConjunctionResponsibility
   Work <|-- Policy
   Work <|-- Conjunction
   Work <|-- Projection
@@ -111,7 +107,7 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 - **`History`** is an entity's remembered occurrences in log order, at least one; it derives `latest`, a selection by a proven key. Collection.
 - **An entity's condition** is the fold of its history in the state-transition shape: each remembered occurrence succeeds the condition before it. The application owns the fold. A policy's emissions are the next steps of that one chain when they are remembered in turn.
 - **The reads.** `ReadHistory(about)`; `ReadLatest(about, scope)` with scope `OfType(event_type)` or `EveryType`; `ReadAddress(address)`. Actions. A read's outcome is `Retained | Absent(about) | Unavailable(reason)`, or for a history `History | Absent | Unavailable`. Reads see memory as it is now.
-- **`Readings`** is the collection of read outcomes in the declared order of the reads, deriving `completeness` through the ordered union `AllRead | SomeUnavailable`: the outcomes are constructed instances, so the only refusal of `AllRead` is an `Unavailable` member, which is what `SomeUnavailable` means.
+- **`Readings`** is the collection of read outcomes in the declared order of the reads. A response reads them by declared position and by the type it requires, so a reading that is `Unavailable` where a `Retained` is required refuses the response, and a deferral requires an `Unavailable` at a position; no separate completeness fact is needed.
 
 ### Recording
 
@@ -122,8 +118,8 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 
 ### Responsibilities
 
-- **`Responsibility(Action)`** is declared work that responds to occurrences. It adds `work_type: WorkTypeName`, the responsibility's interchange identity, which travels in provenance, subjects, and the provider's names. The application refines it and refines `Role` and `Goal`, so a kind of work says who does what, through which office, toward which end, in response to what. There is no separate specification of a kind of work; the `Action` is it.
-- **Its kinds.** `PolicyResponsibility` adds `consumes`, at least one event type in declared order. `ConjunctionResponsibility` adds `first` and `second`, the two event types whose conjunction it acts on. `ProjectionResponsibility` adds `consumes`. Each derives `event_types` and `subscription`.
+- **A responsibility** is declared work that responds to occurrences: a refinement of Core `Action` carrying `work_type: WorkTypeName`, its interchange identity, which travels in provenance, subjects, and the provider's names. The application refines it and refines `Role` and `Goal`, so a kind of work says who does what, through which office, toward which end, in response to what. There is no separate specification of a kind of work; the `Action` is it.
+- **Its kinds.** `Responsibility` adds `consumes`, at least one event type in declared order, and is what a policy or a projection undertakes; the two are one declaration, because what differs between them is the work, not the responsibility. `ConjunctionResponsibility` adds `first` and `second`, the two event types whose conjunction it acts on. Each derives `event_types` and `subscription`.
 - **`Subscription(work_type, event_types)`** is a responsibility's standing interest in those occurrences, from the beginning of memory, independent of any process. Its name and deliver group are the `work_type`, so each delivery reaches exactly one running instance; its deliver subject is fixed, so a callback stays bound across deletion and recreation. Value object.
 - **`EnsureSubscription(subscription)`** and **`DeleteSubscription(subscription)`**. Actions. Outcomes: `SubscriptionEnsured(subscription) | EnsureUnavailable(subscription, reason)`, coupling the subscription because the startup fact reads it; `SubscriptionDeleted(subscription) | Unavailable(reason)`.
 
@@ -133,11 +129,11 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 
 ### Delivery
 
-- **`Delivery(token, retained)`** is memory handing a remembered occurrence to a responsibility, possibly more than once; the token is the provider's acknowledgement address. Concept model; derives `address` and `abouts`, the entity concerned. **`Unconstructible(token)`**: what arrived is not one of this program's occurrences; derives no `abouts`. The arrival is their ordered union, constructed from the application's route with `from_attributes=True` through `ArrivalConstructor`; `Delivery.retained.event` refuses only a body that is not one of the program's events, which is what `Unconstructible` means. A delivery token never enters a response.
-- **The application's route** is one model, `DeliveryRoute`: the token through the alias `reply`, the sequence through an `AliasPath` into the provider's message metadata, and the body through the alias `data` as the ordered union `Json[<its event union>] | MessageBody`, where `MessageBody` is the provider's source-owned scalar over the message bytes and every refusal of the program's events means the body is not one of them. Nothing retains the body.
+- **`Delivery(token, event, sequence)`** is memory handing a remembered occurrence to a responsibility, possibly more than once; the token is the provider's acknowledgement address. Concept model; derives `retained`, `address`, and `abouts`, the entity concerned. **`Unconstructible(token, body)`**: what arrived is not one of this program's occurrences, and the body it lifts from the route's `event` is the witness, never read. The arrival is their ordered union, constructed from the application's route with `from_attributes=True` through `ArrivalConstructor`; `Delivery.event` refuses only a `MessageBody`, and `Unconstructible.body` accepts only one, so each is proven by an attribute the other lacks. A delivery token never enters a response.
+- **The application's route** is one model, `DeliveryRoute`: the token through the alias `reply`, the sequence through an `AliasPath` into the provider's message metadata, and the body through the alias `data` as the ordered union `Json[<its event union>] | MessageBody`, where `MessageBody` is this module's scalar over an arrival's bytes and every refusal of the program's events means the body is not one of them. Only `Unconstructible` holds the body, as its witness.
 - **`Consultation(work, arrival)`** is what memory a work consults for an arrival. `PolicyConsultation` derives one `ReadHistory` for each of the arrival's `abouts`; `ConjunctionConsultation` derives, for each, a `ReadLatest` of `OfType(first)` then `OfType(second)`; `ProjectionConsultation` derives none. An `Unconstructible` arrival has no `abouts`, so it authorizes no reads. Transformations. Each read executes through its own one-action interpreter; `Readings` constructs at the composition root from their outcomes.
 - **`Occasion(consultation, consulted, at)`** is the situation work faces: what was asked of memory, what memory answered, and when. `MintedOccasion(Occasion)` adds `emitted: EmittedIdentities` for a policy or a conjunction. Concept model; derives `work` and `action`. This is where `Context` and `Rule` attach when the organization's governance is evaluated.
-- **The response** is constructed from the occasion through the `TypeAdapter` the application declares beside the kind's response union, a plain union of which exactly one variant constructs: a variant the application declares, the work having responded, requiring a `Delivery` arrival, its trigger's event kinds, and `AllRead` readings; `Deferred(completeness)`, requiring `SomeUnavailable` readings, memory could not be consulted; `Rejected(arrival)`, requiring an `Unconstructible` arrival. A response that refuses for any other reason constructs nothing, and the process crashes as a defect. The application's variant constructs its fields from the occasion through `AliasPath`s: its trigger from the arrival's retained event, typed as the event kinds it responds to; its readings by declared position; its `emitted` and `at` by name. Every variant derives `emissions`, `expectation`, `effects`, `disposition`, and `append` as `Append(expectation, events=emissions, disposition)`: an application variant derives Complete; `Deferred` derives Retry; `Rejected` derives Reject; the last two derive no emissions and no effects.
+- **The response** is constructed from the occasion through the `TypeAdapter` the application declares beside the kind's response union, a plain union of which exactly one variant constructs, because each is proven by an attribute the others lack: a variant the application declares, the work having responded, requiring the arrival's `event` of the kinds it responds to and `Retained` readings at the positions it declares; `Deferred(unavailable)`, requiring an `Unavailable` at the first position, and `DeferredSecond(unavailable)` at the second, memory could not be consulted; `Rejected(arrival)`, requiring an `Unconstructible` arrival, proven by its body. A response that refuses for any other reason constructs nothing, and the process crashes as a defect. The application's variants refine `Response(at)`, or `EmittingResponse(at, emitted)` for work that emits, and construct their fields from the occasion through `AliasPath`s: the trigger from `consultation.arrival.event`, the readings from `consulted.root` by declared position; `at` and `emitted` by name. Every variant derives `emissions`, `expectation`, `effects`, `disposition`, and `append` as `Append(expectation, events=emissions, disposition)`: an application variant derives Complete; `Deferred` derives Retry; `Rejected` derives Reject; the last two derive no emissions and no effects.
 - **Emission.** A policy's or conjunction's emitted events carry `Provenance`, occur at the occasion's instant, and take their ids from `emitted` at their position, a selection proven because the collection's length is exactly the ordinal's range. A policy's first emission into its trigger's entity expects the sequence of its history's `latest`; every other emission, and every conjunction emission, expects nothing at its own address. A conjunction's provenance names both remembered occurrences in declared order, so a lagging subscription that responds at both arrivals produces one publication and memory keeps one.
 - **Effects.** For a kind with effects, the application declares `Effects(response)`, the effects a response asks of the work's one external system, carrying the response as the fact that asks; its effect interpreter returns `Performed(effects, outcomes)`, which derives `completeness` through `EffectsHeld | EffectsUnavailable` (the outcomes are constructed instances, so the only refusal is an `Unavailable` member) and each derives the `append` it authorizes: `EffectsHeld` the response's, `EffectsUnavailable` one with no events authorizing Retry. Effects precede emissions, because an emission announces a consequence. A work's effects run through exactly one capability; effects on two systems are two responsibilities. A read model's writes apply only when the incoming sequence is newer than the one stored, and each write sets its key to the value at that sequence.
 - **`Acknowledge(token, disposition)`** is the one effect durability authorizes, constructed at the composition root from the route's token and the settled durability's disposition. Action; outcome `Acknowledged | Unavailable`. Complete: every consequence of the occurrence is durable. Retry: deliver again. Reject: the delivery is terminal, and the provider keeps its own record of rejections for operators.
@@ -151,12 +147,12 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 
 ### Identity and time
 
-- **`ReadClock`** through the standard library's `datetime`, returning `Timestamp`. **`MintEmissionIdentities`** through `uuid.uuid7`, returning `EmittedIdentities`, exactly a thousand independently minted `NodeId`s, one for each `Ordinal` from 0 to 999; each reply lifts through `Uuid`, the source-owned scalar over the standard library's `UUID`, and serializes at the interpreter. Actions carrying nothing; one interpreter each; their outcomes are plain because their capabilities have no documented failures.
+- **`ReadClock`** through the standard library's `datetime` class, returning `Timestamp`. **`MintEmissionIdentities`** through `uuid.uuid7`, returning `EmittedIdentities`, exactly a thousand independently minted `NodeId`s, one for each `Ordinal` from 0 to 999; each reply lifts through `Uuid`, the source-owned scalar over the standard library's `UUID`, and serializes at the interpreter. Actions carrying nothing, declared beside the occasion that needs them; one interpreter each; their outcomes are plain because their capabilities have no documented failures.
 - **Scalars.** `EventTypeName`, `WorkTypeName`, `LogSequence`, `Ordinal` (0 to 999), `DeliveryToken`, `FailureReason`; `Disposition` as a `StrEnum` of Complete, Retry, Reject.
 
 ### Files
 
-`type.py` scalars; `value.py` value objects and their unions; `occurrence.py`, `memory.py`, `recording.py`, `responsibility.py`, `work.py`, `delivery.py` each named for the family it holds, with their actions beside the facts that authorize them; `interpreter.py` the clock and the mint.
+`type.py` scalars; `value.py` value objects, their unions, and `MessageBody`; `occurrence.py`, `memory.py`, `recording.py`, `responsibility.py`, `work.py`, `delivery.py` each named for the family it holds, with their actions beside the facts that authorize them; `interpreter.py` the clock and the mint. The module's tests hold a test-owned ontology and one test per claim on its failure path.
 
 ## Decisions
 
@@ -208,7 +204,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A delivery is redelivered after its emissions landed | The append settles as `AlreadyPresent`; memory holds one copy; the delivery completes |
 | The process crashes after the append and before the acknowledgement | Redelivery settles as `AlreadyPresent` and completes |
 | Another occurrence lands on the entity between the read and the append | The append is `Contested` and settles as `Conflict`; the delivery retries and converges |
-| A read is unavailable | The response is `Deferred`; the delivery retries; nothing is appended |
+| A read is unavailable | The response is `Deferred` or `DeferredSecond`; the delivery retries; nothing is appended |
 | An effect is unavailable | `EffectsUnavailable`; the delivery retries; nothing is appended |
 | A body arrives that is not one of the program's occurrences | The arrival is `Unconstructible`; the response is `Rejected`; the delivery is terminal |
 | A conjunction's subscription lags and both occurrences have landed | Both arrivals derive the same provenance; memory keeps one emission |
