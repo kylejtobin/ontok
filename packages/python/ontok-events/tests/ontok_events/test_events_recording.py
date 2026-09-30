@@ -23,7 +23,7 @@ from ontok.events import (
     Written,
 )
 
-from .ontology import placed
+from .events_ontology import placed
 
 REFUSED = ClaimRefusal("wrong last sequence: 42")
 

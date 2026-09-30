@@ -40,7 +40,7 @@ from ontok.events import (
     Written,
 )
 
-from .ontology import Kind, OrderPlaced, identifier, placed
+from .events_ontology import Kind, OrderPlaced, identifier, placed
 
 STRICT = ConfigDict(
     frozen=True, extra="forbid", strict=True, validate_default=True, revalidate_instances="never"

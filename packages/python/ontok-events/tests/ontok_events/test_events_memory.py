@@ -10,7 +10,7 @@ from ontok.events import (
     WorkTypeName,
 )
 
-from .ontology import OrderPlaced, identifier, placed
+from .events_ontology import OrderPlaced, identifier, placed
 
 
 class OrderShipped(OrderPlaced):

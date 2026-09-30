@@ -39,7 +39,7 @@ from ontok.nats import (
 )
 from ontok.nats.interpreter import DELIVER_PREFIX, STREAM
 
-from .ontology import (
+from .nats_ontology import (
     Kind,
     OrderPaid,
     OrderPlaced,

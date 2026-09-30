@@ -35,7 +35,7 @@ from ontok.events import (
     WorkTypeName,
 )
 
-from .ontology import Kind, OrderPlaced, identifier, placed
+from .events_ontology import Kind, OrderPlaced, identifier, placed
 
 
 class Kinds(StrEnum):

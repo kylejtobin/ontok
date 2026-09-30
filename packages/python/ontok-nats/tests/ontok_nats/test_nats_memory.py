@@ -36,7 +36,7 @@ from ontok.nats import (
 )
 from ontok.nats.subject import EntitySubject
 
-from .ontology import Kind, OccurrenceConstructor, fresh, paid, placed, shipped
+from .nats_ontology import Kind, OccurrenceConstructor, fresh, paid, placed, shipped
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
 
