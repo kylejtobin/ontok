@@ -18,6 +18,10 @@ sources:
   - id: client
     resource: https://github.com/nats-io/nats.py
     title: nats-py
+verified:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-30T21:56:24Z
+  how: every quality scenario proven by the conformance suite against nats:2.14.6-alpine through testcontainers
 ---
 
 # ontok-nats
@@ -86,15 +90,15 @@ A step that fails stops the run before the next. The conformance suite runs step
 
 ### Foreign models
 
-The server's replies, lifted whole, with `extra` matching each source contract, and each proven by an attribute the others lack, because under `from_attributes` class identity is not a fact: the publish acknowledgement and the batch acknowledgement; the API error with `code`, `err_code`, and `description`; the JetStream message metadata, from which a delivery's log sequence lifts through an `AliasPath`; the direct-get reply, which is one of a message, proven by its `Nats-Sequence` header whose text constructs `LogSequence` through `model_validate_json`, `NoResults`, proven by the `Literal` status `404`, and `EndOfBatch`, proven by the `Literal` status `204` and carrying `Nats-Num-Pending` and `Nats-Last-Sequence`. The application's route names `ontok.events.MessageBody` as the fallback of its event union; it is not this module's.
+The server's replies, lifted whole, with `extra` matching each source contract, and each proven by an attribute the others lack, because under `from_attributes` class identity is not a fact: the publish reply, which is `ClaimRefused`, proven by the `Literal` error code 10071 and carrying the description as memory's refusal, `Failed`, proven by any other `error`, or `Acknowledgement`, what remains, because an error reply also carries `stream` and `seq` and so cannot be told from an acknowledgement by those; the JetStream message metadata, from which a delivery's log sequence lifts through an `AliasPath`; the direct-get reply, which is one of a message, proven by its `Nats-Sequence` header whose text constructs `LogSequence` through `model_validate_json`, `NoResults`, proven by the `Literal` status `404`, and `EndOfBatch`, proven by the `Literal` status `204` and carrying `Nats-Num-Pending` and `Nats-Last-Sequence`. This program's requests to the direct-get API, `LastBySubject` and `NextBySubject`, are contract models. The application's route names `ontok.events.MessageBody` as the fallback of its event union; it is not this module's.
 
 ### Interpreters
 
-One per Events action meaning; each holds its action and the one client, composes its subject and headers at the call, and translates only its documented failures into the action's unavailable outcome. Every `execute` is a coroutine, because the client is asyncio, and the application's callback is one `async` expression with each `await` nested where its outcome is consumed. `CancelledError`, `KeyboardInterrupt`, and `SystemExit` propagate; anything else is a defect.
+One per Events action meaning; each holds its action and the one client, composes its subject and headers at the call, and translates only its documented failures, the client's timeout, no responders, and closed connection, into the action's unavailable outcome, with a five-second request timeout as the module's transport constant. A claim's headers are an ordered union over the append, `SequenceClaim | AnyClaim`, proven by the claim's `sequence` and the lead's entity; an append's answer is an ordered union over the append and its reply, `ContestedPublication | FailedPublication | WrittenPublication`, proven by the reply's `refusal` or `failure`, with written what remains. A read interpreter completes its outcome by the reply's kind inside `execute`, because the application's event constructor is a capability, not a fact, and a capability is applied only in `execute`. Every `execute` is a coroutine, because the client is asyncio, and the application's callback is one `async` expression with each `await` nested where its outcome is consumed. `CancelledError`, `KeyboardInterrupt`, and `SystemExit` propagate; anything else is a defect.
 
 - **`AppendInterpreter`** publishes each event with `Nats-Batch-Id` set to the lead occurrence's id, which is unique per publication and identical on retry, `Nats-Batch-Sequence` from 1, the claim's headers on the first (`Nats-Expected-Last-Subject-Sequence: 0` on its own subject, and for `ExpectSequence` `Nats-Expected-Last-Subject-Sequence-Subject: event.<about>.>` with the sequence), and `Nats-Batch-Commit: 1` on the last, which is a request whose reply acknowledges the whole batch. `nats-py` has no batch call, so the interpreter sets the headers itself. An append of no events makes no call and is `Written`. A publish acknowledgement is `Written`; API error 10071, wrong last sequence, is `Contested` carrying its description as the refusal; every other documented failure is `AppendUnavailable`.
-- **`EnsureSubscriptionInterpreter`** creates, through the consumer API, a durable push consumer named `<work_type>`, with the subscription's filter subjects, deliver subject `_INBOX.ontok.<work_type>`, deliver group `<work_type>`, explicit acknowledgement, `max_ack_pending` 1, an acknowledgement wait equal to the subscription's `patience`, unlimited deliveries, deliver-all, no flow control. Creating it again with the same configuration is `SubscriptionEnsured`; a documented failure is `EnsureUnavailable`.
-- **`DeleteSubscriptionInterpreter`** deletes that consumer: `SubscriptionDeleted`, or `Unavailable`.
+- **`EnsureSubscriptionInterpreter`** creates, through the consumer API and with the consumer's `name` equal to its durable name so that the create subject is `$JS.API.CONSUMER.CREATE.EVENTS.<work_type>`, a durable push consumer named `<work_type>`, with the subscription's filter subjects, deliver subject `_INBOX.ontok.<work_type>`, deliver group `<work_type>`, explicit acknowledgement, `max_ack_pending` 1, an acknowledgement wait equal to the subscription's `patience`, unlimited deliveries, deliver-all, no flow control. Creating it again with the same configuration is `SubscriptionEnsured`; a documented failure is `EnsureUnavailable`.
+- **`DeleteSubscriptionInterpreter`** deletes that consumer: `SubscriptionDeleted`, also when the consumer was already gone, or `Unavailable`.
 - **`AcknowledgeInterpreter`** publishes to the delivery token: `+ACK` for Complete, `-NAK` for Retry, `+TERM` for Reject; `Acknowledged`, or `Unavailable`.
 - **`ReadLatestInterpreter`** requests `$JS.API.DIRECT.GET.EVENTS` in the body form, `{"last_by_subj": "<subject>"}`, and constructs `Retained` from a message reply through the event constructor, or `Absent` from `NoResults`. **`ReadHistoryInterpreter`** subscribes an inbox, publishes `{"seq": <next>, "next_by_subj": "event.<about>.>", "batch": <n>}` with that inbox as its reply, and constructs from the replies it receives until `EndOfBatch`: the first page requests one message, each later page requests the previous `EndOfBatch`'s `Nats-Num-Pending` from after its `Nats-Last-Sequence`, and the history ends at an `EndOfBatch` with nothing pending. **`SettleInterpreter`** reads an answer's addresses the same way and returns `Settled`.
 - **The callback** is bound by the application with `subscribe_bind` on the consumer's deliver subject with manual acknowledgement, which subscribes with the deliver group as its queue, so each occurrence reaches exactly one running instance and the binding survives the consumer's deletion and recreation.
@@ -105,7 +109,7 @@ Publish on `event.>`; `$JS.API.INFO`; `$JS.API.STREAM.INFO.EVENTS`; `$JS.API.DIR
 
 ### Files
 
-`config.py`, `stream.py`, `subject.py`, `model.py`, `interpreter.py`. The conformance suite and its testcontainers fixture live in the package's `tests`.
+`config.py`, `stream.py`, `subject.py`, `model.py`, `interpreter.py`. The conformance suite, its testcontainers fixture, the server's configuration with the account and both identities, and a test-owned ontology live in the package's `tests/ontok_nats`, a package named so that every module's tests collect in one workspace run.
 
 ## Decisions
 
@@ -146,6 +150,10 @@ Each is verified at the cited source; none is inferred.
 - **Atomic batches.** A batch id must be unique among batches in flight, and a completed batch's id may be reused; `allow_atomic` accepts `Nats-Batch-Id`, `Nats-Batch-Sequence`, and `Nats-Batch-Commit`; the default batch limit is 1,000; a per-subject expectation is allowed on a subject not already written in the batch; the only refused expectation header is `Nats-Expected-Last-Msg-Id`; `nats-py` supports the stream setting and has no batch publish.
 - **Batched history reads.** `JSApiMsgGetRequest` carries `batch` with `next_by_subj`, which may be a wildcard (`jetstream_api.go` lines 673 to 695); each batched reply carries `Nats-Num-Pending` and `Nats-Last-Sequence`; a batch ends with `204 EOB` carrying `Nats-Num-Pending` (`stream.go` lines 5916 to 5918); a batch stops early at `max_bytes`, defaulting to the server's maximum pending size.
 - **One reply per request.** `nats-py`'s `request` returns the first reply to its inbox.
+- **An error reply looks like an acknowledgement.** A refused publish answers `{"error": {...}, "stream": "EVENTS", "seq": 0}`, so the presence of `stream` and `seq` proves nothing; only the absence of `error` does.
+- **A batch of one is a batch.** A single message carrying `Nats-Batch-Id`, `Nats-Batch-Sequence: 1`, and `Nats-Batch-Commit: 1` lands and is acknowledged with `batch` and `count`; a repeated claim on it is refused with 10071.
+- **A subscription sees all of memory.** Deliver-all delivers every earlier occurrence of a consumer's kinds about every entity, so a program that binds a new responsibility receives the past first.
+- **JetStream is not ready the instant the server is.** After a restart the client reconnects before the account answers; a request made before then times out, and a client that must not lose an append waits for `account_info` first.
 - **Body form required.** `nats-py`'s `get_msg(direct=True, subject=...)` sends `$JS.API.DIRECT.GET.<stream>.<subject>`, and a request subject cannot contain a wildcard.
 - **Consumers.** Several `filter_subjects` are supported from server 2.10; a consumer is created on `$JS.API.CONSUMER.CREATE.<stream>`, so its permission is scoped by stream; `ConsumerConfig` carries `filter_subjects`, `deliver_subject`, `deliver_group`, `max_ack_pending`, `ack_wait`, and `deliver_policy`.
 - **Names.** Stream and consumer names cannot contain whitespace, `.`, `*`, `>`, path separators, or non-printable characters; the hyphen in `<namespace>-<Class>` is valid in both a name and a subject token.
@@ -155,7 +163,7 @@ Each is verified at the cited source; none is inferred.
 
 ## Quality scenarios
 
-The conformance suite starts `nats:2.14.6-alpine@sha256:ad7a43eb7e3337c3c38ce5d784d1461791f95f730f252d2b25eee699752a0ca3` through testcontainers with an account, an administrative identity, a program identity, and the `EVENTS` stream, and proves each row against it through a test-owned ontology that declares its route and read interpreters.
+The conformance suite starts `nats:2.14.6-alpine@sha256:ad7a43eb7e3337c3c38ce5d784d1461791f95f730f252d2b25eee699752a0ca3` through testcontainers on a host port that survives a restart, with an account, an administrative identity, a program identity holding exactly the permissions above, and the `EVENTS` stream, and proves each row against it through a test-owned ontology that declares its event union, its constructor, and its route.
 
 | Scenario | Expected |
 |----------|----------|
