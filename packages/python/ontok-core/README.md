@@ -26,7 +26,7 @@ pip install ontok-core
 
 ## Realization
 
-ONTOK Core has exactly twelve primitives, plus `Work`:
+ONTOK Core has exactly thirteen primitives:
 
 - **Structure:** `Node`, `Connection` (with `NodeId`)
 - **Reality:** `Entity`, `Relation`, `State`, `Event` (with `Timestamp`, `Instant`, `Interval`, `PositiveDuration`, `TemporalExtent`)

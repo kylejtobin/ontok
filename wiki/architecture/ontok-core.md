@@ -26,14 +26,14 @@ verified:
 
 # ontok-core
 
-Core is the ONTOK language: twelve primitives that say what kinds of things an organization contains, and `Work`. An organization refines them into its own kinds, and its programs construct facts that satisfy those kinds. Core depends on Pydantic and on nothing else, and knows no module, no transport, and no application. Read this page before any structural change and edit the section the change lands in, in the same commit as the specification and the code; Git is the history.
+Core is the ONTOK language: thirteen primitives that say what kinds of things an organization contains. An organization refines them into its own kinds, and its programs construct facts that satisfy those kinds. Core depends on Pydantic and on nothing else, and knows no module, no transport, and no application. Read this page before any structural change and edit the section the change lands in, in the same commit as the specification and the code; Git is the history.
 
 ## Constraints
 
-- Core has exactly twelve primitives: `Node`, `Connection`, `Entity`, `Relation`, `State`, `Event`, `Role`, `Goal`, `Action`, `Concept`, `Context`, `Rule`. `Work` is realized beside them. Everything else in Core makes their construction complete: `NodeId`, `RelationId`, `Timestamp`, `PositiveDuration`, `Instant`, `Interval`, `TemporalExtent`, `States`.
+- Core has exactly thirteen primitives: `Node`, `Connection`, `Entity`, `Relation`, `State`, `Event`, `Role`, `Goal`, `Action`, `Work`, `Concept`, `Context`, `Rule`. Everything else in Core makes their construction complete: `NodeId`, `RelationId`, `Timestamp`, `PositiveDuration`, `Instant`, `Interval`, `TemporalExtent`, `States`.
 - The class is the kind and the value is the fact. A domain meaning is a refinement. No instance-level `type`, `kind`, `TypeId`, URI, or registry field exists.
 - Every Core declaration is a frozen Pydantic model with `extra="forbid"`: the primitives and the temporal values as `BaseModel`, the identifiers and `States` as `RootModel`.
-- The specification `spec/ontok-core.xml` and this realization are one executable specification. A change to meaning touches both in one commit; a change to implementation alone leaves the specification untouched.
+- The specification `spec/ontok-core.xml` is written from this realization and the two are one executable specification. A change to meaning touches both in one commit; a change to implementation alone leaves the specification untouched.
 - Core imports no ONTOK package. The workspace's import-linter layers contract places every module above `ontok.core`.
 - Python 3.13 or later; `pydantic>=2.9,<3`.
 
@@ -109,9 +109,9 @@ Each is stated as it stands. To change one, change it here, in the specification
 
 **The class is the kind.** Domain semantics are refinements of the primitives, because a refinement is checked by the type system while a `type` field is checked by nothing. This rules out instance-level `type`, `kind`, `TypeId`, URI, and registry fields, and rules out any registry that maps names to classes.
 
-**Core has twelve primitives and grows by modules.** Core holds only the semantics every organization shares, because a kernel that fits every organization must be small enough to refine without contradiction. A capability becomes part of ONTOK by composing the kernel in a module with a one-way dependency on Core. This rules out adding a primitive because a capability needs representation.
+**Core has thirteen primitives and grows by modules.** Core holds only the semantics every organization shares, because a kernel that fits every organization must be small enough to refine without contradiction. A capability becomes part of ONTOK by composing the kernel in a module with a one-way dependency on Core. This rules out adding a primitive because a capability needs representation.
 
-**Work is realized beside the primitives.** `Action` is declared work and `Work` is its persistent undertaking, because declaring a doing and undertaking it are different facts with different lifetimes: an `Action` is stated once and a `Work` persists while it is carried out. This rules out treating a declaration as its own execution.
+**Work is a primitive.** `Action` is declared work and `Work` is its persistent undertaking, because declaring a doing and undertaking it are different facts with different lifetimes: an `Action` is stated once and a `Work` persists while it is carried out. This rules out treating a declaration as its own execution.
 
 **An Event is an occurrence, not a cause.** `Event` carries when it occurred and nothing about why, because temporal sequence does not imply causation. Core declares no causal kind; a causal link is a `Relation` whose endpoints are `Event`s, declared by the module or organization that needs it. This rules out inferring cause from order.
 
@@ -154,7 +154,7 @@ Each is stated as it stands. To change one, change it here, in the specification
 
 | Term | Meaning |
 |------|---------|
-| Primitive | One of the twelve kinds Core declares; everything an organization contains is a refinement of one. |
+| Primitive | One of the thirteen kinds Core declares; everything an organization contains is a refinement of one. |
 | Family | The grouping of primitives by what they distinguish: structure, reality, agency, meaning, governance. |
 | Kind | A class: a primitive or a refinement of one. |
 | Fact | A value: a constructed instance of a kind. |
