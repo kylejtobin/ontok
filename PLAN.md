@@ -110,7 +110,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 7. **Node ids.**
    - Minting reads randomness, so it is an effect. The minting interpreter composes UUIDv7s from a millisecond timestamp and 74 random bits drawn from its capability. Python 3.13 has no `uuid7`.
    - `MintIdentity(at)` returns `Minted(at, id)`: a source's or a projection's id.
-   - `MintEmissionIdentities(at)` returns `EmissionMinted(at, id, emitted)`: a policy's id, and `EmittedIdentities`, exactly 1,000 ids, each the minted id with a position from 0 to 999 in its low 16 bits.
+   - `MintEmissionIdentities(at)` returns `EmissionMinted(at, id, emitted)`: a policy's id, and `EmittedIdentities`, exactly 1,000 independently minted UUIDv7s, one for each position from 0 to 999.
    - An emitted event's id is `emitted` at its position, a selection by a proven key.
    - A retry mints a different id. Its emissions carry new ids but share the same causation, so they share a publication identity with the first attempt.
 8. **Occurrence.** A delivery reads the clock once. Its reaction, and every event it emits, occurs at that instant.
@@ -161,41 +161,38 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
     - A retry never appends a second copy, even when other events have landed in the stream since the first attempt.
 16. There is no deduplication window. Idempotence holds for the life of the log.
-17. **Events carry state, not their prior.** Succession is enforced by `ExpectSequence`.
-    - Every event in a stream carries the complete state of that stream after it, as a value object.
-    - A policy's prior state is the state on the latest event in its trigger's stream, read through `EveryType`.
-    - The policy constructs its successor state from that prior and its trigger, in the state-transition shape, and the event it emits into that stream carries the successor state.
+17. **Events do not embed their prior.** Succession is enforced by `ExpectSequence`.
+    - A stream's state is the fold of its history, a transformation on the history collection; no event stores it.
+    - A policy reads its trigger's stream history through `ReadStream`, folds it into its prior state, and constructs its successor in the state-transition shape.
     - The state-transition shape with a `prior` field is in memory, never a wire shape.
 
 ### Reads
 
-18. **The latest read.** `ReadLatest(stream, scope)` names a stream and a scope. The scope is `OfType(event_type)`, which reads the latest event of one type in the stream, or `EveryType`, which reads the latest event in the stream. `ReadAddress(address)` names one address.
+18. **The latest read.** `ReadLatest(stream, scope)` names a stream and a scope. The scope is `OfType(event_type)`, which reads the latest event of one type in the stream, or `EveryType`, which reads the latest event in the stream. `ReadAddress(address)` names one address. `ReadStream(stream)` names a stream's whole history.
     - The outcome is `Retained(event, sequence)`, the event and its log sequence.
     - When nothing matches, the outcome is `Absent(stream)`.
     - On provider failure, the outcome is `Unavailable(reason)`.
+    - A history read's outcome is `History`, the collection of the stream's events as `Retained` in log order with at least one member, or `Absent(stream)`, or `Unavailable(reason)`. `History` derives `latest`, its last member, a selection by a proven key.
 19. **Reads see the log as it is now.** The provider has no latest read as of an earlier sequence.
-20. **Readings.** A read interpreter executes a tuple of authorized reads and returns `Readings`, the collection of their outcomes in the same order. Readings derive their `completeness` through the ordered union `AllRead | SomeUnavailable`. `AllRead` requires every outcome to be `Retained` or `Absent`. The outcomes are constructed instances, so its only refusal is an `Unavailable` outcome, which is what `SomeUnavailable` means.
+20. **Readings.** A read interpreter executes a tuple of authorized reads and returns `Readings`, the collection of their outcomes in the same order. Readings derive their `completeness` through the ordered union `AllRead | SomeUnavailable`. `AllRead` requires every outcome to be `Retained`, `History`, or `Absent`. The outcomes are constructed instances, so its only refusal is an `Unavailable` outcome, which is what `SomeUnavailable` means.
 
 ### Subscriptions
 
 21. **A subscription is a reaction kind's standing interest** in every event type it consumes, together with its progress.
-    - It is the value `Subscription(work_type, event_types, start)`.
+    - It is the value `Subscription(work_type, event_types)`.
     - Each reaction kind has exactly one.
     - It exists independently of any process.
     - Its name and its deliver group are the reaction kind's `work_type`, so each delivery reaches exactly one running instance.
     - Its deliver subject is `_INBOX.ontok.<work_type>`, fixed so that a callback stays bound across deletion and recreation.
     - `EnsureSubscription(subscription)` creates it, and creating it again with the same configuration is idempotent. `DeleteSubscription(subscription)` removes it.
-22. **Start point:** from the beginning of the log or from the next event.
+22. **Start:** every subscription delivers from the beginning of the log.
 23. **Order:** one event at a time, in log order across all of the reaction kind's consumed types.
 24. **Storage is infrastructure,** declared by the deployment and not created by the program. `ontok-nats` states the required stream specification, and its conformance suite verifies a deployment against it.
-25. **The specification** of a reaction kind is declared once, at the composition root, and is the single home of the kind's `work_type`, its consumed event types, its start point, and its `Action`.
-    - A `PolicySpecification(work_type, event_types, start, action)` is for a policy.
-    - A `JoinSpecification(work_type, first, second, start, action)` is for a join. It derives `event_types` from its two types.
-    - A `ProjectionSpecification(work_type, event_types, start, action)` is for a projection.
-    - Each derives `subscription` and `scopes`, the reads every delivery of that kind requires:
-      - `EveryType` for a policy;
-      - `OfType` for `first`, then for `second`, for a join;
-      - none for a projection.
+25. **The specification** of a reaction kind is declared once, at the composition root, and is the single home of the kind's `work_type`, its consumed event types, and its `Action`.
+    - A `PolicySpecification(work_type, event_types, action)` is for a policy.
+    - A `JoinSpecification(work_type, first, second, action)` is for a join. It derives `event_types` from its two types.
+    - A `ProjectionSpecification(work_type, event_types, action)` is for a projection.
+    - Each derives `subscription`.
     - The action is the kind's single `Action` refinement instance, with its `Role` and `Goal` refinement instances, each with a fixed UUIDv7 id.
 
 ### Delivery
@@ -224,7 +221,12 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
 ### The delivery's facts
 
-31. **`Inquiry(specification, arrival)`** derives the delivery's `reads`: one `ReadLatest` for each of the arrival's streams and each of the specification's scopes. An `Unconstructible` arrival has no streams, so it authorizes no reads.
+31. **The inquiry** derives the delivery's `reads` from its specification and arrival. Each kind's callback constructs its own inquiry:
+    - `PolicyInquiry(specification, arrival)` derives one `ReadStream` for each of the arrival's streams;
+    - `JoinInquiry(specification, arrival)` derives, for each of the arrival's streams, a `ReadLatest` of `OfType(first)`, then of `OfType(second)`;
+    - `ProjectionInquiry(specification, arrival)` derives no reads.
+
+    An `Unconstructible` arrival has no streams, so it authorizes no reads. Each inquiry's reads are one action meaning, so each is executed by one read interpreter.
 32. **`Attempt(inquiry, minted, readings)`** is one delivery attempt: the inquiry, the delivery's minted instant and ids, and the readings of its inquiry.
 33. **The response** is constructed from the attempt through the `TypeAdapter` the application declares beside the reaction kind's response union. That union is a plain union:
     - the reaction kind's own variants, each requiring a `Delivery` arrival, its trigger's event types, and `AllRead` readings;
@@ -272,7 +274,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `expectation` and `events`, for a variant that emits;
     - the application's effect actions, for a kind with effects.
 42. **Emission expectations.**
-    - A policy reads the latest event of any type in its trigger's stream. Its batch's first event is its emission into that stream and expects that event's sequence.
+    - A policy's batch's first event is its emission into its trigger's stream and expects the sequence of its history's `latest`.
     - A batch whose first event goes to another stream, and every join batch, expects `ExpectAny`.
 43. **Joins.**
     - A join consumes two event types in one stream and reads the latest event of each.
@@ -292,7 +294,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 47. **Replay is three effects, each authorized by the previous outcome,** declared by the application:
     - `DeleteSubscription(subscription)` returns `SubscriptionDeleted(subscription)`;
     - the application's fact holding that outcome authorizes the projection's reset;
-    - the reset's outcome authorizes `EnsureSubscription` of the same subscription from the beginning of the log, which returns `SubscriptionEnsured`.
+    - the reset's outcome authorizes `EnsureSubscription` of the same subscription, which returns `SubscriptionEnsured`.
 
     Each step derives its successor through a failure-exhaustive ordered union, so an unavailable step authorizes nothing further.
 48. **The in-flight race is harmless.** A delivery still running during replay can write after the reset. Its write sets its key to the value at its sequence, which is the value replay itself produces there. Acknowledgements sent to a deleted consumer are dropped.
@@ -307,7 +309,9 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
     The callback's input is the delivery route. Its body is the delivery's terminal expression.
 
-    Registration does not depend on the ensure outcome: the deliver subject is fixed, so the callback is bound whether or not the consumer exists. The startup expression's result is each kind's `SubscriptionEnsured | Unavailable`. An unavailable ensure leaves that kind without deliveries, and restarting the process is the deployment's liveness.
+    The callback is registered once at the composition root. The deliver subject is fixed, so registration holds whether or not the consumer exists.
+
+    The startup expression evaluates each kind's `EnsureSubscription` and constructs its terminal fact, `StartupSubscriptions`, the collection of each kind's ensure outcome in specification order. The ensure outcome is `SubscriptionEnsured(subscription)` or `EnsureUnavailable(subscription, reason)`, coupling the subscription because the startup fact reads it. The application's startup egress route projects that fact. An unavailable ensure authorizes nothing further, and that kind receives no deliveries.
 51. **A source publishes through one terminal expression** at its composition root, nesting by data dependency:
     - the clock interpreter and the minting interpreter;
     - the source's event, and `Origination(event, expectation)`, with `ExpectAny` or with `ExpectSequence` from a `ReadLatest` nested ahead of it;
@@ -364,6 +368,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `OfType` reads `event.<stream>.<event_type>.>`;
     - `EveryType` reads `event.<stream>.>`;
     - `ReadAddress` reads the address's exact subject.
+    - `ReadStream` pages through a batched direct get, `{"seq": <next>, "next_by_subj": "event.<stream>.>", "batch": <n>}`, from sequence 1. The first page requests one message. Each later page requests the `Nats-Num-Pending` of the previous reply and starts after its last sequence, and the history ends at a `204 EOB` with no pending messages.
 
     A 404 status is `Absent`.
 64. **Consumer settings:**
@@ -375,7 +380,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `max_ack_pending` of 1;
     - an acknowledgement wait of 30 seconds;
     - unlimited deliveries;
-    - deliver-all or deliver-new, following the start point;
+    - deliver-all;
     - no flow control.
 
     `EnsureSubscription` creates it through the JetStream consumer API. The composition root binds the callback with the client's `subscribe_bind` and manual acknowledgement, which subscribes with the deliver group as its queue.
@@ -405,6 +410,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 - **Names.** NATS stream and consumer names cannot contain whitespace, `.`, `*`, `>`, path separators, or non-printable characters. The documentation recommends alphanumeric characters, `-`, and `_`.
 - **Acknowledgement payloads.** `nats-py` acknowledges with `+ACK`, `-NAK`, and `+TERM` on the message's reply subject.
 - **Push binding.** `nats-py`'s `subscribe_bind` binds a callback to an existing consumer's deliver subject and subscribes with the consumer's `deliver_group` as its queue. `ConsumerConfig` carries `filter_subjects`, `deliver_subject`, `deliver_group`, `max_ack_pending`, `ack_wait`, and `deliver_policy`.
+- **Batched history reads.** `JSApiMsgGetRequest` carries `batch` with `next_by_subj`, which may be a wildcard (`jetstream_api.go` lines 673 to 695). Each batched reply carries `Nats-Num-Pending` and `Nats-Last-Sequence`, and a batch ends with `204 EOB`, which also carries `Nats-Num-Pending` (`stream.go` lines 5916 to 5918). A batch stops early at `max_bytes`, which defaults to the server's maximum pending size.
 - **Terminate advisory.** A terminate publishes on `$JS.EVENT.ADVISORY.CONSUMER.MSG_TERMINATED.<stream>.<consumer>` for operators.
 
 ## Constructs
@@ -424,7 +430,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | Declaration | Construct | Rule | File |
 |---|---|---|---|
 | `StreamKey`, `EventTypeName`, `WorkTypeName`, `LogSequence`, `Ordinal` (0 to 999), `DeliveryToken`, `FailureReason` | semantic scalars | one atomic meaning over a primitive | `type.py` |
-| `StartPoint`, `Disposition` | `StrEnum` scalars | a uniform closed vocabulary | `type.py` |
+| `Disposition` | `StrEnum` scalar | a uniform closed vocabulary | `type.py` |
 | `Causation(work_type, trigger, position)` | value object; `trigger` is the trigger's `NodeId` | value object references an identified concept by its identity scalar | `value.py` |
 | `OriginAddress`, `EmissionAddress`, and `Address` with `AddressConstructor` | value objects and an ordered union | decision 9 proves the sole refusal | `value.py` |
 | `ExpectAny`, `ExpectSequence`, and `Expectation` | value objects and a union built in code | alternatives with different facts | `value.py` |
@@ -441,12 +447,14 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 | `AppendAnswer(answer)`, `ContestedAppend`, `UncontestedAppend` | concept model and ordered union; derives `reads` | decision 15 proves the sole refusal | `publication.py` |
 | `AppendSettlement(answer, readings)` | concept model; derives `outcome` | a durable fact | `publication.py` |
 | `AlreadyPresent(append, existing)`, `Conflict(append)`, `AppendUnavailable` | concept models; the outcome is the ordered union in decision 15 | each attempt's refusals mean the next | `publication.py` |
-| `ReadLatest(stream, scope)`, `ReadAddress(address)` | actions | one intended external effect | `read.py` |
-| the read outcome `Retained \| Absent \| Unavailable` | union | alternatives with different facts | `read.py` |
+| `ReadLatest(stream, scope)`, `ReadAddress(address)`, `ReadStream(stream)` | actions | one intended external effect | `read.py` |
+| the read outcome `Retained \| Absent \| Unavailable`, and the history outcome `History \| Absent \| Unavailable` | unions | alternatives with different facts | `read.py` |
+| `History` | collection of `Retained`, at least one, in log order; derives `latest` | order carries meaning; a fold's input | `read.py` |
 | `Readings` with `AllRead \| SomeUnavailable` | collection and ordered union | order carries meaning; decision 20 proves the sole refusal | `read.py` |
-| `Subscription(work_type, event_types, start)` | value object | exhausted by field equality | `subscription.py` |
+| `Subscription(work_type, event_types)` | value object | exhausted by field equality | `subscription.py` |
 | `EnsureSubscription`, `DeleteSubscription` | actions | one intended external effect | `subscription.py` |
-| `SubscriptionEnsured`, `SubscriptionDeleted` | concept models coupling their subscription; each outcome is a union with `Unavailable` | outcomes a later construction reads | `subscription.py` |
+| `SubscriptionEnsured`, `EnsureUnavailable`, `SubscriptionDeleted` | concept models coupling their subscription; the ensure outcome is `SubscriptionEnsured \| EnsureUnavailable`; the delete outcome is `SubscriptionDeleted \| Unavailable` | outcomes a later construction reads | `subscription.py` |
+| `StartupSubscriptions` | collection of ensure outcomes in specification order | the startup expression's terminal fact | `subscription.py` |
 | `Delivery(token, event, sequence)` | concept model; `event` is Core `Event`; derives `address` and `streams` | a durable fact | `delivery.py` |
 | `Conclusion(authorized, settlement)` with `Durable \| NotDurable` | concept model and ordered union; derives `disposition` | decision 37 proves the sole refusal | `delivery.py` |
 | the arrival `Delivery \| Unconstructible` with `ArrivalConstructor` | ordered union | decision 26 proves the sole refusal | `delivery.py` |
@@ -469,8 +477,8 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 
 | Declaration | Construct | Rule | File |
 |---|---|---|---|
-| `PolicySpecification`, `JoinSpecification`, `ProjectionSpecification` | concept models holding the kind's `Action`; each derives `event_types`, `subscription`, and `scopes` | a durable fact holding a concept | `specification.py` |
-| `Inquiry(specification, arrival)` | transformation; derives `reads` | constructed inputs determine one output | `attempt.py` |
+| `PolicySpecification`, `JoinSpecification`, `ProjectionSpecification` | concept models holding the kind's `Action`; each derives `event_types` and `subscription` | a durable fact holding a concept | `specification.py` |
+| `PolicyInquiry`, `JoinInquiry`, `ProjectionInquiry` | transformations; each derives `reads` | constructed inputs determine one output | `attempt.py` |
 | `Attempt(inquiry, minted, readings)` | concept model | a durable fact | `attempt.py` |
 | `Deferred`, `Rejected` | concept models; each derives `batch` and `disposition` | variants with different facts | `response.py` |
 | `Reaction(Work)` | concept model adding `work_type` and `at` | a refinement that only adds facts | `reaction.py` |
@@ -482,7 +490,8 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 Each application declares, because each holds its own types:
 - its event-type `StrEnum`, its events, its event union, and that union's `TypeAdapter`;
 - its delivery route, `DeliveryRoute`, nesting the provider's metadata foreign model and `UnknownEvent`;
-- its `ReadLatestInterpreter` and `ReadAddressInterpreter`, over direct-get reply foreign models that hold its event union;
+- its `ReadLatestInterpreter`, `ReadAddressInterpreter`, and `ReadStreamInterpreter`, over direct-get reply foreign models that hold its event union;
+- its startup egress route;
 - its reaction kinds, their variants, and their `Action`, `Role`, and `Goal` refinements;
 - each kind's response union with its `TypeAdapter`;
 - its effect actions, their outcome unions, and their interpreters;
@@ -507,6 +516,7 @@ Each application declares, because each holds its own types:
      - an atomic batch landing whole or not at all;
      - a contested batch settling as already present;
      - the latest read of one type, of every type, and of an exact address, and `Absent`;
+     - a history read across several pages, and `Absent`;
      - push ordering across several filter subjects;
      - one delivery per event across two instances in the deliver group;
      - durability across a restart;
