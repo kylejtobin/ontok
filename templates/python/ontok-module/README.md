@@ -80,8 +80,8 @@ When developing this package inside the ONTOK workspace:
 
 When creating a new ONTOK module:
 
-- [ ] **1. Specification:** Ensure an implementation-independent specification exists in `spec/` and is accessible via canonical GitHub URL.
-- [ ] **2. Realization:** Render this template into `packages/python/__DISTRIBUTION_NAME__`. Implement types using Type Construction Architecture (TCA) under `src/ontok/__MODULE_NAME__/`.
+- [ ] **1. Realization:** Render this template into `packages/python/__DISTRIBUTION_NAME__`. Declare the module's kinds under `src/ontok/__MODULE_NAME__/` through the python-development standard; the module is its own specification.
+- [ ] **2. Architecture page:** Write `wiki/architecture/__DISTRIBUTION_NAME__.md` stating the module as it is.
 - [ ] **3. Semantic Test:** Write tests under `tests/` proving domain invariants through value construction, not substrate trivia.
 - [ ] **4. Artifact Test:** Build the wheel and source distribution with `uv build --package __DISTRIBUTION_NAME__ --no-sources`. Prove that the wheel excludes tests, the sdist includes tests, `py.typed` is present, and no `ontok/__init__.py` exists.
 - [ ] **5. Workspace Registration:** Register the package in the root `pyproject.toml` workspace members, update `uv.lock`, and ensure all workspace quality gates pass.

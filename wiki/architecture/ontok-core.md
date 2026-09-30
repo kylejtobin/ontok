@@ -6,9 +6,6 @@ generated:
   by: claude-code/claude-fable-5-1
   at: 2026-09-30T17:22:29Z
 sources:
-  - id: spec
-    resource: ../../spec/ontok-core.xml
-    title: Core specification
   - id: package
     resource: ../../packages/python/ontok-core/src/ontok/core
     title: Core realization
@@ -26,14 +23,14 @@ verified:
 
 # ontok-core
 
-Core is the ONTOK language: thirteen primitives that say what kinds of things an organization contains. An organization refines them into its own kinds, and its programs construct facts that satisfy those kinds. Core depends on Pydantic and on nothing else, and knows no module, no transport, and no application. Read this page before any structural change and edit the section the change lands in, in the same commit as the specification and the code; Git is the history.
+Core is the ONTOK language: thirteen primitives that say what kinds of things an organization contains. An organization refines them into its own kinds, and its programs construct facts that satisfy those kinds. Core depends on Pydantic and on nothing else, and knows no module, no transport, and no application. Read this page before any structural change and edit the section the change lands in, in the same commit as the code; Git is the history.
 
 ## Constraints
 
 - Core has exactly thirteen primitives: `Node`, `Connection`, `Entity`, `Relation`, `State`, `Event`, `Role`, `Goal`, `Action`, `Work`, `Concept`, `Context`, `Rule`. Everything else in Core makes their construction complete: `NodeId`, `RelationId`, `Timestamp`, `PositiveDuration`, `Instant`, `Interval`, `TemporalExtent`, `States`.
 - The class is the kind and the value is the fact. A domain meaning is a refinement. No instance-level `type`, `kind`, `TypeId`, URI, or registry field exists.
 - Every Core declaration is a frozen Pydantic model with `extra="forbid"`: the primitives and the temporal values as `BaseModel`, the identifiers and `States` as `RootModel`.
-- The specification `spec/ontok-core.xml` is written from this realization and the two are one executable specification. A change to meaning touches both in one commit; a change to implementation alone leaves the specification untouched.
+- The module is the specification. No separate specification artifact exists; a portable rendering is projected from the module when another realization needs one.
 - Core imports no ONTOK package. The workspace's import-linter layers contract places every module above `ontok.core`.
 - Python 3.13 or later; `pydantic>=2.9,<3`.
 
@@ -57,10 +54,8 @@ C4Context
 ```mermaid
 C4Container
   System_Boundary(core, "ontok-core") {
-    Container(spec, "spec/ontok-core.xml", "XML", "The meaning of each primitive, independent of any language")
-    Container(package, "ontok.core", "Python 3.13, Pydantic 2", "The realization: one frozen model per construct, in the PEP 420 namespace ontok")
+    Container(package, "ontok.core", "Python 3.13, Pydantic 2", "One frozen model per construct, in the PEP 420 namespace ontok; the module is the specification")
   }
-  Rel(spec, package, "Is realized by, one to one")
 ```
 
 The primitives form five families, and refinement is the only relationship among them:
@@ -93,7 +88,7 @@ classDiagram
   Entity <|-- Work
 ```
 
-Structure is `Node` and `Connection`. Reality is `Entity`, `Relation`, `State`, and `Event`. Agency is `Role`, `Goal`, `Action`, and `Work`. Meaning is `Concept` and `Context`. Governance is `Rule`. Each primitive's meaning is stated once, in the specification, and its docstring in the realization is that sentence.
+Structure is `Node` and `Connection`. Reality is `Entity`, `Relation`, `State`, and `Event`. Agency is `Role`, `Goal`, `Action`, and `Work`. Meaning is `Concept` and `Context`. Governance is `Rule`. Each primitive's meaning is stated once, as its docstring.
 
 ## Construction
 
@@ -105,7 +100,7 @@ A fact comes to exist in three moves and no others.
 
 ## Decisions
 
-Each is stated as it stands. To change one, change it here, in the specification, and in the code in one commit.
+Each is stated as it stands. To change one, change it here and in the code in one commit.
 
 **The class is the kind.** Domain semantics are refinements of the primitives, because a refinement is checked by the type system while a `type` field is checked by nothing. This rules out instance-level `type`, `kind`, `TypeId`, URI, and registry fields, and rules out any registry that maps names to classes.
 
@@ -129,7 +124,7 @@ Each is stated as it stands. To change one, change it here, in the specification
 
 **A Rule binds a Context and an Action.** Governance is a constraint on declared work within a situation, composed from the same primitives as everything else, because a rule that lives outside the model cannot be checked against it. This rules out a separate rule engine with its own vocabulary.
 
-**The specification defines the language; the realization makes it usable.** `spec/ontok-core.xml` and `ontok.core` are one executable specification and change together, because ONTOK is not defined by Python and a realization that drifts from its specification defines nothing. This rules out Python as the semantic authority.
+**The module is the specification.** `ontok.core` is the one statement of Core's meaning, and any portable rendering is a projection of it, because a specification kept beside its realization is a second copy that can only drift. This rules out a hand-written specification and rules out a rendering that is not derived.
 
 **Modules depend one way.** Core imports no ONTOK package; every module imports Core and never learns of what imports it, because an imported meaning that knew its importers would no longer be universal. This rules out Core referring to any module.
 
@@ -159,6 +154,5 @@ Each is stated as it stands. To change one, change it here, in the specification
 | Kind | A class: a primitive or a refinement of one. |
 | Fact | A value: a constructed instance of a kind. |
 | Refinement | A subclass that adds fields to a kind and inherits everything else unchanged. |
-| Realization | A language's implementation of a specification, in which construction makes invalid declarations unrepresentable. |
-| Executable specification | A module's XML specification and its realization taken together. |
+| Realization | A language's implementation of a module's meaning, in which construction makes invalid declarations unrepresentable. |
 | Module | A distribution that composes Core into a standard capability and depends on Core one way. |
