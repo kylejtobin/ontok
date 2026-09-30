@@ -68,7 +68,7 @@ Semantic Topology evolves through explicit validated change. Models may infer or
 
 Universal organizational semantics belong in `ontok-core`. Reusable domain or standards-specific semantics belong in modules. Organization-specific semantics belong in organization-specific refinements.
 
-`ontok-vsm` and `ontok-scim` extend Core through explicit one-way dependencies. Do not move module concepts into Core simply because they are useful.
+A module extends Core through an explicit one-way dependency. Do not move module concepts into Core simply because they are useful.
 
 ## The module is the specification
 
@@ -82,9 +82,9 @@ The Python realization lives under `packages/python/` as a `uv` workspace using 
 
 ```text
 ontok-core  → ontok.core
-ontok-vsm   → ontok.vsm
-ontok-scim  → ontok.scim
 ```
+
+A module's distribution `ontok-<module>` provides `ontok.<module>` and joins the workspace and the import-linter layers contract when it merges.
 
 Every model carries the mandatory configuration of the python-development standard, inherited unchanged by every refinement. Prefer construction-time invalidity over conventions documented only in prose.
 

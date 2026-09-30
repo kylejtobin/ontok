@@ -5,3 +5,5 @@ __pycache__/
 .ruff_cache/
 .lake/
 dist/
+.pytest_cache/
+.import_linter_cache/
