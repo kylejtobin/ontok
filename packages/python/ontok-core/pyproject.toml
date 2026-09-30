@@ -30,7 +30,7 @@ import-namespaces = ["ontok"]
 Homepage = "https://github.com/kyzobuild/ontok"
 Repository = "https://github.com/kyzobuild/ontok"
 Issues = "https://github.com/kyzobuild/ontok/issues"
-Specification = "https://github.com/kyzobuild/ontok/blob/main/spec/ontok-core.xml"
+Specification = "https://github.com/kyzobuild/ontok/tree/main/packages/python/ontok-core/src/ontok/core"
 
 [build-system]
 requires = ["uv_build>=0.12.12,<0.13"]

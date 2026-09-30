@@ -1,14 +1,14 @@
 # AGENTS.md
 
-ONTOK is a modular declarative semantic language for making organizational meaning explicit, portable, and executable. This repository contains the implementation-independent specifications, documentation, and language realizations for ONTOK Core and its modules.
+ONTOK is a modular declarative semantic language for making organizational meaning explicit, portable, and executable. This repository contains ONTOK Core, its modules, and their documentation. Each module is its own specification.
 
 ## Project knowledge
 
-`wiki/` is what this project knows that the specification and the code do not say, and the project-knowledge protocol is always on. At the start of every task orient from `wiki/index.md` and read only the pages the task needs; open a directory index before a page. Give delegated agents the pages they need and require their report to name evidence, contradictions, and a knowledge delta. While working, notice what becomes durable knowledge. Before finishing, reconcile it into the page that owns it, or say there is no delta. The wiki never restates a specification or a source file. Read `wiki/architecture/<module>.md` before any structural change to that module; state the change as its design, by construct, before any task list or code; and edit the page's section and the code in the same commit, with the specification where the module has one. A page states what is and carries no status: a design becomes a page only in the commit that makes every sentence of it true. The standard for every page is `.agents/skills/project-knowledge`.
+`wiki/` is what this project knows that the code does not say, and the project-knowledge protocol is always on. At the start of every task orient from `wiki/index.md` and read only the pages the task needs; open a directory index before a page. Give delegated agents the pages they need and require their report to name evidence, contradictions, and a knowledge delta. While working, notice what becomes durable knowledge. Before finishing, reconcile it into the page that owns it, or say there is no delta. The wiki never restates a source file. Read `wiki/architecture/<module>.md` before any structural change to that module; state the change as its design, by construct, before any task list or code; and edit the page's section and the code in the same commit. A page states what is and carries no status: a design becomes a page only in the commit that makes every sentence of it true. The standard for every page is `.agents/skills/project-knowledge`.
 
 ## Start with the model
 
-Do not infer ONTOK's semantics from implementation convenience. The specification defines the language; code realizes it.
+Do not infer ONTOK's semantics from implementation convenience. The module defines the language; a program refines it.
 
 ONTOK Core has exactly thirteen primitives:
 
@@ -68,13 +68,11 @@ Semantic Topology evolves through explicit validated change. Models may infer or
 
 Universal organizational semantics belong in `ontok-core`. Reusable domain or standards-specific semantics belong in modules. Organization-specific semantics belong in organization-specific refinements.
 
-`ontok-vsm` and `ontok-scim` extend Core through explicit one-way dependencies. Do not move module concepts into Core simply because they are useful.
+A module extends Core through an explicit one-way dependency. Do not move module concepts into Core simply because they are useful.
 
-## Specification and implementation
+## The module is the specification
 
-Each module has an implementation-independent specification. The Python packages are executable realizations of those specifications, not their source of semantic authority.
-
-When changing semantics, update the specification and realization together. When changing implementation without changing semantics, preserve the specification.
+Each module's meaning is stated once, in the module: the class is the kind, the docstring is the meaning, the fields are the mandatory dependencies. No specification is written beside it. A portable rendering, for another language's realization or for interchange, is projected from the module when a consumer needs one and is never kept in the repository.
 
 Prefer the smallest model that makes the intended distinction explicit. Avoid generic metadata bags, speculative abstraction layers, duplicate representations, and convenience fields whose only purpose is to recover meaning already carried by the class structure.
 
@@ -84,11 +82,11 @@ The Python realization lives under `packages/python/` as a `uv` workspace using 
 
 ```text
 ontok-core  → ontok.core
-ontok-vsm   → ontok.vsm
-ontok-scim  → ontok.scim
 ```
 
-Use strict Pydantic models. Preserve immutability and `extra="forbid"` unless the semantics explicitly require otherwise. Prefer construction-time invalidity over conventions documented only in prose.
+A module's distribution `ontok-<module>` provides `ontok.<module>` and joins the workspace and the import-linter layers contract when it merges.
+
+Every model carries the mandatory configuration of the python-development standard, inherited unchanged by every refinement. Prefer construction-time invalidity over conventions documented only in prose.
 
 Tests should prove semantic invariants, not merely exercise lines of code.
 

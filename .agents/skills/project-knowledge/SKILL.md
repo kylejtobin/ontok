@@ -5,13 +5,13 @@ description: The always-active protocol for wiki/, the project's durable shared 
 
 # Project Knowledge
 
-`wiki/` is what this project knows that the specification and the code do not say. The specification in `spec/` defines each module's meaning; the packages realize it; tests and tool configuration are the evidence about what runs. The wiki is the evidence about how each module is composed and why, what must hold, and what an operator does. A page that restates a specification or a source file is deleted.
+`wiki/` is what this project knows that the code does not say. Each module is its own specification; tests and tool configuration are the evidence about what runs. The wiki is the evidence about how each module is composed and why, what must hold, and what an operator does. A page that restates a source file is deleted.
 
 ## The loop
 
 1. **Orient.** Read `wiki/index.md`, then the index of each directory the task touches, then only the pages the task needs.
 2. **Observe.** While working, note every durable thing learned, changed, or contradicted: a decision, a procedure, a rule, a constraint a module carries.
-3. **Reconcile.** Before finishing, update the page that owns the knowledge, create the smallest page when none owns it, or state that there is no knowledge delta. The wiki change is part of the same commit as the code and specification change.
+3. **Reconcile.** Before finishing, update the page that owns the knowledge, create the smallest page when none owns it, or state that there is no knowledge delta. The wiki change is part of the same commit as the code change.
 
 Before delegating, give the subagent the paths of the pages it needs. Require its report to name its evidence, any contradiction with the wiki, and a knowledge delta of `add`, `update`, `deprecate`, `conflict`, or `none`.
 
@@ -25,11 +25,11 @@ A page goes in the directory whose question it answers. A new directory is added
 
 ## What is knowledge
 
-Write what changes future building, decisions, operations, or verification. Update before adding. One subject is one page. Never store transcripts, scratch work, source-tree inventories, primitives or fields the specification already declares, dependency tables that restate a `pyproject.toml`, speculative taxonomy, or private reasoning. Rationale lives only in an architecture page's decisions, one sentence per choice; everywhere else a decision's result is stated on the page that owns it.
+Write what changes future building, decisions, operations, or verification. Update before adding. One subject is one page. Never store transcripts, scratch work, source-tree inventories, primitives or fields the code already declares, dependency tables that restate a `pyproject.toml`, speculative taxonomy, or private reasoning. Rationale lives only in an architecture page's decisions, one sentence per choice; everywhere else a decision's result is stated on the page that owns it.
 
 ## A page states what is
 
-A page carries no status. Nothing planned, pending, deferred, or partially built appears on any page. A design becomes a page only in the commit that makes every sentence of it true, so a page is either wholly true of the specification and the code or it is a lie to be corrected in the next commit. There is no third state.
+A page carries no status. Nothing planned, pending, deferred, or partially built appears on any page. A page is written as the thing built, and the work is complete when every sentence of it is true.
 
 ## Standard
 

@@ -1,43 +1,23 @@
 # ontok-core
 
-The universal ONTOK organizational type system.
+The universal ONTOK organizational type system: thirteen primitives that say what kinds of things an organization contains, realized as strict, frozen Pydantic models in the `ontok` namespace.
 
-- **Specification:** [Canonical Specification](https://github.com/kyzobuild/ontok/blob/main/spec/ontok-core.xml)
-- **Status:** Development Status :: 3 - Alpha
-- **Python Support:** >=3.13 (tested on 3.13 and 3.14)
-- **Shared Namespace:** `ontok` (PEP 420 implicit namespace)
-- **Provided Import:** `ontok.core`
+- **Import:** `ontok.core`
+- **Python:** 3.13 or later
+- **Depends on:** `pydantic>=2.9,<3`, and no other ONTOK package
+- **Status:** alpha
+- **Architecture:** [wiki/architecture/ontok-core.md](https://github.com/kyzobuild/ontok/blob/main/wiki/architecture/ontok-core.md)
 
----
-
-## Installation
+## Install
 
 ```bash
-pip install ontok-core
+pip install "ontok-core @ git+https://github.com/kyzobuild/ontok.git#subdirectory=packages/python/ontok-core"
 ```
 
----
-
-## Responsibility
-
-`ontok-core` realizes ONTOK's universal organizational type system and depends on no other ONTOK package. Extension packages may depend on Core; Core never depends on an extension.
-
----
-
-## Realization
-
-ONTOK Core has exactly thirteen primitives:
-
-- **Structure:** `Node`, `Connection` (with `NodeId`)
-- **Reality:** `Entity`, `Relation`, `State`, `Event` (with `Timestamp`, `Instant`, `Interval`, `PositiveDuration`, `TemporalExtent`)
-- **Agency:** `Role`, `Goal`, `Action`, `Work`
-- **Meaning:** `Concept`, `Context`, `States`
-- **Governance:** `Rule`
-
-The class is the kind; the value is the fact. Domain semantics are expressed through refinement:
+## Use
 
 ```python
-from ontok.core import Action, Entity, Goal, Role, Work
+from ontok.core import Action, Entity, Goal, NodeId, Role
 
 
 class Customer(Entity): ...
@@ -50,16 +30,17 @@ class AccountReviewed(Goal): ...
 
 
 class ReviewAccount(Action): ...
+
+
+review = ReviewAccount(
+    id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b"),
+    role=AccountManager(id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2c")),
+    goal=AccountReviewed(id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2d")),
+)
 ```
 
----
+The class is the kind; the value is the fact; a `ValidationError` is the absence of a fact. The module is its own specification.
 
-## Package Contract
+## Package
 
-This package adheres to the canonical ONTOK package contract:
-
-- **Namespace:** `ontok` is a PEP 420 implicit namespace; no `ontok/__init__.py` exists.
-- **Imports:** Declared via `import-names = ["ontok.core"]` and `import-namespaces = ["ontok"]`.
-- **Build Backend:** `uv_build>=0.12.12,<0.13`. Tests are included in sdist and excluded from wheels.
-- **Dependencies:** Strictly bounded runtime dependencies (`pydantic>=2.9,<3`). No dependency on other ONTOK packages.
-- **Distribution Authority:** Distribution metadata is the sole version authority.
+`ontok` is a PEP 420 implicit namespace: no `ontok/__init__.py` exists in any distribution. The wheel carries the source, `py.typed`, `LICENSE`, and `NOTICE`; distribution metadata is the sole version authority.
