@@ -29,7 +29,7 @@ Write what changes future building, decisions, operations, or verification. Upda
 
 ## A page states what is
 
-A page carries no status. Nothing planned, pending, deferred, or partially built appears on any page. A design becomes a page only in the commit that makes every sentence of it true, so a page is either wholly true of the code or it is a lie to be corrected in the next commit. There is no third state.
+A page carries no status. Nothing planned, pending, deferred, or partially built appears on any page. A page is written as the thing built, and the work is complete when every sentence of it is true.
 
 ## Standard
 
