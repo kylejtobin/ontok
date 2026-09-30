@@ -60,7 +60,8 @@ C4Container
     Container(stream, "stream", "Python", "StreamSpecification, the required EVENTS stream as a value")
     Container(subject, "subject", "Python", "The subjects and filter subjects an address, a claim, and a subscription realize")
     Container(model, "model", "Python", "Foreign models: acknowledgements, API errors, message metadata, direct-get replies, EndOfBatch")
-    Container(interpreter, "interpreter", "Python", "Append, EnsureSubscription, DeleteSubscription, Acknowledge")
+    Container(interpreter, "interpreter", "Python", "Append, ReadLatest, ReadAddress, ReadHistory, Settle, EnsureSubscription, DeleteSubscription, Acknowledge")
+    Container(bucket, "bucket", "Python", "A read model as a key-value bucket: EnsureReadModel, ResetReadModel, WriteState")
   }
   ContainerQueue(server, "NATS JetStream", "nats:2.14.6-alpine", "EVENTS: file storage, limits retention with no limits, deny delete and purge, allow direct, allow atomic")
   Rel(interpreter, server, "One client, bound at the application's composition root")
@@ -101,15 +102,16 @@ One per Events action meaning; each holds its action and the one client, compose
 - **`DeleteSubscriptionInterpreter`** deletes that consumer: `SubscriptionDeleted`, also when the consumer was already gone, or `Unavailable`.
 - **`AcknowledgeInterpreter`** publishes to the delivery token: `+ACK` for Complete, `-NAK` for Retry, `+TERM` for Reject; `Acknowledged`, or `Unavailable`.
 - **`ReadLatestInterpreter`** requests `$JS.API.DIRECT.GET.EVENTS` in the body form, `{"last_by_subj": "<subject>"}`, and constructs `Retained` from a message reply through the event constructor, or `Absent` from `NoResults`. **`ReadHistoryInterpreter`** subscribes an inbox, publishes `{"seq": <next>, "next_by_subj": "event.<about>.>", "batch": <n>}` with that inbox as its reply, and constructs from the replies it receives until `EndOfBatch`: the first page requests one message, each later page requests the previous `EndOfBatch`'s `Nats-Num-Pending` from after its `Nats-Last-Sequence`, and the history ends at an `EndOfBatch` with nothing pending. **`SettleInterpreter`** reads an answer's addresses the same way and returns `Settled`.
+- **A read model is a key-value bucket** named `READ_<work_type>`, one value per key, kept on file, keyed by the entity's id. **`EnsureReadModelInterpreter`** creates it, idempotently. **`ResetReadModelInterpreter`** deletes and recreates it. **`WriteStateInterpreter`** keeps at the key a `Cell(sequence, state)`, serialized at the interpreter: a missing key is created; a kept cell's sequence is lifted through `KeptSequence` and compared through the ordered union `Newer | Stale`, where `Newer` is proven by a positive `Advance` from the kept sequence to the write's; a newer write is a compare-and-set on the key's revision, and a stale one is `StateStale`. A lost race on the revision is `StateUnavailable`, and the delivery retries.
 - **The callback** is bound by the application with `subscribe_bind` on the consumer's deliver subject with manual acknowledgement, which subscribes with the deliver group as its queue, so each occurrence reaches exactly one running instance and the binding survives the consumer's deletion and recreation.
 
 ### The program identity
 
-Publish on `event.>`; `$JS.API.INFO`; `$JS.API.STREAM.INFO.EVENTS`; `$JS.API.DIRECT.GET.EVENTS`; `$JS.API.CONSUMER.CREATE.EVENTS` and `$JS.API.CONSUMER.CREATE.EVENTS.>`; `$JS.API.CONSUMER.INFO.EVENTS.*` and `$JS.API.CONSUMER.DELETE.EVENTS.*`; `$JS.ACK.EVENTS.>` and `$JS.ACK.*.*.EVENTS.>`. Subscribe on `_INBOX.>`. Nothing else. These permissions are the realization of the authority of the roles the program's responsibilities act through.
+Publish on `event.>`; `$JS.API.INFO`; `$JS.API.STREAM.INFO.*`; `$JS.API.DIRECT.GET.EVENTS` and `$JS.API.DIRECT.GET.*.>`; `$JS.API.CONSUMER.CREATE.EVENTS` and `$JS.API.CONSUMER.CREATE.EVENTS.>`; `$JS.API.CONSUMER.INFO.EVENTS.*` and `$JS.API.CONSUMER.DELETE.EVENTS.*`; `$JS.ACK.EVENTS.>` and `$JS.ACK.*.*.EVENTS.>`; `$KV.*.>`; `$JS.API.STREAM.CREATE.*` and `$JS.API.STREAM.DELETE.*`. Denied: `$JS.API.STREAM.CREATE.EVENTS`, `DELETE.EVENTS`, `UPDATE.EVENTS`, `PURGE.EVENTS`, and `MSG.DELETE.EVENTS`. Subscribe on `_INBOX.>`. Nothing else. These permissions are the realization of the authority of the roles the program's responsibilities act through: it may administer its own read models and can never administer memory.
 
 ### Files
 
-`config.py`, `stream.py`, `subject.py`, `model.py`, `interpreter.py`. The conformance suite, its testcontainers fixture, the server's configuration with the account and both identities, and a test-owned ontology live in the package's `tests/ontok_nats`, a package named so that every module's tests collect in one workspace run.
+`config.py`, `stream.py`, `subject.py`, `model.py`, `interpreter.py`, `bucket.py`. The conformance suite, its testcontainers fixture, the server's configuration with the account and both identities, and a test-owned ontology live in the package's `tests/ontok_nats`, a package named so that every module's tests collect in one workspace run.
 
 ## Decisions
 
@@ -133,7 +135,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **Acknowledgement is a publish to the token.** Complete, Retry, and Reject are `+ACK`, `-NAK`, and `+TERM` on the message's reply subject, because those are the three dispositions the server knows and the token is where it listens. This rules out any fourth disposition and rules out acknowledging through the message handle inside a domain value.
 
-**The stream is infrastructure and conformance is a test.** The deployment declares `EVENTS`; the module states what it must be and proves a deployment against it, because a program that creates its own storage holds an authority its role does not have. This rules out stream administration in any program identity.
+**Memory is infrastructure; read models are the program's.** The deployment declares `EVENTS` and the identity is denied every administration of it, while the identity may create and delete other streams, because a read model is a stream the program owns and must reset for replay, and NATS permissions match whole tokens, so a bucket cannot be scoped by prefix. A program in the account can therefore reach a sibling program's read model; the account is the trust boundary, as it is for memory itself. This rules out stream administration of memory by any program identity.
 
 **Header text becomes a sequence through JSON construction.** A `Nats-Sequence` header constructs `LogSequence` through `model_validate_json`, because the text is a JSON number and strict construction from JSON is the admitted path, while lax mode is not. This rules out `int()` and rules out a lax foreign model.
 
@@ -153,6 +155,8 @@ Each is verified at the cited source; none is inferred.
 - **An error reply looks like an acknowledgement.** A refused publish answers `{"error": {...}, "stream": "EVENTS", "seq": 0}`, so the presence of `stream` and `seq` proves nothing; only the absence of `error` does.
 - **A batch of one is a batch.** A single message carrying `Nats-Batch-Id`, `Nats-Batch-Sequence: 1`, and `Nats-Batch-Commit: 1` lands and is acknowledged with `batch` and `count`; a repeated claim on it is refused with 10071.
 - **A subscription sees all of memory.** Deliver-all delivers every earlier occurrence of a consumer's kinds about every entity, so a program that binds a new responsibility receives the past first.
+- **Permissions match whole tokens.** A subject permission's `*` matches one whole token and cannot match a prefix within one, so a stream named `KV_READ_x` cannot be granted by `KV_READ_*`; authority over read models is granted on `STREAM.CREATE.*` and `STREAM.DELETE.*` with memory denied by name.
+- **Key-value semantics.** A bucket is the stream `KV_<bucket>` on subjects `$KV.<bucket>.>` with one message per subject; a key's revision is the stream sequence; `create` claims expected sequence 0 and `update` claims the last revision; a get is a direct get on the key's subject.
 - **JetStream is not ready the instant the server is.** After a restart the client reconnects before the account answers; a request made before then times out, and a client that must not lose an append waits for `account_info` first.
 - **Body form required.** `nats-py`'s `get_msg(direct=True, subject=...)` sends `$JS.API.DIRECT.GET.<stream>.<subject>`, and a request subject cannot contain a wildcard.
 - **Consumers.** Several `filter_subjects` are supported from server 2.10; a consumer is created on `$JS.API.CONSUMER.CREATE.<stream>`, so its permission is scoped by stream; `ConsumerConfig` carries `filter_subjects`, `deliver_subject`, `deliver_group`, `max_ack_pending`, `ack_wait`, and `deliver_policy`.
@@ -180,7 +184,9 @@ The conformance suite starts `nats:2.14.6-alpine@sha256:ad7a43eb7e3337c3c38ce5d7
 | The server restarts | The consumer resumes from where it acknowledged |
 | Complete, Retry, and Reject are acknowledged | The message is done, redelivered, and terminated respectively |
 | The consumer is deleted and recreated | The callback bound to the fixed deliver subject keeps receiving |
-| The program identity creates a stream | Refused by permissions |
+| The program identity deletes or purges memory | Refused by permissions |
+| A projection writes a newer condition, then an older one, then a newer one | Written, stale with the recorded sequence, written; the key keeps the latest |
+| A read model is reset, and ensured twice | It is empty, and it is one bucket |
 
 ## Glossary
 
@@ -197,3 +203,5 @@ The conformance suite starts `nats:2.14.6-alpine@sha256:ad7a43eb7e3337c3c38ce5d7
 | Token | The message's reply subject, where an acknowledgement is published. |
 | Program identity | The NATS user a program runs as; its permissions realize its roles' authority. |
 | Conformance | The suite that proves a deployment and the server behave as this page states. |
+| Bucket | The key-value store that is a projection's read model: stream `KV_READ_<work_type>`, one cell per entity. |
+| Cell | What a bucket keeps at a key: an entity's condition and the sequence it is as of. |

@@ -10,7 +10,7 @@ import pytest
 import pytest_asyncio
 from nats.aio.client import Client
 from nats.aio.msg import Msg
-from nats.js.api import ConsumerConfig, StreamConfig
+from nats.js.api import ConsumerConfig
 from pydantic import AliasPath, BaseModel, ConfigDict, Field, Json
 from testcontainers.core.container import DockerContainer
 
@@ -242,11 +242,11 @@ async def test_deleting_a_subscription_that_is_gone_is_gone(program: Client) -> 
     assert isinstance(deleted, SubscriptionDeleted)
 
 
-async def test_the_program_identity_cannot_administer_streams(program: Client) -> None:
+async def test_the_program_identity_cannot_administer_memory(program: Client) -> None:
     with pytest.raises(nats.errors.Error):
-        await program.jetstream().add_stream(  # pyright: ignore[reportUnknownMemberType]
-            StreamConfig(name="ROGUE", subjects=["rogue.>"])
-        )
+        await program.jetstream().delete_stream(STREAM)  # pyright: ignore[reportUnknownMemberType]
+    with pytest.raises(nats.errors.Error):
+        await program.jetstream().purge_stream(STREAM)  # pyright: ignore[reportUnknownMemberType]
 
 
 async def test_memory_and_progress_survive_a_server_restart(

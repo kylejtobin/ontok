@@ -38,6 +38,17 @@ from ontok.events.memory import Readings as Readings
 from ontok.events.memory import ReadLatest as ReadLatest
 from ontok.events.memory import Retained as Retained
 from ontok.events.occurrence import Lineage as Lineage
+from ontok.events.projection import EnsureReadModel as EnsureReadModel
+from ontok.events.projection import ReadModelEnsured as ReadModelEnsured
+from ontok.events.projection import ReadModelEnsuring as ReadModelEnsuring
+from ontok.events.projection import ReadModelReset as ReadModelReset
+from ontok.events.projection import ReadModelResetting as ReadModelResetting
+from ontok.events.projection import ResetReadModel as ResetReadModel
+from ontok.events.projection import StateStale as StateStale
+from ontok.events.projection import StateUnavailable as StateUnavailable
+from ontok.events.projection import StateWriting as StateWriting
+from ontok.events.projection import StateWritten as StateWritten
+from ontok.events.projection import WriteState as WriteState
 from ontok.events.recording import AlreadyPresent as AlreadyPresent
 from ontok.events.recording import Answer as Answer
 from ontok.events.recording import Append as Append
