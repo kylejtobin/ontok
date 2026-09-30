@@ -5,7 +5,7 @@ from pydantic import AliasPath, BaseModel, ConfigDict, Field, RootModel, TypeAda
 from ontok.core import Action, Event, NodeId, Timestamp
 from ontok.events.memory import ReadHistory, Readings, ReadLatest, Retained
 from ontok.events.recording import Append
-from ontok.events.type import DeliveryToken, Disposition, LogSequence
+from ontok.events.type import DeliveryToken, Digest, Disposition, LogSequence
 from ontok.events.value import (
     Address,
     AddressConstructor,
@@ -153,6 +153,20 @@ class ReadClock(BaseModel):
         validate_default=True,
         revalidate_instances="never",
     )
+
+
+class MintContentIdentity(BaseModel):
+    """The effect of deriving the identity of a thing that is its content."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    digest: Digest
 
 
 class MintEmissionIdentities(BaseModel):

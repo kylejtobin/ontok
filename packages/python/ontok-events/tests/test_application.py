@@ -1,11 +1,11 @@
 """An application's simplest declarations prove the module's chain without a provider."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from pydantic import AliasPath, BaseModel, ConfigDict, Field, TypeAdapter
 
-from ontok.core import Event, Goal, Instant, NodeId, Role, Timestamp
+from ontok.core import Event, Goal, Instant, NodeId, PositiveDuration, Role, Timestamp
 from ontok.events import (
     Acknowledge,
     Append,
@@ -92,6 +92,7 @@ INVOICE = Responsibility(
     goal=OrderInvoiced(id=identifier(32)),
     work_type=WorkTypeName("shop-Invoicing"),
     consumes=(EventTypeName(Kind.PLACED),),
+    patience=PositiveDuration(timedelta(seconds=30)),
 )
 INVOICING = Policy(id=identifier(33), action=INVOICE)
 
@@ -233,6 +234,7 @@ COUNT = Responsibility(
     goal=OrderInvoiced(id=identifier(42)),
     work_type=WorkTypeName("shop-Counting"),
     consumes=(EventTypeName(Kind.PLACED),),
+    patience=PositiveDuration(timedelta(seconds=30)),
 )
 COUNTING = Projection(id=identifier(43), action=COUNT)
 

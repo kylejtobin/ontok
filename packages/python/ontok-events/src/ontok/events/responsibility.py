@@ -1,12 +1,13 @@
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
-from ontok.core import Action
+from ontok.core import Action, PositiveDuration
 from ontok.events.type import EventTypeName, FailureReason, WorkTypeName
 from ontok.events.value import Unavailable
 
 
 class Subscription(BaseModel):
-    """A responsibility's standing interest in its occurrences, from the beginning of memory."""
+    """A responsibility's standing interest in its occurrences, from the beginning of memory, and
+    how long its work may take."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -18,6 +19,7 @@ class Subscription(BaseModel):
 
     work_type: WorkTypeName
     event_types: tuple[EventTypeName, ...] = Field(min_length=1)
+    patience: PositiveDuration
 
 
 class Responsibility(Action):
@@ -25,6 +27,7 @@ class Responsibility(Action):
 
     work_type: WorkTypeName
     consumes: tuple[EventTypeName, ...] = Field(min_length=1)
+    patience: PositiveDuration
 
     @property
     def event_types(self) -> tuple[EventTypeName, ...]:
@@ -32,7 +35,9 @@ class Responsibility(Action):
 
     @property
     def subscription(self) -> Subscription:
-        return Subscription(work_type=self.work_type, event_types=self.event_types)
+        return Subscription(
+            work_type=self.work_type, event_types=self.event_types, patience=self.patience
+        )
 
 
 class ConjunctionResponsibility(Action):
@@ -41,6 +46,7 @@ class ConjunctionResponsibility(Action):
     work_type: WorkTypeName
     first: EventTypeName
     second: EventTypeName
+    patience: PositiveDuration
 
     @property
     def event_types(self) -> tuple[EventTypeName, ...]:
@@ -48,7 +54,9 @@ class ConjunctionResponsibility(Action):
 
     @property
     def subscription(self) -> Subscription:
-        return Subscription(work_type=self.work_type, event_types=self.event_types)
+        return Subscription(
+            work_type=self.work_type, event_types=self.event_types, patience=self.patience
+        )
 
 
 class EnsureSubscription(BaseModel):

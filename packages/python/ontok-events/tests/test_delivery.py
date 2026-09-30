@@ -1,12 +1,12 @@
 """A response is selected by the facts an occasion carries, on the paths that are not the work's."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Literal
 
 from pydantic import AliasPath, Field, TypeAdapter
 
-from ontok.core import Event, Goal, Instant, NodeId, Role, Timestamp
+from ontok.core import Event, Goal, Instant, NodeId, PositiveDuration, Role, Timestamp
 from ontok.events import (
     AddressConstructor,
     ArrivalConstructor,
@@ -107,6 +107,7 @@ SHIP = ConjunctionResponsibility(
     work_type=WorkTypeName("shop-Shipping"),
     first=EventTypeName(Kind.PLACED),
     second=EventTypeName(Kinds.PAID),
+    patience=PositiveDuration(timedelta(seconds=30)),
 )
 WORK = Conjunction(id=identifier(23), action=SHIP)
 TOKEN = DeliveryToken("$JS.ACK.EVENTS.shop-Shipping.1.7.1.0.0")

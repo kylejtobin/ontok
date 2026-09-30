@@ -14,7 +14,7 @@ That is what makes the meaning software-addressable. Applications, agents, and m
 
 | Family | Primitives | What they distinguish |
 |--------|------------|-----------------------|
-| Structure | `Node`, `Connection` | A distinct thing, and a link between two things that exist independently of it |
+| Structure | `Node`, `Connection` | A distinct thing, identified by a UUID minted (v7) or derived from its content (v8), and a link between two things that exist independently of it |
 | Reality | `Entity`, `Relation`, `Causation`, `State`, `Event` | A thing that persists, an identifiable association, one occurrence being because of another, a condition that goes on a thing, an occurrence |
 | Agency | `Role`, `Goal`, `Action`, `Work` | An organizational capacity, an intended end, declared doing through a role toward a goal, the persistent undertaking of it |
 | Meaning | `Concept`, `Context` | What a declaration means, and a situation constituted by states |

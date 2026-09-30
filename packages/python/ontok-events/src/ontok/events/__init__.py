@@ -10,6 +10,7 @@ from ontok.events.delivery import DeferredSecond as DeferredSecond
 from ontok.events.delivery import Delivery as Delivery
 from ontok.events.delivery import EmittedIdentities as EmittedIdentities
 from ontok.events.delivery import EmittingResponse as EmittingResponse
+from ontok.events.delivery import MintContentIdentity as MintContentIdentity
 from ontok.events.delivery import MintedOccasion as MintedOccasion
 from ontok.events.delivery import MintEmissionIdentities as MintEmissionIdentities
 from ontok.events.delivery import Occasion as Occasion
@@ -20,6 +21,9 @@ from ontok.events.delivery import Rejected as Rejected
 from ontok.events.delivery import Response as Response
 from ontok.events.delivery import Unconstructible as Unconstructible
 from ontok.events.interpreter import ClockInterpreter as ClockInterpreter
+from ontok.events.interpreter import (
+    MintContentIdentityInterpreter as MintContentIdentityInterpreter,
+)
 from ontok.events.interpreter import (
     MintEmissionIdentitiesInterpreter as MintEmissionIdentitiesInterpreter,
 )
@@ -64,6 +68,7 @@ from ontok.events.responsibility import SubscriptionDeleted as SubscriptionDelet
 from ontok.events.responsibility import SubscriptionEnsured as SubscriptionEnsured
 from ontok.events.type import ClaimRefusal as ClaimRefusal
 from ontok.events.type import DeliveryToken as DeliveryToken
+from ontok.events.type import Digest as Digest
 from ontok.events.type import Disposition as Disposition
 from ontok.events.type import EventTypeName as EventTypeName
 from ontok.events.type import FailureReason as FailureReason

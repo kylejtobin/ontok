@@ -29,7 +29,7 @@ Events is the module that makes the language executable. An organization remembe
 - Frozen values hold no client, process, or handle. SDK objects never cross the module's boundary.
 - Programming defects are not caught; a defect crashes the process and redelivery makes it visible.
 - Under `from_attributes` construction, class identity is not a fact; only attributes are. Every variant of an ordered union constructed from facts carries an attribute no other variant carries, and the variant that carries none is tried last.
-- Python 3.14 or later, because emission identities are minted through `uuid.uuid7`. `ontok-core` and Pydantic; no other dependency.
+- Python 3.14 or later, because emission identities are minted through `uuid.uuid7` and content identities through `uuid.uuid8`. `ontok-core` and Pydantic; no other dependency.
 
 ## Context
 
@@ -66,8 +66,8 @@ The module's constructs, by family:
 
 ```mermaid
 classDiagram
-  class Responsibility { work_type: WorkTypeName; consumes: tuple~EventTypeName~ }
-  class ConjunctionResponsibility { work_type: WorkTypeName; first: EventTypeName; second: EventTypeName }
+  class Responsibility { work_type: WorkTypeName; consumes: tuple~EventTypeName~; patience: PositiveDuration }
+  class ConjunctionResponsibility { work_type: WorkTypeName; first: EventTypeName; second: EventTypeName; patience: PositiveDuration }
   class Policy
   class Conjunction
   class Projection
@@ -118,9 +118,9 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 
 ### Responsibilities
 
-- **A responsibility** is declared work that responds to occurrences: a refinement of Core `Action` carrying `work_type: WorkTypeName`, its interchange identity, which travels in provenance, subjects, and the provider's names. The application refines it and refines `Role` and `Goal`, so a kind of work says who does what, through which office, toward which end, in response to what. There is no separate specification of a kind of work; the `Action` is it.
+- **A responsibility** is declared work that responds to occurrences: a refinement of Core `Action` carrying `work_type: WorkTypeName`, its interchange identity, which travels in provenance, subjects, and the provider's names, and `patience: PositiveDuration`, how long its work may take, which bounds a delivery and is what the provider's acknowledgement wait realizes. The application refines it and refines `Role` and `Goal`, so a kind of work says who does what, through which office, toward which end, in response to what. There is no separate specification of a kind of work; the `Action` is it.
 - **Its kinds.** `Responsibility` adds `consumes`, at least one event type in declared order, and is what a policy or a projection undertakes; the two are one declaration, because what differs between them is the work, not the responsibility. `ConjunctionResponsibility` adds `first` and `second`, the two event types whose conjunction it acts on. Each derives `event_types` and `subscription`.
-- **`Subscription(work_type, event_types)`** is a responsibility's standing interest in those occurrences, from the beginning of memory, independent of any process. Its name and deliver group are the `work_type`, so each delivery reaches exactly one running instance; its deliver subject is fixed, so a callback stays bound across deletion and recreation. Value object.
+- **`Subscription(work_type, event_types, patience)`** is a responsibility's standing interest in those occurrences, from the beginning of memory, independent of any process, and how long its work may take. Its name and deliver group are the `work_type`, so each delivery reaches exactly one running instance; its deliver subject is fixed, so a callback stays bound across deletion and recreation. Value object.
 - **`EnsureSubscription(subscription)`** and **`DeleteSubscription(subscription)`**. Actions. Outcomes: `SubscriptionEnsured(subscription) | EnsureUnavailable(subscription, reason)`, coupling the subscription because the startup fact reads it; `SubscriptionDeleted(subscription) | Unavailable(reason)`.
 
 ### Work
@@ -129,7 +129,7 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 
 ### Delivery
 
-- **`Delivery(token, event, sequence)`** is memory handing a remembered occurrence to a responsibility, possibly more than once; the token is the provider's acknowledgement address. Concept model; derives `retained`, `address`, and `abouts`, the entity concerned. **`Unconstructible(token, body)`**: what arrived is not one of this program's occurrences, and the body it lifts from the route's `event` is the witness, never read. The arrival is their ordered union, constructed from the application's route with `from_attributes=True` through `ArrivalConstructor`; `Delivery.event` refuses only a `MessageBody`, and `Unconstructible.body` accepts only one, so each is proven by an attribute the other lacks. A delivery token never enters a response.
+- **`Delivery(token, event, sequence)`** is memory handing a remembered occurrence to a responsibility, possibly more than once, within the responsibility's patience; the token is the provider's acknowledgement address. Concept model; derives `retained`, `address`, and `abouts`, the entity concerned. **`Unconstructible(token, body)`**: what arrived is not one of this program's occurrences, and the body it lifts from the route's `event` is the witness, never read. The arrival is their ordered union, constructed from the application's route with `from_attributes=True` through `ArrivalConstructor`; `Delivery.event` refuses only a `MessageBody`, and `Unconstructible.body` accepts only one, so each is proven by an attribute the other lacks. A delivery token never enters a response.
 - **The application's route** is one model, `DeliveryRoute`: the token through the alias `reply`, the sequence through an `AliasPath` into the provider's message metadata, and the body through the alias `data` as the ordered union `Json[<its event union>] | MessageBody`, where `MessageBody` is this module's scalar over an arrival's bytes and every refusal of the program's events means the body is not one of them. Only `Unconstructible` holds the body, as its witness.
 - **`Consultation(work, arrival)`** is what memory a work consults for an arrival. `PolicyConsultation` derives one `ReadHistory` for each of the arrival's `abouts`; `ConjunctionConsultation` derives, for each, a `ReadLatest` of `OfType(first)` then `OfType(second)`; `ProjectionConsultation` derives none. An `Unconstructible` arrival has no `abouts`, so it authorizes no reads. Transformations. Each read executes through its own one-action interpreter; `Readings` constructs at the composition root from their outcomes.
 - **`Occasion(consultation, consulted, at)`** is the situation work faces: what was asked of memory, what memory answered, and when. `MintedOccasion(Occasion)` adds `emitted: EmittedIdentities` for a policy or a conjunction. Concept model; derives `work` and `action`. This is where `Context` and `Rule` attach when the organization's governance is evaluated.
@@ -143,11 +143,11 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 
 - **A source publishes** through one terminal expression at its composition root: the clock; its occurrence and an `Append` of that one event, with `ExpectAny` or with `ExpectSequence` from a `ReadLatest` nested ahead of it and Complete as its disposition; the append interpreter; the settle interpreter, whose `Settled` durability is the publication's result. Whether a source is itself declared `Work` is the application's modeling.
 - **Replay** is three facts, each authorizing the next through a failure-exhaustive ordered union: `SubscriptionDeleted` authorizes the read model's reset, an application action; the reset's outcome authorizes `EnsureSubscription` of the same subscription; that returns `SubscriptionEnsured`. An unavailable step authorizes nothing further. A delivery still running during replay writes the value at its sequence, which is the value replay produces there; acknowledgements sent to a deleted subscription are dropped.
-- **Startup.** The composition root binds configuration and the provider client; the clock, mint, and provider interpreters, and the application's read, settle, and effect interpreters; and for each responsibility its `Work`, its `EnsureSubscription`, and its callback, registered once with the provider's push binding on the fixed deliver subject with manual acknowledgement. The startup expression's terminal fact is `StartupSubscriptions`, each responsibility's ensure outcome in declared order; a responsibility whose ensure is unavailable receives no deliveries, and what the deployment does with the fact is its liveness.
+- **Startup.** The composition root binds configuration, the provider client, and the application's event constructor; the clock, mint, and provider interpreters, including the provider's read and settle interpreters over that constructor, and the application's effect interpreters; and for each responsibility its `Work`, its `EnsureSubscription`, and its callback, registered once with the provider's push binding on the fixed deliver subject with manual acknowledgement. The startup expression's terminal fact is `StartupSubscriptions`, each responsibility's ensure outcome in declared order; a responsibility whose ensure is unavailable receives no deliveries, and what the deployment does with the fact is its liveness.
 
 ### Identity and time
 
-- **`ReadClock`** through the standard library's `datetime` class, returning `Timestamp`. **`MintEmissionIdentities`** through `uuid.uuid7`, returning `EmittedIdentities`, exactly a thousand independently minted `NodeId`s, one for each `Ordinal` from 0 to 999; each reply lifts through `Uuid`, the source-owned scalar over the standard library's `UUID`, and serializes at the interpreter. Actions carrying nothing, declared beside the occasion that needs them; one interpreter each; their outcomes are plain because their capabilities have no documented failures.
+- **`MintContentIdentity(digest)`** through the standard library's `uuid.uuid8`, returning the `NodeId` of a thing that is its content: the same bytes are the same thing wherever they arrive, so a source that publishes the same content twice claims the same address and settles the second as `AlreadyPresent`. `Digest` is the SHA-256 of the content in lowercase hex. **`ReadClock`** through the standard library's `datetime` class, returning `Timestamp`. **`MintEmissionIdentities`** through `uuid.uuid7`, returning `EmittedIdentities`, exactly a thousand independently minted `NodeId`s, one for each `Ordinal` from 0 to 999; each reply lifts through `Uuid`, the source-owned scalar over the standard library's `UUID`, and serializes at the interpreter. Actions carrying nothing, declared beside the occasion that needs them; one interpreter each; their outcomes are plain because their capabilities have no documented failures.
 - **Scalars.** `EventTypeName`, `WorkTypeName`, `LogSequence`, `Ordinal` (0 to 999), `DeliveryToken`, `FailureReason`; `Disposition` as a `StrEnum` of Complete, Retry, Reject.
 
 ### Files
@@ -232,7 +232,9 @@ The module's own tests construct its claims on their refusal paths and need no p
 | Policy | Work that derives occurrences from an entity's condition and an occurrence. |
 | Conjunction | Work that derives occurrences when two kinds of occurrence about one entity have both happened. |
 | Projection | Work that maintains a read model and derives no occurrences. |
-| Subscription | A responsibility's standing interest in its occurrences, from the beginning of memory. |
+| Subscription | A responsibility's standing interest in its occurrences, from the beginning of memory, with how long its work may take. |
+| Patience | How long a responsibility's work may take: the bound on a delivery, realized as the provider's acknowledgement wait. |
+| Digest | The SHA-256 of some content; the identity of a thing that is its content is derived from it as a UUIDv8. |
 | Delivery | Memory handing a remembered occurrence to a responsibility, with the provider's acknowledgement token. |
 | Arrival | What reached the callback: a delivery, or something unconstructible. |
 | Consultation | What memory a work consults for an arrival. |

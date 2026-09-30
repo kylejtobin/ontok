@@ -43,6 +43,16 @@ class Ordinal(RootModel[int]):
     root: int = Field(ge=0, le=999)
 
 
+class Digest(RootModel[str]):
+    """The SHA-256 of some content in lowercase hex: the identity of a thing that is its content."""
+
+    model_config = ConfigDict(
+        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
+    )
+
+    root: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class DeliveryToken(RootModel[str]):
     """The provider's acknowledgement address for one delivery."""
 
