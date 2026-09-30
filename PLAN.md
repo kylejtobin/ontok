@@ -106,13 +106,13 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 4. **Stream.** Every publishable kind derives `stream`, a `StreamKey` naming what the event is about. A stream key is a canonical lowercase UUIDv7 or a lowercase hex digest. An event that is its own stream uses its own id.
 5. **Two acts of publication.**
    - An **originating** event is created by a source. It carries no causation.
-   - An **emitted** event is derived by a reaction. It carries `causation: Causation`, which holds the reaction kind's `work_type`, the `trigger` (the id of the event that caused it), and its `position` among the reaction's emissions.
+   - An **emitted** event is derived by a reaction. It carries its causation: `Causation(work_type, trigger, position)` for a policy, naming the reaction kind, the id of the event that caused it, and its position among the emissions; `JoinCausation(work_type, first, second, position)` for a join, naming the ids of both events it joined, in the join's declared type order. Causation is a relation to the events that caused the emission, so a join names both.
 6. **Publication identity.** An originating event's publication identity is its id. An emitted event's publication identity is its causation.
 7. **Node ids.**
    - Minting reads randomness, so it is an effect. The minting interpreters' capability is the standard library's `uuid.uuid7`, which composes a UUIDv7 from the current millisecond and random bits. Its reply lifts through `Uuid`, the source-owned scalar over the standard library's `UUID`, and is serialized at the interpreter into `NodeId`.
    - `MintIdentity` carries nothing and returns `Minted(id)`: a source's or a projection's id.
    - `MintEmissionIdentities` carries nothing and returns `EmissionMinted(id, emitted)`: a policy's id, and `EmittedIdentities`, exactly 1,000 independently minted UUIDv7s, one for each position from 0 to 999.
-   - An emitted event's id is `emitted` at its position, a selection by a proven key.
+   - An emitted event's id is `emitted` at its position. The key is proven because the collection's length is exactly the ordinal's range; a per-kind count would leave the selection unproven, and deriving the ids from the reaction's id is outside the transformation algebra.
    - A retry mints a different id. Its emissions carry new ids but share the same causation, so they share a publication identity with the first attempt.
 8. **Occurrence.** A delivery reads the clock once. Its reaction, and every event it emits, occurs at that instant.
 
@@ -120,7 +120,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
 9. **An address locates one publication in the log.**
    - An originating event's address is `OriginAddress(stream, event_type, id)`.
-   - An emitted event's address is `EmissionAddress(stream, event_type, causation)`.
+   - An emitted event's address is `EmissionAddress(stream, event_type, causation)`, where `causation` is `Causation | JoinCausation`.
    - `Address` is the ordered union `EmissionAddress | OriginAddress`, constructed from an event instance with `from_attributes=True` through `AddressConstructor`. The only refusal of `EmissionAddress` over a constructed event is an event with no `causation`, which decision 5 makes an originating event.
    - An address holds at most one event.
 10. Accounts isolate organizations, so addresses carry no organization prefix.
@@ -139,7 +139,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - `AppendBatch(expectation, events, authorized)` appends a reaction's emitted events atomically: every event lands or none does.
       - The expectation applies to the first event. Every later event expects `ExpectAny`.
       - `events` holds from 0 to 1,000 events, the provider's atomic batch limit.
-      - `authorized` is the disposition the authorizing response derived. The effect does not send it; it is a completed value carried so that the settlement's disposition follows from the written batch.
+      - `authorized` is the disposition the authorizing response derived. The action carries it forward exactly as the skill's `PersistPosition` carries the position: the response is constructed once, flows into this action, and the settlement that couples the action carries its authority to the conclusion.
 13. **The settling read.** Each append action derives `reads`, the address reads that settle a contest over it.
     - `Origination` derives one `ReadAddress` of its event's address.
     - `AppendBatch` derives `lead` through the ordered union `Lead | NoLead`, constructed from the batch with `from_attributes=True`. `Lead` reads the first event through `AliasPath("events", 0)` and derives one `ReadAddress` of its address. The events are constructed instances, so its only refusal is an empty tuple, which is what `NoLead`, deriving no reads, means. `AppendBatch.reads` is its lead's reads.
@@ -283,7 +283,7 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
     - A join consumes two event types in one stream and reads the latest event of each.
     - Its variants take those readings by position.
     - `Joined` requires both retained. Each `Partial` variant requires one absent, and emits nothing.
-    - Because reads see the log as it is now, a lagging subscription can construct `Joined` at both arrivals. `Joined` therefore takes as its causation trigger the later of its two events by log sequence. It derives `later` as `(self.first, self.second)[max(0, min(1, self.second.sequence.root - self.first.sequence.root))]`: arithmetic, an extremum over `int`, and selection by an index proven to be 0 or 1 over a pair. The two sequences belong to different events, so their difference is never 0. Both arrivals produce the same publication, and the log keeps one.
+    - Because reads see the log as it is now, a lagging subscription can construct `Joined` at both arrivals. `Joined` emits with `JoinCausation` naming both events in declared type order, so both arrivals produce the same publication identity and the log keeps one.
     - A join across streams, or over more than two event types, is out of scope.
 44. **Causation.** An emitted event references its trigger and the reaction kind that derived it. Reactions are never published. Causation is a relation between events and is never inferred from temporal order.
 45. **Effects.**
@@ -353,7 +353,8 @@ A program that uses only `ontok-core`, `ontok-bus`, `ontok-nats`, and `ontok-ex`
 
 58. **Subjects.**
     - An originating event's subject is `event.<stream>.<event_type>.<id>`.
-    - An emitted event's subject is `event.<stream>.<event_type>.<work_type>.<trigger>.<position>`.
+    - A policy's emitted event's subject is `event.<stream>.<event_type>.<work_type>.<trigger>.<position>`.
+    - A join's emitted event's subject is `event.<stream>.<event_type>.<work_type>.<first>.<second>.<position>`. Each causation derives its subject tokens, and the interpreter composes the subject from them.
 59. **Stream specification:**
     - the stream `EVENTS` per account, holding `event.>`;
     - file storage;
@@ -435,7 +436,7 @@ Every declaration is one of the skill's thirteen forms, selected by the construc
 |---|---|---|---|
 | `StreamKey`, `EventTypeName`, `WorkTypeName`, `LogSequence`, `Ordinal` (0 to 999), `DeliveryToken`, `FailureReason` | semantic scalars | one atomic meaning over a primitive | `type.py` |
 | `Disposition` | `StrEnum` scalar | a uniform closed vocabulary | `type.py` |
-| `Causation(work_type, trigger, position)` | value object; `trigger` is the trigger's `NodeId` | value object references an identified concept by its identity scalar | `value.py` |
+| `Causation(work_type, trigger, position)`, `JoinCausation(work_type, first, second, position)` | value objects holding the causing events' `NodeId`s; each derives its subject `tokens`; their union is an emitted event's causation | value object references an identified concept by its identity scalar; a join is caused by two events | `value.py` |
 | `OriginAddress`, `EmissionAddress`, and `Address` with `AddressConstructor` | value objects and an ordered union | decision 9 proves the sole refusal | `value.py` |
 | `ExpectAny`, `ExpectSequence`, and `Expectation` | value objects and a union built in code | alternatives with different facts | `value.py` |
 | `OfType`, `EveryType`, and the read scope | value objects and a union built in code | alternatives with different facts | `value.py` |
@@ -575,6 +576,7 @@ Each application declares, because each holds its own types:
 - Tracing.
 - Liveness.
 - Evaluating rules and contexts.
+- Snapshots. A policy folds its stream's whole history on every delivery.
 
 ## Interchange standards
 
