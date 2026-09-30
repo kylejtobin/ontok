@@ -33,6 +33,7 @@ Core is the ONTOK language: thirteen primitives that say what kinds of things an
 - The module is the specification. No separate specification artifact exists; a portable rendering is projected from the module when another realization needs one.
 - Core imports no ONTOK package. The workspace's import-linter layers contract places every module above `ontok.core`.
 - Python 3.13 or later; `pydantic>=2.9,<3`.
+- Every push passes four gates in CI: ruff check and format, basedpyright strict, the import-linter layers contract, and pytest.
 
 ## Context
 

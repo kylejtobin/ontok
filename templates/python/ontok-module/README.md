@@ -2,7 +2,7 @@
 
 __DESCRIPTION__
 
-- **Specification:** [Canonical Specification](__SPECIFICATION_URL__)
+- **Module, which is its specification:** [__MODULE_NAME__](__SPECIFICATION_URL__)
 - **Status:** Development Status :: __STATUS__
 - **Python Support:** >=3.13 (tested on 3.13 and 3.14)
 - **Shared Namespace:** `ontok` (PEP 420 implicit namespace)
