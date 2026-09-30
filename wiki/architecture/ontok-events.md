@@ -15,6 +15,13 @@ sources:
   - id: standard
     resource: ../../.agents/skills/python-development/SKILL.md
     title: Python development standard
+  - id: acceptance
+    resource: ../../tests/acceptance
+    title: The acceptance application
+verified:
+  by: claude-code/claude-fable-5-1
+  at: 2026-09-30T22:48:17Z
+  how: the module's claims by its own tests; memory, delivery, and the read model by the NATS conformance suite; the five functions by the acceptance application, all against nats:2.14.6-alpine
 ---
 
 # ontok-events
@@ -131,7 +138,7 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 ### Delivery
 
 - **`Delivery(token, event, sequence)`** is memory handing a remembered occurrence to a responsibility, possibly more than once, within the responsibility's patience; the token is the provider's acknowledgement address. Concept model; derives `retained`, `address`, and `abouts`, the entity concerned. **`Unconstructible(token, body)`**: what arrived is not one of this program's occurrences, and the body it lifts from the route's `event` is the witness, never read. The arrival is their ordered union, constructed from the application's route with `from_attributes=True` through `ArrivalConstructor`; `Delivery.event` refuses only a `MessageBody`, and `Unconstructible.body` accepts only one, so each is proven by an attribute the other lacks. A delivery token never enters a response.
-- **The application's route** is one model, `DeliveryRoute`: the token through the alias `reply`, the sequence through an `AliasPath` into the provider's message metadata, and the body through the alias `data` as the ordered union `Json[<its event union>] | MessageBody`, where `MessageBody` is this module's scalar over an arrival's bytes and every refusal of the program's events means the body is not one of them. Only `Unconstructible` holds the body, as its witness.
+- **The application's route** refines this module's `DeliveryRoute`, which lifts the token through the alias `reply` and the sequence through an `AliasPath` into the provider's message metadata, by adding `event`: the body through the alias `data` as the ordered union `Json[<its event union>] | MessageBody`, where `MessageBody` is this module's scalar over an arrival's bytes and every refusal of the program's events means the body is not one of them. Only `Unconstructible` holds the body, as its witness.
 - **`Consultation(work, arrival)`** is what memory a work consults for an arrival. `PolicyConsultation` derives one `ReadHistory` for each of the arrival's `abouts`; `ConjunctionConsultation` derives, for each, a `ReadLatest` of `OfType(first)` then `OfType(second)`; `ProjectionConsultation` derives none. An `Unconstructible` arrival has no `abouts`, so it authorizes no reads. Transformations. Each read executes through its own one-action interpreter; `Readings` constructs at the composition root from their outcomes.
 - **`Occasion(consultation, consulted, at)`** is the situation work faces: what was asked of memory, what memory answered, and when. `MintedOccasion(Occasion)` adds `emitted: EmittedIdentities` for a policy or a conjunction. Concept model; derives `work` and `action`. This is where `Context` and `Rule` attach when the organization's governance is evaluated.
 - **The response** is constructed from the occasion through the `TypeAdapter` the application declares beside the kind's response union, a plain union of which exactly one variant constructs, because each is proven by an attribute the others lack: a variant the application declares, the work having responded, requiring the arrival's `event` of the kinds it responds to and `Retained` readings at the positions it declares; `Deferred(unavailable)`, requiring an `Unavailable` at the first position, and `DeferredSecond(unavailable)` at the second, memory could not be consulted; `Rejected(arrival)`, requiring an `Unconstructible` arrival, proven by its body. A response that refuses for any other reason constructs nothing, and the process crashes as a defect. The application's variants refine `Response(at)`, or `EmittingResponse(at, emitted)` for work that emits, and construct their fields from the occasion through `AliasPath`s: the trigger from `consultation.arrival.event`, the readings from `consulted.root` by declared position; `at` and `emitted` by name. Every variant derives `emissions`, `expectation`, `effects`, `disposition`, and `append` as `Append(expectation, events=emissions, disposition)`: an application variant derives Complete; `Deferred` derives Retry; `Rejected` derives Reject; the last two derive no emissions and no effects.
@@ -214,7 +221,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A response derives a thousand and one emissions | `Append` refuses; no such fact exists |
 | A responsibility's subscription cannot be ensured at startup | `StartupSubscriptions` records `EnsureUnavailable`; that responsibility receives no deliveries |
 
-The module's own tests construct its claims on their refusal paths and need no provider: each is one constructed fact and one derived fact. The acceptance application in `tests/acceptance` is a test-owned ontology refining this module, proving every scenario against a real provider through `ontok-nats`; its projection's read model is a JetStream key-value bucket in the same account, written through an effect interpreter whose one capability is the bucket, and replay identity compares the bucket's keys and values before and after.
+The module's own tests construct its claims on their refusal paths and need no provider: each is one constructed fact and one derived fact. The acceptance application in `tests/acceptance` is an organization written as software, a shop with a policy, a conjunction, and a projection, whose composition root is the worked example every application copies; it proves the five functions against a real provider through `ontok-nats`; its projection's read model is a JetStream key-value bucket in the same account, written through an effect interpreter whose one capability is the bucket, and replay identity compares the bucket's keys and values before and after.
 
 ## Glossary
 

@@ -18,6 +18,22 @@ from ontok.events.value import (
 from ontok.events.work import Conjunction, Policy, Projection
 
 
+class DeliveryRoute(BaseModel):
+    """The provider's message, lifted whole: its acknowledgement token and its log sequence. An
+    application refines it by adding `event`, its own union with `MessageBody` as the fallback."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    token: DeliveryToken = Field(validation_alias="reply")
+    sequence: LogSequence = Field(validation_alias=AliasPath("metadata", "sequence", "stream"))
+
+
 class Delivery(BaseModel):
     """Memory handing a remembered occurrence to a responsibility, with its token."""
 

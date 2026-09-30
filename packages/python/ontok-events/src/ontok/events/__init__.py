@@ -8,6 +8,7 @@ from ontok.events.delivery import Consultation as Consultation
 from ontok.events.delivery import Deferred as Deferred
 from ontok.events.delivery import DeferredSecond as DeferredSecond
 from ontok.events.delivery import Delivery as Delivery
+from ontok.events.delivery import DeliveryRoute as DeliveryRoute
 from ontok.events.delivery import EmittedIdentities as EmittedIdentities
 from ontok.events.delivery import EmittingResponse as EmittingResponse
 from ontok.events.delivery import MintContentIdentity as MintContentIdentity

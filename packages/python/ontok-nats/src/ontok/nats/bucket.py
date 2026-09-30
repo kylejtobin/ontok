@@ -28,7 +28,8 @@ BUCKET_PREFIX = "READ_"
 
 
 class Cell(BaseModel):
-    """What a read model keeps at a key: an entity's condition and the sequence it is as of."""
+    """What a read model keeps at a key: an entity's condition and the sequence it is as of. It is
+    serialized as the condition's own kind, not as `State`, so a refinement keeps its fields."""
 
     model_config = STRICT
 
@@ -173,7 +174,9 @@ class WriteStateInterpreter(BaseModel):
 
     async def execute(self) -> StateWriting:
         key = self.action.about.root
-        value = Cell(sequence=self.action.sequence, state=self.action.state).model_dump_json()
+        value = Cell(sequence=self.action.sequence, state=self.action.state).model_dump_json(
+            serialize_as_any=True
+        )
         try:
             store = await self.client.jetstream().key_value(  # pyright: ignore[reportUnknownMemberType]
                 bucket_of(self.action.work_type.root)
