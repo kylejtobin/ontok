@@ -4,13 +4,13 @@ ONTOK is a modular declarative semantic language for making organizational meani
 
 ## Project knowledge
 
-`wiki/` is what this project knows that the specification and the code do not say, and the project-knowledge protocol is always on. At the start of every task orient from `wiki/index.md` and read only the pages the task needs; open a directory index before a page. Give delegated agents the pages they need and require their report to name evidence, contradictions, and a knowledge delta. While working, notice what becomes durable knowledge. Before finishing, reconcile it into the page that owns it, or say there is no delta. The wiki never restates a specification or a source file. Read `wiki/architecture/<module>.md` before any structural change to that module; state the change as its design, by construct, with its place in the specification, before any task list or code; and edit the page's section, the specification, and the code in the same commit. A page states what is and carries no status: a design becomes a page only in the commit that makes every sentence of it true. The standard for every page is `.agents/skills/project-knowledge`.
+`wiki/` is what this project knows that the specification and the code do not say, and the project-knowledge protocol is always on. At the start of every task orient from `wiki/index.md` and read only the pages the task needs; open a directory index before a page. Give delegated agents the pages they need and require their report to name evidence, contradictions, and a knowledge delta. While working, notice what becomes durable knowledge. Before finishing, reconcile it into the page that owns it, or say there is no delta. The wiki never restates a specification or a source file. Read `wiki/architecture/<module>.md` before any structural change to that module; state the change as its design, by construct, before any task list or code; and edit the page's section and the code in the same commit, with the specification where the module has one. A page states what is and carries no status: a design becomes a page only in the commit that makes every sentence of it true. The standard for every page is `.agents/skills/project-knowledge`.
 
 ## Start with the model
 
 Do not infer ONTOK's semantics from implementation convenience. The specification defines the language; code realizes it.
 
-ONTOK Core has exactly twelve primitives:
+ONTOK Core has exactly thirteen primitives:
 
 ```text
 Node
@@ -22,6 +22,7 @@ Event
 Role
 Goal
 Action
+Work
 Concept
 Context
 Rule
