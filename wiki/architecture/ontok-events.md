@@ -212,7 +212,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A response derives a thousand and one emissions | `Append` refuses; no such fact exists |
 | A responsibility's subscription cannot be ensured at startup | `StartupSubscriptions` records `EnsureUnavailable`; that responsibility receives no deliveries |
 
-The module's own tests construct its claims on their refusal paths and need no provider: each is one constructed fact and one derived fact. The acceptance application in `tests/acceptance` is a test-owned ontology refining this module, proving every scenario against a real provider through `ontok-nats`; its projection writes to a SQLite file through an effect interpreter whose one capability is the standard library's connection.
+The module's own tests construct its claims on their refusal paths and need no provider: each is one constructed fact and one derived fact. The acceptance application in `tests/acceptance` is a test-owned ontology refining this module, proving every scenario against a real provider through `ontok-nats`; its projection's read model is a JetStream key-value bucket in the same account, written through an effect interpreter whose one capability is the bucket, and replay identity compares the bucket's keys and values before and after.
 
 ## Glossary
 
