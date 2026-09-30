@@ -22,6 +22,8 @@ from ontok.events.type import WorkTypeName as WorkTypeName
 from ontok.events.value import Absent as Absent
 from ontok.events.value import Address as Address
 from ontok.events.value import AddressConstructor as AddressConstructor
+from ontok.events.value import AnyProvenance as AnyProvenance
+from ontok.events.value import ConjunctionProvenance as ConjunctionProvenance
 from ontok.events.value import EmissionAddress as EmissionAddress
 from ontok.events.value import EveryType as EveryType
 from ontok.events.value import ExpectAny as ExpectAny

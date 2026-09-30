@@ -7,7 +7,7 @@ from ontok.events.type import EventTypeName, FailureReason, LogSequence, Ordinal
 
 
 class Provenance(BaseModel):
-    """How a derived occurrence came to be: the responsibility, its causes, and its position."""
+    """How a policy's emission came to be: the responsibility, its one cause, and its position."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -18,8 +18,36 @@ class Provenance(BaseModel):
     )
 
     work_type: WorkTypeName
-    causes: tuple[NodeId, ...] = Field(min_length=1, max_length=2)
+    cause: NodeId
     position: Ordinal
+
+    @property
+    def causes(self) -> tuple[NodeId, ...]:
+        return (self.cause,)
+
+
+class ConjunctionProvenance(BaseModel):
+    """A conjunction's emission: its responsibility, both causes in order, and its position."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    work_type: WorkTypeName
+    first: NodeId
+    second: NodeId
+    position: Ordinal
+
+    @property
+    def causes(self) -> tuple[NodeId, ...]:
+        return (self.first, self.second)
+
+
+AnyProvenance = Provenance | ConjunctionProvenance
 
 
 class OriginAddress(BaseModel):
@@ -51,7 +79,7 @@ class EmissionAddress(BaseModel):
 
     about: NodeId
     event_type: EventTypeName
-    provenance: Provenance
+    provenance: AnyProvenance
 
 
 Address = Annotated[EmissionAddress | OriginAddress, Field(union_mode="left_to_right")]

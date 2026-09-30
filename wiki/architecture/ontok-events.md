@@ -72,7 +72,8 @@ classDiagram
   class Policy
   class Conjunction
   class Projection
-  class Provenance { work_type; causes: tuple~NodeId~; position: Ordinal }
+  class Provenance { work_type; cause: NodeId; position: Ordinal }
+  class ConjunctionProvenance { work_type; first: NodeId; second: NodeId; position: Ordinal }
   class Retained { event: Event; sequence: LogSequence }
   class History
   class Delivery { token: DeliveryToken; retained: Retained }
@@ -99,9 +100,9 @@ How a fact comes to exist in this module, by family. Each declaration names the 
 ### Occurrences
 
 - **A recordable event** refines Core `Event`, carries `event_type: Literal[<member>]` of the application's event-type `StrEnum`, whose values are `<namespace>-<Class>`, and derives `about: NodeId`, the entity it concerns. The `Literal` is interchange identity: it travels on the wire and in subjects, and renaming the class does not change it. Concept model; `Literal` discriminator admitted for interchange data.
-- **`Provenance(work_type, causes, position)`** is how a derived occurrence came to be: which responsibility derived it, the one or two remembered occurrences it was derived from, in the responsibility's declared order, and its position among that responsibility's emissions. Value object; `causes` holds one or two `NodeId`s. An originating occurrence carries no provenance.
+- **`Provenance(work_type, cause, position)`** is how a policy's emission came to be: which responsibility derived it, the remembered occurrence it was derived from, and its position among that response's emissions. **`ConjunctionProvenance(work_type, first, second, position)`** is how a conjunction's emission came to be, naming both remembered occurrences in the responsibility's declared order. Value objects; each derives `causes`, so what reads a provenance reads one name. A policy emission with two causes, or a conjunction emission with one, has no representation. An originating occurrence carries no provenance.
 - **`Address`** locates one publication in memory and proves an event is recordable. `OriginAddress(about, event_type, id)` and `EmissionAddress(about, event_type, provenance)`, an ordered union constructed from an event with `from_attributes=True` through `AddressConstructor`; the only refusal of `EmissionAddress` over a constructed event is the absence of `provenance`, which is what an originating occurrence is. An address holds at most one event, for the life of memory.
-- **`Lineage(id, provenance)`**, lifted from a derived event, derives `causation: tuple[Causation, ...]`, the Core connections from each cause to this event. Transformation; this is the ontology's "why", executable.
+- **`Lineage(id, provenance)`**, lifted from a derived event, derives `causation: tuple[Causation, ...]`, the Core connections from each of its provenance's causes to this event. Transformation; this is the ontology's "why", executable.
 
 ### Memory
 
@@ -225,7 +226,7 @@ The acceptance application in `tests/acceptance` is a test-owned ontology refini
 | Memory | Everything the organization remembers: every retained occurrence, in log order. |
 | History | One entity's remembered occurrences in order, never empty. |
 | Condition | An entity's state as the fold of its history, in the state-transition shape; owned by the application. |
-| Provenance | How a derived occurrence came to be: the responsibility, its causes, its position. |
+| Provenance | How a derived occurrence came to be: the responsibility, its cause or its two causes in declared order, and its position. |
 | Lineage | The Core `Causation` connections derived from an occurrence's provenance. |
 | Address | Where one publication lives in memory; holds at most one occurrence. |
 | Claim | An expectation about memory under which an append lands or is contested. |
