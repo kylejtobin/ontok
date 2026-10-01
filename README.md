@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="img/ontok-hero.webp" width="880" alt="ONTOK — Write the organization as software. Independently modeled systems arranged around a shared semantic kernel.">
+  <img src="img/ontok-hero.webp" width="880" alt="ONTOK — Write the organization as software. Customer, Member, Transaction, Payment, Party, and Counterparty, each modeled in its own program, arranged around ONTOK Core: Node and Connection; Entity, Relation, State, Event; Role, Goal, Action, Work; Concept, Context; Rule.">
 </p>
 
 # ONTOK
@@ -14,7 +14,7 @@ That is what makes the meaning software-addressable. Applications, agents, and m
 
 | Family | Primitives | What they distinguish |
 |--------|------------|-----------------------|
-| Structure | `Node`, `Connection` | A distinct thing, and a link between two things that exist independently of it |
+| Structure | `Node`, `Connection` | A distinct thing, identified by a UUID minted (v7) or derived from its content (v8), and a link between two things that exist independently of it |
 | Reality | `Entity`, `Relation`, `Causation`, `State`, `Event` | A thing that persists, an identifiable association, one occurrence being because of another, a condition that goes on a thing, an occurrence |
 | Agency | `Role`, `Goal`, `Action`, `Work` | An organizational capacity, an intended end, declared doing through a role toward a goal, the persistent undertaking of it |
 | Meaning | `Concept`, `Context` | What a declaration means, and a situation constituted by states |
@@ -85,7 +85,7 @@ Core is deliberately small and grows by modules. A capability becomes part of ON
 Core is a Python 3.13+ package in the `ontok` namespace and is installed from this repository:
 
 ```bash
-pip install "ontok-core @ git+https://github.com/kyzobuild/ontok.git#subdirectory=packages/python/ontok-core"
+pip install "ontok-core @ git+https://github.com/kylejtobin/ontok.git#subdirectory=packages/python/ontok-core"
 ```
 
 - Status: alpha. The primitives are settled; the surface around them is not.

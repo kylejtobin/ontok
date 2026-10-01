@@ -6,12 +6,12 @@ The universal ONTOK organizational type system: fourteen primitives that say wha
 - **Python:** 3.13 or later
 - **Depends on:** `pydantic>=2.9,<3`, and no other ONTOK package
 - **Status:** alpha
-- **Architecture:** [wiki/architecture/ontok-core.md](https://github.com/kyzobuild/ontok/blob/main/wiki/architecture/ontok-core.md)
+- **Architecture:** [wiki/architecture/ontok-core.md](https://github.com/kylejtobin/ontok/blob/main/wiki/architecture/ontok-core.md)
 
 ## Install
 
 ```bash
-pip install "ontok-core @ git+https://github.com/kyzobuild/ontok.git#subdirectory=packages/python/ontok-core"
+pip install "ontok-core @ git+https://github.com/kylejtobin/ontok.git#subdirectory=packages/python/ontok-core"
 ```
 
 ## Use

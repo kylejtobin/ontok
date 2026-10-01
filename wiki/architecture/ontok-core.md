@@ -99,7 +99,7 @@ A fact comes to exist in three moves and no others.
 
 1. **Refine.** An organization declares a kind by subclassing a primitive and adding the fields that kind carries. `class Customer(Entity)` is a kind; `class StrategicAccount(State)` with a `customer: Customer` field is a kind whose facts require a proven customer. A refinement adds; it never redeclares what it inherits.
 2. **Construct.** A fact exists when its kind's constructor has established every declared field. Nested input constructs every constituent; an existing fact is accepted as prior proof. `Action` requires a proven `Role` and `Goal`; `Work` requires a proven `Action`; `Rule` requires a proven `Context` and `Action`.
-3. **Refuse.** A `ValidationError` means no fact of that kind exists. An unknown field, a missing field, a mutation of a constructed fact, an identifier that is not a canonical UUIDv7, a timestamp without a timezone, a duration that is not positive, and a situation with no conditions are each refused at construction.
+3. **Refuse.** A `ValidationError` means no fact of that kind exists. An unknown field, a missing field, a mutation of a constructed fact, an identifier that is not a canonical UUID of version 7 or 8, a timestamp without a timezone, a duration that is not positive, and a situation with no conditions are each refused at construction.
 
 ## Decisions
 
@@ -119,7 +119,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **Time is a temporal extent.** An occurrence occupies an `Instant` or an `Interval`; a `Timestamp` carries its timezone and a `PositiveDuration` is strictly positive, because an occurrence takes a point or a positive span on the timeline and never zero. This rules out naive datetimes and zero-length intervals.
 
-**Identity is a canonical lowercase UUIDv7.** `NodeId` and `RelationId` construct only from that form, because a UUIDv7 is globally unique without coordination and ordered by the moment it was minted. This rules out serial integers and identifiers minted from content.
+**Identity is a canonical lowercase UUID, version 7 or version 8.** `NodeId` and `RelationId` construct only from those forms, because a thing that is minted is identified by a UUIDv7, globally unique without coordination and ordered by the moment it was minted, and a thing whose identity is its content is identified by a UUIDv8 derived from that content, so the same content is the same thing wherever it appears. This rules out serial integers and rules out any other version.
 
 **State is an Entity.** A condition that goes on an entity is itself a thing whose identity persists, because a condition is referred to, related, and governed in its own right. This rules out state as an attribute enumeration on the entity it goes on.
 
@@ -142,7 +142,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A kind adds a field Core does not declare and constructs with it | Constructs; a refinement adds facts |
 | A value is constructed with a field its kind does not declare | Refused |
 | A constructed fact is assigned to | Refused |
-| A `NodeId` is not a canonical lowercase UUIDv7 | Refused |
+| A `NodeId` is not a canonical lowercase UUID of version 7 or 8 | Refused |
 | A `Timestamp` has no timezone | Refused |
 | A `NodeId` field is given an `int` | Refused |
 | A `Connection` is given a `Node` as an endpoint | Refused |
