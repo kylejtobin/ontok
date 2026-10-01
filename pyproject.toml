@@ -18,7 +18,7 @@ dev = ["basedpyright", "import-linter", "pytest>=8", "pytest-asyncio>=0.24", "ru
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib"]
-testpaths = ["tests", "packages/python"]
+testpaths = ["packages/python"]
 asyncio_mode = "strict"
 strict_config = true
 strict_markers = true
@@ -27,8 +27,7 @@ xfail_strict = true
 [tool.ruff]
 target-version = "py313"
 line-length = 100
-src = ["packages/python", "tests"]
-extend-exclude = ["templates"]
+src = ["packages/python"]
 
 [tool.ruff.lint]
 select = ["E","W","F","I","N","UP","B","A","C4","PIE","RET","SIM","ARG","PTH","ERA","PL","TRY","RUF","ANN","S","FBT","TC","EM"]
@@ -44,14 +43,14 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel","pydantic.RootModel"]
 known-first-party = ["ontok"]
 
 [tool.basedpyright]
-include = ["packages/python", "tests"]
+include = ["packages/python"]
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
 [tool.importlinter]
-root_packages = ["ontok.core"]
+root_packages = ["ontok.events", "ontok.core"]
 
 [[tool.importlinter.contracts]]
 name = "ONTOK modules follow workspace dependencies"
 type = "layers"
-layers = ["ontok.core"]
+layers = ["ontok.events", "ontok.core"]

@@ -1,1 +1,0 @@
-"""Package template tests."""

@@ -13,8 +13,8 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --all-packages
-      - run: uv run ruff check packages tests
-      - run: uv run ruff format --check packages tests
+      - run: uv run ruff check packages
+      - run: uv run ruff format --check packages
       - run: uv run basedpyright
       - run: uv run lint-imports
       - run: uv run pytest

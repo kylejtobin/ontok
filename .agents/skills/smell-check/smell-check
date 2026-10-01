@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# smell-check: find the five procedural patterns in TCA Python code.
+# Usage: smell-check <path>...   Exit 1 if anything is found, 0 if clean.
+# Every hit is a violation. There is no severity. Fix the model, not the line.
+set -u
+if [ "$#" -eq 0 ]; then
+  echo "usage: smell-check <path>..." >&2
+  exit 2
+fi
+
+found=0
+scan() {
+  local label="$1" pattern="$2"; shift 2
+  local out
+  out="$(rg -n --no-heading --color never -g '*.py' "$@" -e "$pattern" -- "${PATHS[@]}" 2>/dev/null)"
+  if [ -n "$out" ]; then
+    found=1
+    printf '%s\n' "$out" | sed "s/^/${label}  /"
+  fi
+}
+PATHS=("$@")
+
+# 1. FREE FUNCTION: a def at column 0. The only admitted one is the callback in main.py.
+scan 'FREE-FUNCTION ' '^(async )?def ' -g '!main.py'
+
+# 2. ISINSTANCE: asking a value what it is. It already said, by existing as its variant.
+scan 'ISINSTANCE    ' '\bisinstance\('
+
+# 3. LOOP: a fold with no name.
+scan 'LOOP          ' '^\s*(async\s+)?for\s.*:\s*(#.*)?$|^\s*while\s.*:\s*(#.*)?$'
+
+# 4. CONDITIONAL: a branch. The only branch is construction choosing a union variant.
+scan 'CONDITIONAL   ' '^\s*(if|elif)\b|^\s*else\s*:|^\s*match\b.*:\s*$|^\s*case\b.*:\s*$|\sif\s.+\selse\s|\sfor\s.+\sif\s'
+
+# 5. DICT: a shape nobody proved. A violation.
+scan 'DICT          ' '\bdict\[|\bdict\(|[=:(,]\s*\{|\breturn\s+\{'
+
+# 6. PARSE METHOD: procedure hung on a model. A derivation takes only self and returns one expression.
+scan 'PARSE-METHOD  ' 'def \w+\(\s*self\s*,|@staticmethod|validator|\bstr\('
+
+exit "$found"
