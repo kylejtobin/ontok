@@ -1,6 +1,9 @@
 from enum import StrEnum
+from typing import Literal
 
-from pydantic import ConfigDict, Field, RootModel
+from pydantic import AliasPath, BaseModel, ConfigDict, Field, Json, RootModel, TypeAdapter
+
+from ontok.nats.direct_get import NoMessages
 
 
 class Bucket(RootModel[str]):
@@ -39,3 +42,41 @@ class Operation(StrEnum):
     PUT = "PUT"
     DEL = "DEL"
     PURGE = "PURGE"
+
+
+class Entry(BaseModel):
+    """The last entry on a key, as a direct get returns it: a value put at a revision."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="ignore",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    revision: Json[Revision] = Field(validation_alias=AliasPath("headers", "Nats-Sequence"))
+    operation: Literal[Operation.PUT] = Field(
+        default=Operation.PUT, validation_alias=AliasPath("headers", "KV-Operation")
+    )
+
+
+class Deleted(BaseModel):
+    """The last entry on a key, as a direct get returns it: the key was deleted or purged."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="ignore",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    revision: Json[Revision] = Field(validation_alias=AliasPath("headers", "Nats-Sequence"))
+    operation: Literal[Operation.DEL, Operation.PURGE] = Field(
+        validation_alias=AliasPath("headers", "KV-Operation")
+    )
+
+
+KvReply = Entry | Deleted | NoMessages
+KvReplyConstructor: TypeAdapter[KvReply] = TypeAdapter(KvReply)
