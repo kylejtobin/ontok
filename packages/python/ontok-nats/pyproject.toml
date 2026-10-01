@@ -1,0 +1,42 @@
+[project]
+name = "ontok-nats"
+version = "0.0.0"
+description = "The NATS JetStream realization of ontok-events: memory, delivery, and acknowledgement on one stream."
+requires-python = ">=3.14"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Kyle Tobin", email = "tobin.kyle@gmail.com" }]
+keywords = ["ontok", "events", "nats", "jetstream"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "ontok-events>=0.0.0,<0.1.0",
+    "nats-py>=2.10,<3",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2,<3",
+]
+import-names = ["ontok.nats"]
+import-namespaces = ["ontok"]
+
+[project.urls]
+Homepage = "https://github.com/kylejtobin/ontok"
+Repository = "https://github.com/kylejtobin/ontok"
+Issues = "https://github.com/kylejtobin/ontok/issues"
+Architecture = "https://github.com/kylejtobin/ontok/blob/main/wiki/architecture/ontok-nats.md"
+
+[build-system]
+requires = ["uv_build>=0.12.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+ontok-events = { workspace = true }
+
+[tool.uv.build-backend]
+module-name = "ontok.nats"
+source-include = ["tests/**"]
