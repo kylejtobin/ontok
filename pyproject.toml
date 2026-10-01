@@ -48,9 +48,9 @@ pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
 [tool.importlinter]
-root_packages = ["ontok.events", "ontok.core"]
+root_packages = ["ontok.nats", "ontok.events", "ontok.core"]
 
 [[tool.importlinter.contracts]]
 name = "ONTOK modules follow workspace dependencies"
 type = "layers"
-layers = ["ontok.events", "ontok.core"]
+layers = ["ontok.nats", "ontok.events", "ontok.core"]
