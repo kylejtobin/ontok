@@ -3,6 +3,7 @@ from typing import Literal
 
 from pydantic import AliasPath, BaseModel, ConfigDict, Field, Json, RootModel, TypeAdapter
 
+from ontok.core import NodeId
 from ontok.nats.direct_get import NoMessages
 
 
@@ -80,3 +81,21 @@ class Deleted(BaseModel):
 
 KvReply = Entry | Deleted | NoMessages
 KvReplyConstructor: TypeAdapter[KvReply] = TypeAdapter(KvReply)
+
+
+class ReadModelKey(BaseModel):
+    """The key a ReadModel is held under: its identity."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    id: NodeId = Field(description="The ReadModel.")
+
+    @property
+    def key(self) -> Key:
+        return Key(self.id.root)

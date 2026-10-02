@@ -1,4 +1,6 @@
-from pydantic import ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel
+
+from ontok.core import NodeId
 
 
 class StreamName(RootModel[str]):
@@ -39,3 +41,22 @@ class FilterSubject(RootModel[str]):
     )
 
     root: str = Field(pattern=r"^(([^\s.*>]+|\*)\.)*([^\s.*>]+|\*|>)$")
+
+
+class EventSubject(BaseModel):
+    """The subject the occurrences of one Stream are published to: `event.` and the Stream's
+    identity."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    stream: NodeId = Field(description="The Stream.")
+
+    @property
+    def subject(self) -> Subject:
+        return Subject(f"event.{self.stream.root}")

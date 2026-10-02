@@ -1,18 +1,25 @@
-from pydantic import ConfigDict, Field, RootModel, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from ontok.core import Action, NodeId
 from ontok.events.event import Events, Occurrence
 from ontok.events.value import ExpectedVersion, VersionMismatch
 
 
-class Occurrences(RootModel[tuple[Occurrence, ...]]):
-    """The occurrences of one Append, in order."""
+class Occurrences(BaseModel):
+    """The occurrences of one Append, in order: those leading, and the last."""
 
     model_config = ConfigDict(
-        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
     )
 
-    root: tuple[Occurrence, ...] = Field(min_length=1)
+    leading: tuple[Occurrence, ...] = Field(
+        description="The occurrences before the last, in order."
+    )
+    last: Occurrence = Field(description="The last occurrence.")
 
 
 class Append(Action):

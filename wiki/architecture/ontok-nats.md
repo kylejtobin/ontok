@@ -82,9 +82,21 @@ classDiagram
   class NoAckFloor { ack_floor: 0 }
   class Entry { revision: Json~Revision~; operation: PUT }
   class Deleted { revision: Json~Revision~; operation: DEL | PURGE }
+  class EventSubject { stream: NodeId; subject() }
+  class ReadModelKey { id: NodeId; key() }
+  class ExpectAt { version; events; sequence() }
+  class ExpectNone { value: no_stream; sequence() 0 }
+  class ExpectAny { value: any }
+  class BeginAfter { position; deliver_policy(); opt_start_seq() }
+  class BeginAll { value: beginning; deliver_policy() }
+  class BeginNew { value: now; deliver_policy() }
+  class AckReply { ending: Ending; reply: Subject; ack() }
+  class NatsConfig { url; user; credentials; stream; bucket }
 ```
 
-One file per NATS topic: `stream`, `consumer`, `batch`, `direct_get`, `error`, `kv`, `connection`, `publish`. The reply unions, each with its `TypeAdapter` named with the suffix `Constructor`:
+One file per NATS topic: `stream`, `consumer`, `batch`, `direct_get`, `error`, `kv`, `connection`, `publish`, and one per Events union lifted into NATS's terms: `expect`, `begin`, `ack`, with `config` for deployment input.
+
+An Events value a provider must act on differently per variant is lifted into a NATS union by structure: `Expect` is constructed `from_attributes` from an append with its prior events, `ExpectAt` by the asserted version and the events, `ExpectNone` and `ExpectAny` by the enum member's `value`; `Begin` is constructed from a `Subscription`, `BeginAfter` by its position, `BeginAll` and `BeginNew` by the member's `value`. Each variant derives what NATS needs: the expected last sequence, the deliver policy, the start sequence. `AckReply` holds an `Ending` and the delivered message's reply subject and derives the `Ack` through a total case table over `End`. `EventSubject` derives `event.<stream>` from a stream identity; `ReadModelKey` derives the key from a read model identity. The reply unions, each with its `TypeAdapter` named with the suffix `Constructor`:
 
 | Reply | Variants | Realizes |
 |-------|----------|----------|
@@ -122,6 +134,10 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **The checkpoint is the consumer's ack floor.** `ConsumerInfo.ack_floor` realizes `Checkpoint` and `NoAckFloor` realizes `NoCheckpoint`, because a durable consumer with explicit acknowledgement already holds the position its acknowledgements have reached. This rules out a key-value checkpoint.
 
+**An Events union is lifted, not branched on.** `Expect` and `Begin` are NATS unions constructed by structure from the Events value, because a NATS derivation cannot be added to an Events class and a vocabulary member carries none, while a value object lifted by `AliasPath` on the member's `value` can. This rules out `isinstance` or discriminator comparison anywhere in this module.
+
+**The subject is the stream's identity.** `EventSubject` is `event.<stream NodeId>`, because a stream's events share one subject and the kind is in the payload, not the subject. This rules out a subject grammar carrying the event type.
+
 **Catch-up and persistent subscription are one thing here.** Every subscription is a durable consumer, because NATS holds the checkpoint either way. This rules out a client-held checkpoint.
 
 ## Quality scenarios
@@ -137,6 +153,13 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A key put, then read by direct get | `Entry` at revision 1 |
 | The key deleted, then read | `Deleted` at revision 2 |
 | A key never written, read | `NoMessages` |
+| An append asserting a version, with prior events at positions 4 and 9 | `ExpectAt` with sequence 9 |
+| An append asserting no stream | `ExpectNone` with sequence 0 |
+| An append asserting any | `ExpectAny` |
+| A subscription beginning after position 4 | `BeginAfter`, policy `by_start_sequence`, start 5 |
+| A subscription beginning at the beginning, then now | `BeginAll`, then `BeginNew` |
+| An ending to park | `AckReply.ack` is `+TERM` |
+| Environment text `NATS_STREAM=EVENTS` | `NatsConfig.stream` is the `StreamName` |
 
 ## Glossary
 
@@ -154,3 +177,5 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | Revision | The sequence of a key's entry in its bucket. |
 | Operation | What an entry did to its key: put, delete, or purge. |
 | err_code | JetStream's numeric reason a request was refused. |
+| Expected last subject sequence | The header a publish carries asserting the last sequence on its subject. |
+| Deliver policy | Where a consumer begins in the stream. |

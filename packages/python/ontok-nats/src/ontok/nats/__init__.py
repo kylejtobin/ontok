@@ -1,5 +1,12 @@
+from ontok.nats.ack import AckReply as AckReply
 from ontok.nats.batch import BatchId as BatchId
 from ontok.nats.batch import BatchSequence as BatchSequence
+from ontok.nats.begin import Begin as Begin
+from ontok.nats.begin import BeginAfter as BeginAfter
+from ontok.nats.begin import BeginAll as BeginAll
+from ontok.nats.begin import BeginConstructor as BeginConstructor
+from ontok.nats.begin import BeginNew as BeginNew
+from ontok.nats.config import NatsConfig as NatsConfig
 from ontok.nats.connection import ServerUrl as ServerUrl
 from ontok.nats.connection import User as User
 from ontok.nats.consumer import Ack as Ack
@@ -19,6 +26,11 @@ from ontok.nats.direct_get import Status as Status
 from ontok.nats.error import ApiError as ApiError
 from ontok.nats.error import ErrorCode as ErrorCode
 from ontok.nats.error import JetStreamError as JetStreamError
+from ontok.nats.expect import Expect as Expect
+from ontok.nats.expect import ExpectAny as ExpectAny
+from ontok.nats.expect import ExpectAt as ExpectAt
+from ontok.nats.expect import ExpectConstructor as ExpectConstructor
+from ontok.nats.expect import ExpectNone as ExpectNone
 from ontok.nats.kv import Bucket as Bucket
 from ontok.nats.kv import Deleted as Deleted
 from ontok.nats.kv import Entry as Entry
@@ -26,10 +38,12 @@ from ontok.nats.kv import Key as Key
 from ontok.nats.kv import KvReply as KvReply
 from ontok.nats.kv import KvReplyConstructor as KvReplyConstructor
 from ontok.nats.kv import Operation as Operation
+from ontok.nats.kv import ReadModelKey as ReadModelKey
 from ontok.nats.kv import Revision as Revision
 from ontok.nats.publish import PubAck as PubAck
 from ontok.nats.publish import PublishReply as PublishReply
 from ontok.nats.publish import PublishReplyConstructor as PublishReplyConstructor
+from ontok.nats.stream import EventSubject as EventSubject
 from ontok.nats.stream import FilterSubject as FilterSubject
 from ontok.nats.stream import Sequence as Sequence
 from ontok.nats.stream import StreamName as StreamName

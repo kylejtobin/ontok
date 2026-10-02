@@ -64,7 +64,11 @@ classDiagram
   class Occurrence { version: Version }
   class Event { occurrence: Occurrence; stream: NodeId; position: Position }
   class Events { root: tuple~Event~ ≥ 1 }
-  class Occurrences { root: tuple~Occurrence~ ≥ 1 }
+  class Occurrences { leading: tuple~Occurrence~; last: Occurrence }
+  class StateIdentity { stream: NodeId; version: Version }
+  class DeliveryIdentity { subscription: NodeId; event: NodeId; attempt: Attempt }
+  class DispositionIdentity { delivery: NodeId; end: End }
+  class IdentityInterpreter { action: Identity; derive; execute() NodeId }
   class Append { stream: NodeId; expected: ExpectedVersion; occurrences: Occurrences }
   class Read { stream: NodeId }
   class Initial { stream: NodeId }
@@ -98,7 +102,7 @@ classDiagram
   core_Event <|-- Disposition
 ```
 
-The unions: `ExpectedVersion` is `AtVersion | Expectation`; `StartingPoint` is `FromPosition | Start`. One file holds each meaning: `position`, `value`, `stream`, `event`, `append`, `read`, `state`, `read_model`, `subscription`, `checkpoint`, `delivery`.
+The unions: `ExpectedVersion` is `AtVersion | Expectation`; `StartingPoint` is `FromPosition | Start`; `Identity` is `StateIdentity | DeliveryIdentity | DispositionIdentity`. One file holds each meaning: `position`, `value`, `stream`, `event`, `append`, `read`, `state`, `read_model`, `subscription`, `checkpoint`, `delivery`, `identity`.
 
 The interface, one row per action:
 
@@ -119,7 +123,7 @@ Each bare union has a `TypeAdapter` beside it, named for it with the suffix `Con
 A fact comes to exist in three moves and no others.
 
 1. **Refine.** An organization declares its occurrences by subclassing `Occurrence` and adding the fields each carries; its conditions by subclassing `State`; its interests by subclassing `Subscription` or `StreamSubscription`. A refinement adds and never redeclares.
-2. **Construct.** An `Occurrence` exists when its identity, when it occurred, and its `Version` are proven. An `Event` exists when its `Occurrence`, its stream, and its `Position` are proven. An `Append` exists when its `Role`, `Goal`, stream, `ExpectedVersion`, and `Occurrences` are proven; it performs nothing. A `State` exists when its prior, an `Initial` or a `State`, and the `Event` folded into it are proven; the fold of a stream is the chain of these. A `Delivery` holds the `Subscription` it undertakes, the `Event` handed to it, and which `Attempt` this is; an `Ending` holds the `Delivery` to end and the `End` it is to have; a `Disposition` holds the `Delivery` it ended and the `End` it had. A `ReadModel` holds `States` and the `Position` they are as of, and derives its own `PersistReadModel`. An outcome exists when its `TypeAdapter` constructs one variant from a provider's reply.
+2. **Construct.** An `Occurrence` exists when its identity, when it occurred, and its `Version` are proven. An `Event` exists when its `Occurrence`, its stream, and its `Position` are proven. An `Append` exists when its `Role`, `Goal`, stream, `ExpectedVersion`, and `Occurrences` are proven, and `Occurrences` has its leading occurrences and its last; it performs nothing. A determined fact's `NodeId` exists when `IdentityInterpreter` derives a UUID version 8 from the rendering of its `Identity`. A `State` exists when its prior, an `Initial` or a `State`, and the `Event` folded into it are proven; the fold of a stream is the chain of these. A `Delivery` holds the `Subscription` it undertakes, the `Event` handed to it, and which `Attempt` this is; an `Ending` holds the `Delivery` to end and the `End` it is to have; a `Disposition` holds the `Delivery` it ended and the `End` it had. A `ReadModel` holds `States` and the `Position` they are as of, and derives its own `PersistReadModel`. An outcome exists when its `TypeAdapter` constructs one variant from a provider's reply.
 3. **Refuse.** A negative `Version` or `Position`, an `Attempt` of zero, an `Events` or `Occurrences` with no member, a `VersionMismatch` whose actual is `ANY`, a `ReadOutcome` of `ANY`, a `State` without a prior, a `Delivery` without its event or attempt, and any field Core refuses are each refused at construction.
 
 ## Decisions
@@ -152,6 +156,10 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **A read model is an Entity of States at a Position, and it authorizes its own recording.** It reuses Core's `States` and derives `PersistReadModel`, because conditions as of a position are what a read model holds, and the fact that authorizes an effect derives the action for it. This rules out a read model with its own state type and rules out a caller deciding to persist one.
 
+**An append has a last occurrence.** `Occurrences` is `leading` and `last`, because an atomic batch commits on its final message and the shape says which one that is. This rules out selecting the last member by index.
+
+**A determined fact's identity is derived from its content.** `StateIdentity`, `DeliveryIdentity`, and `DispositionIdentity` name the content, and `IdentityInterpreter` derives the UUID version 8 through the standard library's `uuid5`, because Core says a thing identified by its content has a version 8 identifier and hashing is outside the derivation algebra, so the one admitted form is an interpreter over an imported capability. This rules out minting an identity for a fact its constituents determine.
+
 **Events names no provider.** No declaration carries a subject, a sequence header, a consumer, a revision, or any provider's word, because an entry here is true of event sourcing on any provider. This rules out provider shapes in this module.
 
 ## Quality scenarios
@@ -162,7 +170,9 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A `Version`, `Position`, or `Attempt` is below its bound | Refused |
 | An `ExpectedVersion` constructs from `"no_stream"`, `"any"`, and `{"version": 3}` | Three distinct facts |
 | A `VersionMismatch` is given `ANY` as its actual | Refused |
-| An `Append` is constructed with `NO_STREAM` and one occurrence | Constructs |
+| An `Append` is constructed with `NO_STREAM` and one occurrence as `last` | Constructs |
+| The same `StateIdentity` is given to `IdentityInterpreter` twice | The same version 8 `NodeId` |
+| Two `StateIdentity` values differing in version | Different `NodeId`s |
 | An `Occurrences` or `Events` has no member | Refused |
 | `AppendOutcome` is given an `Events` and then a `VersionMismatch` | Each constructs as itself |
 | `ReadOutcome` is given `"no_stream"` and then `"any"` | Constructs, then refused |
@@ -195,3 +205,4 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | Ending | A delivery to be ended, with its end. |
 | Disposition | The occurrence that ended a delivery, with its end. |
 | Outcome | The union of facts that can exist after an action; a provider constructs one variant. |
+| Identity | The content a determined fact's `NodeId` is derived from. |

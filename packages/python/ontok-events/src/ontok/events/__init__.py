@@ -15,6 +15,12 @@ from ontok.events.delivery import Ending as Ending
 from ontok.events.event import Event as Event
 from ontok.events.event import Events as Events
 from ontok.events.event import Occurrence as Occurrence
+from ontok.events.identity import DeliveryIdentity as DeliveryIdentity
+from ontok.events.identity import DispositionIdentity as DispositionIdentity
+from ontok.events.identity import Identity as Identity
+from ontok.events.identity import IdentityConstructor as IdentityConstructor
+from ontok.events.identity import IdentityInterpreter as IdentityInterpreter
+from ontok.events.identity import StateIdentity as StateIdentity
 from ontok.events.position import Position as Position
 from ontok.events.position import Version as Version
 from ontok.events.read import Read as Read
