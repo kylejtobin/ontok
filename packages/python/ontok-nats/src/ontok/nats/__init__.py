@@ -1,10 +1,5 @@
 from ontok.nats.batch import BatchId as BatchId
 from ontok.nats.batch import BatchSequence as BatchSequence
-from ontok.nats.begin import Begin as Begin
-from ontok.nats.begin import BeginAfter as BeginAfter
-from ontok.nats.begin import BeginAll as BeginAll
-from ontok.nats.begin import BeginConstructor as BeginConstructor
-from ontok.nats.begin import BeginNew as BeginNew
 from ontok.nats.config import NatsConfig as NatsConfig
 from ontok.nats.connection import ServerUrl as ServerUrl
 from ontok.nats.connection import User as User
@@ -25,11 +20,6 @@ from ontok.nats.direct_get import Status as Status
 from ontok.nats.error import ApiError as ApiError
 from ontok.nats.error import ErrorCode as ErrorCode
 from ontok.nats.error import JetStreamError as JetStreamError
-from ontok.nats.expect import Expect as Expect
-from ontok.nats.expect import ExpectAny as ExpectAny
-from ontok.nats.expect import ExpectAt as ExpectAt
-from ontok.nats.expect import ExpectConstructor as ExpectConstructor
-from ontok.nats.expect import ExpectNone as ExpectNone
 from ontok.nats.kv import Bucket as Bucket
 from ontok.nats.kv import Deleted as Deleted
 from ontok.nats.kv import Entry as Entry

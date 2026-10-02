@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field
 
 from ontok.events.position import Position
 from ontok.events.subscription import Subscription
@@ -31,23 +31,3 @@ class Checkpoint(BaseModel):
 
     subscription: Subscription = Field(description="The Subscription that has reached it.")
     position: Position = Field(description="The Position reached.")
-
-
-class ReadCheckpoint(BaseModel):
-    """A Subscription's Checkpoint asked for."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    subscription: Subscription = Field(
-        description="The Subscription whose Checkpoint is asked for."
-    )
-
-
-CheckpointState = NoCheckpoint | Checkpoint
-CheckpointStateConstructor: TypeAdapter[CheckpointState] = TypeAdapter(CheckpointState)

@@ -2,13 +2,11 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel, SerializeAsAny
 
 from ontok import core
 from ontok.core import NodeId
-from ontok.events.position import Position, Version
+from ontok.events.position import Position
 
 
 class Occurrence(core.Event):
-    """An occurrence at its Version in a Stream."""
-
-    version: Version = Field(description="The place this occurrence holds in its Stream.")
+    """An occurrence the organization declares."""
 
 
 class Event(BaseModel):
