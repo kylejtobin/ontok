@@ -1,3 +1,5 @@
+from enum import StrEnum
+
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 from ontok import core
@@ -22,8 +24,16 @@ class Delivery(Work):
     attempt: Attempt = Field(description="Which delivery of this Event this is.")
 
 
-class Acknowledge(BaseModel):
-    """A Delivery to be ended as taken."""
+class End(StrEnum):
+    """How a Delivery ends: taken, not taken and to be handed again, or set aside."""
+
+    ACKNOWLEDGE = "acknowledge"
+    REJECT = "reject"
+    PARK = "park"
+
+
+class Ending(BaseModel):
+    """A Delivery to be ended."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -34,55 +44,11 @@ class Acknowledge(BaseModel):
     )
 
     delivery: Delivery = Field(description="The Delivery to end.")
+    end: End = Field(description="How it is to end.")
 
 
-class Reject(BaseModel):
-    """A Delivery to be ended as not taken, its Event to be handed again."""
+class Disposition(core.Event):
+    """The Delivery ended."""
 
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    delivery: Delivery = Field(description="The Delivery to end.")
-
-
-class Park(BaseModel):
-    """A Delivery to be ended with its Event set aside."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    delivery: Delivery = Field(description="The Delivery to end.")
-
-
-Ending = Acknowledge | Reject | Park
-
-
-class Acknowledgement(core.Event):
-    """The Delivery ended: the Event was taken."""
-
-    delivery: Delivery = Field(description="The Delivery this ends.")
-
-
-class Rejection(core.Event):
-    """The Delivery ended: the Event was not taken and is to be handed again."""
-
-    delivery: Delivery = Field(description="The Delivery this ends.")
-
-
-class Parking(core.Event):
-    """The Delivery ended: the Event was set aside."""
-
-    delivery: Delivery = Field(description="The Delivery this ends.")
-
-
-Disposition = Acknowledgement | Rejection | Parking
+    delivery: Delivery = Field(description="The Delivery this ended.")
+    end: End = Field(description="How it ended.")

@@ -41,7 +41,9 @@ class VersionMismatch(BaseModel):
         revalidate_instances="never",
     )
 
-    expected: ExpectedVersion = Field(description="What was expected of the Stream.")
+    expected: AtVersion | Literal[Expectation.NO_STREAM] = Field(
+        description="What was expected of the Stream."
+    )
     actual: AtVersion | Literal[Expectation.NO_STREAM] = Field(
         description="What was true of the Stream."
     )

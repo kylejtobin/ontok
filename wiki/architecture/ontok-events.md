@@ -17,7 +17,7 @@ sources:
     title: The kinds Events refines
 verified:
   by: claude-code/claude-fable-5-1
-  at: 2026-10-01T22:05:00Z
+  at: 2026-10-02T00:30:00Z
   how: every quality scenario constructed or refused against ontok.events; the import-linter layers contract kept with ontok.nats above ontok.events above ontok.core
 ---
 
@@ -58,7 +58,7 @@ classDiagram
   class Position { root: int ≥ 0 }
   class Expectation { NO_STREAM; ANY }
   class AtVersion { version: Version }
-  class VersionMismatch { expected: AtVersion | Expectation; actual: AtVersion | NO_STREAM }
+  class VersionMismatch { expected: AtVersion | NO_STREAM; actual: AtVersion | NO_STREAM }
   class Stream
   class Occurrence { version: Version }
   class Event { occurrence: Occurrence; stream: NodeId; position: Position }
@@ -81,12 +81,9 @@ classDiagram
   class ReadCheckpoint { subscription: Subscription }
   class Attempt { root: int ≥ 1 }
   class Delivery { event: Event; attempt: Attempt }
-  class Acknowledge { delivery: Delivery }
-  class Reject { delivery: Delivery }
-  class Park { delivery: Delivery }
-  class Acknowledgement { delivery: Delivery }
-  class Rejection { delivery: Delivery }
-  class Parking { delivery: Delivery }
+  class End { ACKNOWLEDGE; REJECT; PARK }
+  class Ending { delivery: Delivery; end: End }
+  class Disposition { delivery: Delivery; end: End }
   core_Entity <|-- Stream
   core_Entity <|-- ReadModel
   core_Event <|-- Occurrence
@@ -97,12 +94,10 @@ classDiagram
   core_Action <|-- Subscription
   Subscription <|-- StreamSubscription
   core_Work <|-- Delivery
-  core_Event <|-- Acknowledgement
-  core_Event <|-- Rejection
-  core_Event <|-- Parking
+  core_Event <|-- Disposition
 ```
 
-The unions: `ExpectedVersion` is `AtVersion | Expectation`; `StartingPoint` is `FromPosition | Start`; `Ending` is `Acknowledge | Reject | Park`; `Disposition` is `Acknowledgement | Rejection | Parking`. One file holds each meaning: `position`, `value`, `stream`, `event`, `append`, `read`, `state`, `read_model`, `subscription`, `checkpoint`, `delivery`.
+The unions: `ExpectedVersion` is `AtVersion | Expectation`; `StartingPoint` is `FromPosition | Start`. One file holds each meaning: `position`, `value`, `stream`, `event`, `append`, `read`, `state`, `read_model`, `subscription`, `checkpoint`, `delivery`.
 
 The interface, one row per action:
 
@@ -112,7 +107,7 @@ The interface, one row per action:
 | `Read` | `ReadOutcome`: `Events \| Literal[Expectation.NO_STREAM]` |
 | `Subscription` | the `Subscription` |
 | `ReadCheckpoint` | `CheckpointState`: `NoCheckpoint \| Checkpoint` |
-| `Ending` | `Disposition` |
+| `Ending` | the `Disposition` |
 | `PersistReadModel` | the `ReadModel` |
 | `ReadModelLookup` | `LookupOutcome`: `ReadModel \| NoReadModel` |
 
@@ -123,7 +118,7 @@ Each bare union has a `TypeAdapter` beside it, named for it with the suffix `Con
 A fact comes to exist in three moves and no others.
 
 1. **Refine.** An organization declares its occurrences by subclassing `Occurrence` and adding the fields each carries; its conditions by subclassing `State`; its interests by subclassing `Subscription` or `StreamSubscription`. A refinement adds and never redeclares.
-2. **Construct.** An `Occurrence` exists when its identity, when it occurred, and its `Version` are proven. An `Event` exists when its `Occurrence`, its stream, and its `Position` are proven. An `Append` exists when its `Role`, `Goal`, stream, `ExpectedVersion`, and `Occurrences` are proven; it performs nothing. A `State` exists when its prior, an `Initial` or a `State`, and the `Event` folded into it are proven; the fold of a stream is the chain of these. A `Delivery` holds the `Subscription` it undertakes, the `Event` handed to it, and which `Attempt` this is; an `Ending` holds the `Delivery` to end; a `Disposition` holds the `Delivery` it ended. A `ReadModel` holds `States` and the `Position` they are as of, and derives its own `PersistReadModel`. An outcome exists when its `TypeAdapter` constructs one variant from a provider's reply.
+2. **Construct.** An `Occurrence` exists when its identity, when it occurred, and its `Version` are proven. An `Event` exists when its `Occurrence`, its stream, and its `Position` are proven. An `Append` exists when its `Role`, `Goal`, stream, `ExpectedVersion`, and `Occurrences` are proven; it performs nothing. A `State` exists when its prior, an `Initial` or a `State`, and the `Event` folded into it are proven; the fold of a stream is the chain of these. A `Delivery` holds the `Subscription` it undertakes, the `Event` handed to it, and which `Attempt` this is; an `Ending` holds the `Delivery` to end and the `End` it is to have; a `Disposition` holds the `Delivery` it ended and the `End` it had. A `ReadModel` holds `States` and the `Position` they are as of, and derives its own `PersistReadModel`. An outcome exists when its `TypeAdapter` constructs one variant from a provider's reply.
 3. **Refuse.** A negative `Version` or `Position`, an `Attempt` of zero, an `Events` or `Occurrences` with no member, a `VersionMismatch` whose actual is `ANY`, a `ReadOutcome` of `ANY`, a `State` without a prior, a `Delivery` without its event or attempt, and any field Core refuses are each refused at construction.
 
 ## Decisions
@@ -140,7 +135,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **Expected version is a model beside a vocabulary.** `AtVersion` carries a fact; no stream and any carry none and form the closed vocabulary `Expectation`, because two empty models cannot be told apart from input while a model and an enum member can. `StartingPoint` has the same shape for the same reason. This rules out empty variants that differ only by class name.
 
-**A mismatch's actual state is a version or no stream.** `VersionMismatch.actual` is `AtVersion | Literal[Expectation.NO_STREAM]`, because a stream is at a version or does not exist, and "any" is an assertion, not a state. This rules out an actual state that could not have been observed.
+**A mismatch names a version or no stream on both sides.** `VersionMismatch.expected` and `actual` are each `AtVersion | Literal[Expectation.NO_STREAM]`, because a stream is at a version or does not exist, and an append under "any" cannot mismatch. This rules out a mismatch that could not have happened and an actual state that could not have been observed.
 
 **An event references its stream; a stream holds no events.** `Event.stream` is a `NodeId` and `Stream` adds nothing to `Entity`, because a stream exists before its first event and is identified independently of them. This rules out a stream that embeds its history.
 
@@ -150,7 +145,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **A checkpoint is read, never written.** `Checkpoint` holds a subscription and a position and no action persists it, because the position a subscription has reached is derived from the deliveries it has acknowledged, and a derived fact is never stored beside its source. This rules out a checkpoint write and rules out a checkpoint that carries a write claim.
 
-**An ending is an action and a disposition is what it produced.** `Acknowledge`, `Reject`, and `Park` carry the delivery to end; `Acknowledgement`, `Rejection`, and `Parking` are Core `Event`s that hold the delivery they ended, because the intent and the occurrence are different facts with different times. This rules out a disposition field on `Delivery` and rules out an ending that claims to have happened.
+**An ending is an action and a disposition is what it produced; how is a vocabulary.** `Ending` carries the delivery and an `End`; `Disposition` is a Core `Event` carrying the same, because the intent and the occurrence are different facts with different times, and the three ways to end carry the same fact and are interchange data, so they are one closed vocabulary rather than three identically shaped classes. This rules out a disposition field on `Delivery`, an ending that claims to have happened, and variants that cannot be told apart from input.
 
 **A delivery knows which attempt it is.** `Delivery.attempt` is at least one, because the first delivery is a delivery and a redelivery is a fact a subscription acts on. This rules out at-least-once living only in a provider's promise.
 
@@ -173,7 +168,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A `State` is constructed from an `Initial` and an `Event` | Constructs |
 | A `State` is constructed without a prior | Refused |
 | `CheckpointState` is given a `NoCheckpoint` and then a `Checkpoint` | Each constructs as itself |
-| An `Ending` and a `Disposition` are constructed from one `Delivery` | Both hold it |
+| An `Ending` and a `Disposition` are constructed from one `Delivery` and serialized | Each constructs back with its `End` |
 | A `ReadModel` derives its `PersistReadModel` | Holds the read model |
 | `LookupOutcome` is given a `NoReadModel` | Constructs as itself |
 | Core imports `ontok.events` | The import-linter layers contract fails |
@@ -195,6 +190,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | Subscription | A role's standing interest in events, toward a goal, from a starting point. |
 | Checkpoint | The position a subscription has reached. |
 | Delivery | A subscription's undertaking of one event, on a numbered attempt. |
-| Ending | A delivery to be ended: acknowledged, rejected, or parked. |
-| Disposition | The occurrence that ended a delivery: acknowledgement, rejection, or parking. |
+| End | How a delivery ends: acknowledge, reject, or park. |
+| Ending | A delivery to be ended, with its end. |
+| Disposition | The occurrence that ended a delivery, with its end. |
 | Outcome | The union of facts that can exist after an action; a provider constructs one variant. |
