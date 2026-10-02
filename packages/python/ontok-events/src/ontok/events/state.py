@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, SerializeAsAny
 
 from ontok import core
 from ontok.core import NodeId
@@ -14,5 +14,5 @@ class Initial(core.State):
 class State(core.State):
     """The fold of a Stream: the prior condition and the Event folded into it."""
 
-    prior: "Initial | State" = Field(description="The condition before this Event.")
+    prior: SerializeAsAny["Initial | State"] = Field(description="The condition before this Event.")
     event: Event = Field(description="The Event folded into the prior condition.")

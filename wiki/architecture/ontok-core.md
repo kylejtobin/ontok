@@ -117,6 +117,8 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **A fact exists only because it was proven.** Every model is frozen, closed, and strict, because a refinement inherits configuration unchanged and the base is the only place that can guarantee, for every kind anyone will ever declare, that a fact cannot be coerced or mutated into existence. A kind whose input is text or a foreign shape constructs through a config or a foreign model at its boundary. This rules out lax coercion, mutation, partial copies, and tolerated extra input.
 
+**A constituent serializes as the kind it is.** `Action.role`, `Action.goal`, `Work.action`, `Rule.context`, `Rule.doing`, and the members of `States` are `SerializeAsAny`, because a constituent of a Core kind is always a refinement and a rendering that dropped its fields would not be the fact. Only the kind's owner constructs it back. This rules out a dump-time flag and rules out a `type` field to recover the kind.
+
 **Time is a temporal extent.** An occurrence occupies an `Instant` or an `Interval`; a `Timestamp` carries its timezone and a `PositiveDuration` is strictly positive, because an occurrence takes a point or a positive span on the timeline and never zero. This rules out naive datetimes and zero-length intervals.
 
 **Identity is a canonical lowercase UUID, version 7 or version 8.** `NodeId` and `RelationId` construct only from those forms, because a thing that is minted is identified by a UUIDv7, globally unique without coordination and ordered by the moment it was minted, and a thing whose identity is its content is identified by a UUIDv8 derived from that content, so the same content is the same thing wherever it appears. This rules out serial integers and rules out any other version.
@@ -148,6 +150,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | A `Connection` is given a `Node` as an endpoint | Refused |
 | An `Interval` has a zero duration | Refused |
 | A `Context` has no `State` | Refused |
+| A refinement of `Role` with a field is held by an `Action` and serialized | The field is in the rendering |
 | A module imports a module above it | The import-linter layers contract fails |
 
 ## Glossary

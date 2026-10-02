@@ -31,6 +31,7 @@ Events is event sourcing stated in ONTOK: an organization's memory of what occur
 - Events depends on `ontok-core` and Pydantic and on nothing else. No declaration names a provider, a transport, or an application.
 - Events sits above Core and below every provider in the workspace's import-linter layers contract.
 - An event's stream is referenced by `NodeId`; a stream's events are not its constituents.
+- `Event.occurrence` and `State.prior` are `SerializeAsAny`: an organization's refinement renders whole, and only the organization's kind constructs it back.
 - `Delivery` inherits `action` typed `Action`. That the action is a `Subscription` is not established by construction.
 - The occurrences of one `Append` share its stream. That agreement is not established by construction.
 - Python 3.14 or later; `pydantic>=2.9,<3`.

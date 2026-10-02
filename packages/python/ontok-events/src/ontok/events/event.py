@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel, SerializeAsAny
 
 from ontok import core
 from ontok.core import NodeId
@@ -22,7 +22,7 @@ class Event(BaseModel):
         revalidate_instances="never",
     )
 
-    occurrence: Occurrence = Field(description="The occurrence memory holds.")
+    occurrence: SerializeAsAny[Occurrence] = Field(description="The occurrence memory holds.")
     stream: NodeId = Field(description="The Stream this Event is in.")
     position: Position = Field(description="The place this Event holds in the log.")
 

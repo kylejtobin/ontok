@@ -1,17 +1,17 @@
-from pydantic import ConfigDict, Field, RootModel
+from pydantic import ConfigDict, Field, RootModel, SerializeAsAny
 
 from ontok.core.state import State
 from ontok.core.structure import Node
 
 
-class States(RootModel[tuple[State, ...]]):
+class States(RootModel[tuple[SerializeAsAny[State], ...]]):
     """The conditions that constitute a situation."""
 
     model_config = ConfigDict(
         frozen=True, strict=True, validate_default=True, revalidate_instances="never"
     )
 
-    root: tuple[State, ...] = Field(min_length=1)
+    root: tuple[SerializeAsAny[State], ...] = Field(min_length=1)
 
 
 class Context(Node):
