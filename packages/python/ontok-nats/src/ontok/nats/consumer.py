@@ -11,8 +11,10 @@ from ontok.events import (
     Attempt,
     Delivery,
     DispositionIdentity,
+    Frontier,
     Outcome,
     Position,
+    Read,
     Subscription,
     Version,
 )
@@ -309,6 +311,50 @@ Begin = BeginAfter | BeginAll | BeginNew
 BeginConstructor: TypeAdapter[Begin] = TypeAdapter(Begin)
 
 
+class AfterPosition(BaseModel):
+    """A Read beginning after a Position: the consumer starts at the next sequence."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    position: Sequence = Field(validation_alias=AliasPath("after", "position", "root"))
+
+    @property
+    def deliver_policy(self) -> DeliverPolicy:
+        return DeliverPolicy.BY_START_SEQUENCE
+
+    @property
+    def opt_start_seq(self) -> Sequence:
+        return Sequence(self.position.root + 1)
+
+
+class FromBeginning(BaseModel):
+    """A Read from the beginning: the consumer delivers all."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    value: Literal["beginning"] = Field(validation_alias=AliasPath("after", "value"))
+
+    @property
+    def deliver_policy(self) -> DeliverPolicy:
+        return DeliverPolicy.ALL
+
+
+After = AfterPosition | FromBeginning
+AfterConstructor: TypeAdapter[After] = TypeAdapter(After)
+
+
 class PullConsumerConfig(BaseModel):
     """The configuration of an ephemeral pull consumer over one Stream's subject."""
 
@@ -321,8 +367,20 @@ class PullConsumerConfig(BaseModel):
     )
 
     filter_subject: FilterSubject = Field(validation_alias=AliasPath("filter", "subject"))
-    deliver_policy: Literal[DeliverPolicy.ALL] = DeliverPolicy.ALL
+    deliver_policy: DeliverPolicy = Field(validation_alias=AliasPath("after", "deliver_policy"))
     ack_policy: Literal[AckPolicy.NONE] = AckPolicy.NONE
+
+
+class PullConsumerFromConfig(PullConsumerConfig):
+    """The configuration of an ephemeral pull consumer that begins at a sequence."""
+
+    opt_start_seq: Sequence = Field(validation_alias=AliasPath("after", "opt_start_seq"))
+
+
+PullConfig = Annotated[
+    PullConsumerFromConfig | PullConsumerConfig, Field(union_mode="left_to_right")
+]
+PullConfigConstructor: TypeAdapter[PullConfig] = TypeAdapter(PullConfig)
 
 
 class PushConsumerConfig(BaseModel):
@@ -360,7 +418,8 @@ PushConfigConstructor: TypeAdapter[PushConfig] = TypeAdapter(PushConfig)
 
 
 class PullConsumer(BaseModel):
-    """A Read as NATS receives it: an ephemeral pull consumer over the Stream's subject."""
+    """A Read as NATS receives it: an ephemeral pull consumer over the Stream's subject, begun
+    where the Read begins."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -370,15 +429,19 @@ class PullConsumer(BaseModel):
         revalidate_instances="never",
     )
 
-    stream: NodeId = Field(validation_alias=AliasPath("stream"))
+    read: Read = Field(description="The Read.")
 
     @property
     def filter(self) -> StreamFilter:
-        return StreamFilter(stream=self.stream)
+        return StreamFilter(stream=self.read.stream)
 
     @property
-    def config(self) -> PullConsumerConfig:
-        return PullConsumerConfig.model_validate(self, from_attributes=True)
+    def after(self) -> After:
+        return AfterConstructor.validate_python(self.read, from_attributes=True)
+
+    @property
+    def config(self) -> PullConfig:
+        return PullConfigConstructor.validate_python(self, from_attributes=True)
 
 
 class PushConsumer(BaseModel):
@@ -434,7 +497,7 @@ class EphemeralConsumerRequest(BaseModel):
     )
 
     stream_name: StreamName = Field(description="The stream.")
-    config: PullConsumerConfig = Field(description="The consumer.")
+    config: PullConfig = Field(description="The consumer.")
 
     @property
     def api(self) -> Subject:
@@ -493,13 +556,13 @@ class Pull(BaseModel):
         revalidate_instances="never",
     )
 
-    stream_name: StreamName = Field(validation_alias=AliasPath("stream_name"))
-    consumer: ConsumerName = Field(validation_alias=AliasPath("name"))
-    batch: PullBatch = Field(validation_alias=AliasPath("num_pending", "root"))
+    stream_name: StreamName = Field(validation_alias=AliasPath("info", "stream_name"))
+    consumer: ConsumerName = Field(validation_alias=AliasPath("info", "name"))
+    batch: PullBatch = Field(validation_alias=AliasPath("info", "num_pending", "root"))
 
 
-class NothingPending(BaseModel):
-    """A consumer with no message pending."""
+class AtFrontier(BaseModel):
+    """A Read after a Position with nothing pending: the Stream's frontier is that Position."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -509,11 +572,50 @@ class NothingPending(BaseModel):
         revalidate_instances="never",
     )
 
-    num_pending: Literal[0] = Field(validation_alias=AliasPath("num_pending", "root"))
+    num_pending: Literal[0] = Field(validation_alias=AliasPath("info", "num_pending", "root"))
+    position: Position = Field(validation_alias=AliasPath("read", "after", "position"))
+
+    @property
+    def frontier(self) -> Frontier:
+        return Frontier(position=self.position)
 
 
-PullOrNothing = Annotated[Pull | NothingPending, Field(union_mode="left_to_right")]
-PullOrNothingConstructor: TypeAdapter[PullOrNothing] = TypeAdapter(PullOrNothing)
+class NoStream(BaseModel):
+    """A Read from the beginning with nothing pending: the Stream holds no Event."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    num_pending: Literal[0] = Field(validation_alias=AliasPath("info", "num_pending", "root"))
+    value: Literal["beginning"] = Field(validation_alias=AliasPath("read", "after", "value"))
+
+
+Pending = Annotated[Pull | AtFrontier | NoStream, Field(union_mode="left_to_right")]
+PendingConstructor: TypeAdapter[Pending] = TypeAdapter(Pending)
+
+
+class ReadReply(BaseModel):
+    """A Read and the consumer NATS created for it: what there is to pull."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    read: Read = Field(description="The Read.")
+    info: ConsumerInfo = Field(description="The consumer created for it.")
+
+    @property
+    def pending(self) -> Pending:
+        return PendingConstructor.validate_python(self, from_attributes=True)
 
 
 class ConsumerInterpreter(BaseModel):

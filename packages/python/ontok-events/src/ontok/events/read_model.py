@@ -2,12 +2,18 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from ontok.core import Entity, NodeId
 from ontok.events.position import Position
+from ontok.events.subscription import FromPosition
 
 
 class ReadModel(Entity):
-    """Conditions held as of a Position in the log. A refinement adds the conditions it holds."""
+    """The fold of one Stream as of a Position, held. A refinement adds the conditions it holds."""
 
-    position: Position = Field(description="The Position the conditions are as of.")
+    stream: NodeId = Field(description="The Stream this is the fold of.")
+    position: Position = Field(description="The Position the fold is as of.")
+
+    @property
+    def after(self) -> FromPosition:
+        return FromPosition(position=self.position)
 
     @property
     def persistence(self) -> "PersistReadModel":

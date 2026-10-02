@@ -36,7 +36,7 @@ class Amount(RootModel[Decimal]):
         frozen=True, strict=True, validate_default=True, revalidate_instances="never"
     )
 
-    root: Decimal = Field(gt=0, decimal_places=2)
+    root: Decimal = Field(decimal_places=2)
 
 
 class Deposited(Occurrence):
@@ -45,12 +45,20 @@ class Deposited(Occurrence):
     kind: Literal["deposited"] = Field(default="deposited", description="Which transaction.")
     amount: Amount = Field(description="How much.")
 
+    @property
+    def signed(self) -> Amount:
+        return Amount(self.amount.root)
+
 
 class Withdrawn(Occurrence):
     """Money left an account."""
 
     kind: Literal["withdrawn"] = Field(default="withdrawn", description="Which transaction.")
     amount: Amount = Field(description="How much.")
+
+    @property
+    def signed(self) -> Amount:
+        return Amount(-self.amount.root)
 
 
 class Balance(ReadModel):
@@ -172,12 +180,14 @@ READ_A = Read(
     role=TELLER,
     goal=BOOKS_BALANCED,
     stream=ACCOUNT_A,
+    after=Start.BEGINNING,
 )
 READ_B = Read(
     id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a32"),
     role=TELLER,
     goal=BOOKS_BALANCED,
     stream=ACCOUNT_B,
+    after=Start.BEGINNING,
 )
 
 CLERK = Subscription(
@@ -216,8 +226,12 @@ A_AFTER_20 = State(
 )
 
 BALANCE_A = NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a61")
-BALANCE_A_MORNING = Balance(id=BALANCE_A, position=Position(3), amount=Amount(Decimal(120)))
-BALANCE_A_AFTER_TRANSFER = Balance(id=BALANCE_A, position=Position(5), amount=Amount(Decimal(100)))
+BALANCE_A_MORNING = Balance(
+    id=BALANCE_A, stream=ACCOUNT_A, position=Position(3), amount=Amount(Decimal(120))
+)
+BALANCE_A_AFTER_TRANSFER = Balance(
+    id=BALANCE_A, stream=ACCOUNT_A, position=Position(5), amount=Amount(Decimal(100))
+)
 
 B_OPENING = Initial(id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a56"), stream=ACCOUNT_B)
 B_AFTER_10 = State(
@@ -235,6 +249,7 @@ READ_NOWHERE = Read(
     role=TELLER,
     goal=BOOKS_BALANCED,
     stream=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a0f"),
+    after=Start.BEGINNING,
 )
 
 DEPOSIT_7 = Deposited(
@@ -250,3 +265,10 @@ LATE_DEPOSIT = Append(
 )
 LATE_DEPOSIT_LANDS_AT = Position(9)
 LATE_EVENT = Event(occurrence=DEPOSIT_7, stream=ACCOUNT_A, version=Version(5), position=Position(9))
+
+BOOKKEEPER = Subscription(
+    id=NodeId("0192a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a44"),
+    role=TELLER,
+    goal=BOOKS_BALANCED,
+    begins=Start.BEGINNING,
+)

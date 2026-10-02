@@ -4,6 +4,7 @@ constructed fact whose construction is the effect."""
 import asyncio
 import uuid
 from collections.abc import Awaitable, Callable
+from decimal import Decimal
 
 from nats.aio.client import Client
 from nats.aio.msg import Msg
@@ -15,12 +16,15 @@ from ontok.events import (
     AppendOutcome,
     Delivery,
     DeliveryIdentity,
+    Events,
     Expectation,
     IdentityInterpreter,
     Initial,
+    Outcome,
     Read,
     ReadModel,
     ReadOutcome,
+    Start,
     State,
     Subscription,
 )
@@ -28,6 +32,7 @@ from ontok.nats import (
     AckInterpreter,
     AckReply,
     ApiError,
+    AtFrontier,
     Batch,
     BatchInterpreter,
     BatchReply,
@@ -35,8 +40,10 @@ from ontok.nats import (
     ConsumerInfo,
     ConsumerInterpreter,
     ConsumerReply,
+    Deleted,
     DuplicateMessage,
     DurableConsumerRequest,
+    Entry,
     EntryInterpreter,
     EntryReply,
     EphemeralConsumerRequest,
@@ -46,16 +53,17 @@ from ontok.nats import (
     MessageGetInterpreter,
     NatsConfig,
     NewEntry,
-    NothingPending,
+    NoEntry,
+    NoStream,
     Prior,
-    Pull,
     PullConsumer,
     PullInterpreter,
-    PullOrNothingConstructor,
     PushConsumer,
+    ReadReply,
 )
 
-from .program import BankRoute, Page, RulingConstructor
+from .program import BankRoute, Page, RulingConstructor, TransactionConstructor
+from .world import Amount, Balance
 
 
 def mint() -> NodeId:
@@ -91,19 +99,19 @@ async def read(
 ) -> ReadOutcome:
     info = await ConsumerInterpreter(
         action=EphemeralConsumerRequest(
-            stream_name=config.stream,
-            config=PullConsumer.model_validate(action, from_attributes=True).config,
+            stream_name=config.stream, config=PullConsumer(read=action).config
         ),
         wait=config.reply_wait,
         client=client,
     ).execute()
     assert isinstance(info, ConsumerInfo), info
-    pull = PullOrNothingConstructor.validate_python(info, from_attributes=True)
-    if isinstance(pull, NothingPending):
+    pending = ReadReply(read=action, info=info).pending
+    if isinstance(pending, NoStream):
         return Expectation.NO_STREAM
-    assert isinstance(pull, Pull)
+    if isinstance(pending, AtFrontier):
+        return pending.frontier
     return Page(
-        messages=await PullInterpreter(action=pull, wait=config.reply_wait, client=js).execute()
+        messages=await PullInterpreter(action=pending, wait=config.reply_wait, client=js).execute()
     ).events
 
 
@@ -204,3 +212,88 @@ async def persist(
         entry=entry,
         reply=await EntryInterpreter(action=entry, wait=config.reply_wait, client=client).execute(),
     ).keeping
+
+
+class Bookkeeper(Clerk):
+    """A subscriber whose delivery is only a trigger: it looks up the account's balance, reads
+    the stream after it, folds what the store returns, writes the balance against the entry
+    it read, and completes the delivery."""
+
+    def __init__(
+        self,
+        client: Client,
+        js: JetStreamContext,
+        subscription: Subscription,
+        config: NatsConfig,
+    ) -> None:
+        super().__init__(client, subscription, config)
+        self.js = js
+        self.kept: list[Keeping] = []
+
+    async def receive(self, msg: Msg) -> None:
+        route = BankRoute.receive(msg)
+        self.deliveries.append(delivered(self.subscription, route))
+        held = await lookup(self.client, self.config, route.stream)
+        opening = Amount(Decimal(0))
+        before = Balance.model_validate_json(held.data) if isinstance(held, Entry) else None
+        prior = (
+            held
+            if isinstance(held, Entry | Deleted)
+            else NoEntry.model_validate(held, from_attributes=True)
+        )
+        outcome = await read(
+            self.client,
+            self.js,
+            self.config,
+            Read(
+                id=mint(),
+                role=self.subscription.role,
+                goal=self.subscription.goal,
+                stream=route.stream,
+                after=before.after if before is not None else Start.BEGINNING,
+            ),
+        )
+        if isinstance(outcome, Events):
+            self.kept.append(
+                await persist(
+                    self.client,
+                    self.config,
+                    Balance(
+                        id=route.stream,
+                        stream=route.stream,
+                        position=outcome.root[-1].position,
+                        amount=Amount(
+                            (before.amount.root if before is not None else opening.root)
+                            + sum(
+                                TransactionConstructor.validate_json(
+                                    e.occurrence.model_dump_json()
+                                ).signed.root
+                                for e in outcome.root
+                            )
+                        ),
+                    ),
+                    prior,
+                )
+            )
+        await AckInterpreter(
+            action=AckReply(reply=route.message.reply, outcome=Outcome.COMPLETE),
+            wait=self.config.reply_wait,
+            client=self.client,
+        ).execute()
+
+
+def balance_of(events: Events) -> Balance:
+    return Balance(
+        id=events.root[0].stream,
+        stream=events.root[0].stream,
+        position=events.root[-1].position,
+        amount=Amount(
+            sum(
+                (
+                    TransactionConstructor.validate_json(e.occurrence.model_dump_json()).signed.root
+                    for e in events.root
+                ),
+                Decimal(0),
+            )
+        ),
+    )

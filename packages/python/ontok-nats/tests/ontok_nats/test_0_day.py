@@ -4,11 +4,11 @@ import pytest
 from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 
-from ontok.events import Expectation, VersionMismatch
+from ontok.events import Events, Expectation, VersionMismatch
 from ontok.nats import Deleted, Entry, EntryAck, EntryRefusal, NatsConfig, NoEntry
 
 from . import world as w
-from .acts import Clerk, append, lookup, persist, read, subscribe
+from .acts import Bookkeeper, Clerk, append, balance_of, lookup, persist, read, subscribe
 from .program import TransactionConstructor
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
@@ -141,3 +141,17 @@ async def test_the_statement_is_written_only_against_what_was_read(
     assert isinstance(now, Entry)
     assert w.Balance.model_validate_json(now.data) == w.BALANCE_A_AFTER_TRANSFER
     assert not isinstance(now, Deleted)
+
+
+async def test_the_books_balance_whatever_the_delivery_did(
+    connection: Client, jetstream: JetStreamContext, config: NatsConfig
+) -> None:
+    books = Bookkeeper(connection, jetstream, w.BOOKKEEPER, config)
+    await subscribe(connection, config, w.BOOKKEEPER, books.receive)
+    await books.until(9)
+    for account, reading in ((w.ACCOUNT_A, w.READ_A), (w.ACCOUNT_B, w.READ_B)):
+        held = await lookup(connection, config, account)
+        assert isinstance(held, Entry)
+        whole = await read(connection, jetstream, config, reading)
+        assert isinstance(whole, Events)
+        assert w.Balance.model_validate_json(held.data) == balance_of(whole)

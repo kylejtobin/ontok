@@ -26,10 +26,10 @@ from ontok.events import (
     StreamSubscription,
     Version,
 )
-from ontok.nats import Batch, NatsConfig
+from ontok.nats import Batch, Entry, NatsConfig
 
-from .acts import Clerk, Silent, append, mint, read, subscribe
-from .world import BOOKS_BALANCED, TELLER, Amount, Deposited, Withdrawn
+from .acts import Bookkeeper, Clerk, Silent, append, balance_of, lookup, mint, read, subscribe
+from .world import BOOKS_BALANCED, TELLER, Amount, Balance, Deposited, Withdrawn
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 
@@ -57,7 +57,7 @@ def an_append(stream: NodeId, *occurrences: Deposited | Withdrawn) -> Append:
 
 
 def a_read(stream: NodeId) -> Read:
-    return Read(id=mint(), role=TELLER, goal=BOOKS_BALANCED, stream=stream)
+    return Read(id=mint(), role=TELLER, goal=BOOKS_BALANCED, stream=stream, after=Start.BEGINNING)
 
 
 async def kill_and_restart(server: DockerCompose, connection: Client) -> None:
@@ -175,3 +175,39 @@ async def test_a_kill_may_replay_endings_not_yet_persisted_but_never_as_a_first_
     after = await clerk.until(len(clerk.deliveries) + 1)
     assert after[-1].event.occurrence.id == later.occurrences.root[0].id
     assert after[-1].attempt.root == 1
+
+
+async def test_the_books_balance_across_a_kill_in_the_middle_of_the_day(
+    server: DockerCompose, connection: Client, jetstream: JetStreamContext, config: NatsConfig
+) -> None:
+    account = mint()
+    opening_fold = Initial(id=mint(), stream=account)
+    books = Bookkeeper(
+        connection,
+        jetstream,
+        StreamSubscription(
+            id=mint(), role=TELLER, goal=BOOKS_BALANCED, begins=Start.BEGINNING, stream=account
+        ),
+        config,
+    )
+    await subscribe(connection, config, books.subscription, books.receive)
+    first = an_append(account, deposit(10), deposit(20), withdrawal(5))
+    assert isinstance(await append(connection, config, first, opening_fold), Position)
+    await books.until(1)
+    await kill_and_restart(server, connection)
+    later = Append(
+        id=mint(),
+        role=TELLER,
+        goal=BOOKS_BALANCED,
+        stream=account,
+        expected=Expectation.ANY,
+        occurrences=Occurrences((deposit(7),)),
+    )
+    assert isinstance(await append(connection, config, later, opening_fold), Position)
+    await books.until(len(books.deliveries) + 1)
+    await asyncio.sleep(config.ack_wait.root.total_seconds() + 0.5)
+    held = await lookup(connection, config, account)
+    assert isinstance(held, Entry)
+    whole = await read(connection, jetstream, config, a_read(account))
+    assert isinstance(whole, Events)
+    assert Balance.model_validate_json(held.data) == balance_of(whole)

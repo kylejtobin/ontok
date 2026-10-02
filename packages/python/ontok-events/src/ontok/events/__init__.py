@@ -17,6 +17,7 @@ from ontok.events.identity import IdentityInterpreter as IdentityInterpreter
 from ontok.events.identity import StateIdentity as StateIdentity
 from ontok.events.position import Position as Position
 from ontok.events.position import Version as Version
+from ontok.events.read import Frontier as Frontier
 from ontok.events.read import Read as Read
 from ontok.events.read import ReadOutcome as ReadOutcome
 from ontok.events.read import ReadOutcomeConstructor as ReadOutcomeConstructor

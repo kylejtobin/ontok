@@ -20,6 +20,8 @@ from ontok.events import (
     Occurrences,
     Position,
     Read,
+    ReadOutcome,
+    Start,
     State,
     Version,
     VersionMismatch,
@@ -56,7 +58,7 @@ def an_append(
 
 
 def a_read(stream: NodeId) -> Read:
-    return Read(id=mint(), role=TELLER, goal=BOOKS_BALANCED, stream=stream)
+    return Read(id=mint(), role=TELLER, goal=BOOKS_BALANCED, stream=stream, after=Start.BEGINNING)
 
 
 async def test_two_tellers_race_the_same_fold_and_exactly_one_wins(
@@ -136,7 +138,7 @@ async def test_a_batch_never_committed_is_abandoned_and_the_stream_stays_free(
     )
 
 
-def await_position_of(outcome: Events | Expectation) -> int:
+def await_position_of(outcome: ReadOutcome) -> int:
     assert isinstance(outcome, Events)
     return outcome.root[-1].position.root
 

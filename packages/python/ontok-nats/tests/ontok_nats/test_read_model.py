@@ -18,7 +18,9 @@ pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 
 
 def balance(identity: NodeId, amount: int, position: int) -> Balance:
-    return Balance(id=identity, position=Position(position), amount=Amount(Decimal(amount)))
+    return Balance(
+        id=identity, stream=identity, position=Position(position), amount=Amount(Decimal(amount))
+    )
 
 
 async def test_two_writers_with_the_same_prior_and_exactly_one_is_kept(
