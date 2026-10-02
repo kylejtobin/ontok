@@ -78,8 +78,6 @@ classDiagram
   class PubAck { stream: StreamName; seq: Sequence }
   class NoMessages { status: 404 }
   class DeliveredMessage { subject; reply; stream_sequence; num_delivered }
-  class ConsumerInfo { ack_floor: Sequence }
-  class NoAckFloor { ack_floor: 0 }
   class Entry { revision: Json~Revision~; operation: PUT }
   class Deleted { revision: Json~Revision~; operation: DEL | PURGE }
   class EventSubject { stream: NodeId; subject() }
@@ -92,7 +90,6 @@ One file per NATS topic: `stream`, `consumer`, `batch`, `direct_get`, `error`, `
 | Reply | Variants | Realizes |
 |-------|----------|----------|
 | `PublishReply` | `PubAck \| ApiError` | `AppendOutcome`: a `PubAck` is the events landed; an `ApiError` with code 10071 is the `VersionMismatch` |
-| `ConsumerInfoReply` | `ConsumerInfo \| NoAckFloor \| ApiError` | `CheckpointState`: the ack floor is the `Checkpoint`; no floor is `NoCheckpoint` |
 | `DeliveredMessage` | one shape | `Delivery`: `num_delivered` is the `Attempt`, `reply` is where the `Ending` is sent |
 | `KvReply` | `Entry \| Deleted \| NoMessages` | `LookupOutcome`: an `Entry` holds the `ReadModel`; `Deleted` and `NoMessages` are `NoReadModel` |
 
@@ -109,7 +106,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **NATS's things are in NATS's words.** `Sequence`, `Subject`, `ConsumerName`, `Revision`, `Ack`, because the account is NATS's documentation and a constituent that is not its word is a step in disguise. This rules out an Events word as a field in this module.
 
-**A reply is one union per request, constructed whole.** `PublishReply`, `ConsumerInfoReply`, `KvReply`, because NATS answers one request with one of a closed set of shapes and construction chooses among them. This rules out parsing a reply field by field and rules out inspecting a status before constructing.
+**A reply is one union per request, constructed whole.** `PublishReply`, `KvReply`, because NATS answers one request with one of a closed set of shapes and construction chooses among them. This rules out parsing a reply field by field and rules out inspecting a status before constructing.
 
 **An error reply is one shape.** `ApiError` holds a `JetStreamError` with its `err_code`, because every JetStream API refusal carries that and the code is what a duty consumes. This rules out an error model per request.
 
@@ -121,9 +118,9 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **The payload is the organization's.** `DeliveredMessage` and `Entry` declare no `data`, because the payload is an `Occurrence` or `ReadModel` of a kind only the organization declares, and a refinement adds the field with `Json[<its kind>]`. This rules out a payload typed `bytes` and rules out this module naming an organization's kind.
 
-**Absence is a variant of the reply.** `NoMessages`, `NoAckFloor`, `Deleted`, because NATS answers absence with a shape, and that shape constructs. This rules out a caught error or a `None` standing for a missing message.
+**Absence is a variant of the reply.** `NoMessages`, `Deleted`, because NATS answers absence with a shape, and that shape constructs. This rules out a caught error or a `None` standing for a missing message.
 
-**The checkpoint is the consumer's ack floor.** `ConsumerInfo.ack_floor` realizes `Checkpoint` and `NoAckFloor` realizes `NoCheckpoint`, because a durable consumer with explicit acknowledgement already holds the position its acknowledgements have reached. This rules out a key-value checkpoint.
+**The consumer holds the checkpoint.** A durable consumer with explicit acknowledgement holds the position its acknowledgements have reached and resumes from it, because that is what a durable consumer is. This rules out a key-value checkpoint and rules out reading the ack floor, which no duty consumes.
 
 **The subject is the stream's identity.** `EventSubject` is `event.<stream NodeId>`, because a stream's events share one subject and the kind is in the payload, not the subject. This rules out a subject grammar carrying the event type.
 
@@ -135,10 +132,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 |----------|----------|
 | A publish under `Nats-Expected-Last-Subject-Sequence: 0` on a fresh subject | `PubAck` with `seq` 1 |
 | The same publish repeated | `ApiError` with code 10071 |
-| Consumer info before any acknowledgement | `NoAckFloor` |
 | A delivered message from a pull consumer | `DeliveredMessage` with `num_delivered` 1 |
-| Consumer info after `+ACK` | `ConsumerInfo` with the acknowledged sequence |
-| Consumer info for a consumer that does not exist | `ApiError` with code 10014 |
 | A key put, then read by direct get | `Entry` at revision 1 |
 | The key deleted, then read | `Deleted` at revision 2 |
 | A key never written, read | `NoMessages` |
@@ -155,7 +149,6 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | PubAck | The acknowledgement of a publish: stream and sequence. |
 | Direct get | A request to a stream for the last message on a subject. |
 | Consumer | A durable view over a stream that delivers messages and takes acknowledgements. |
-| Ack floor | The stream sequence up to which a consumer's deliveries are acknowledged. |
 | Bucket | A key-value store, itself a stream whose subjects are keys. |
 | Revision | The sequence of a key's entry in its bucket. |
 | Operation | What an entry did to its key: put, delete, or purge. |

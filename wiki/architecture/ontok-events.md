@@ -81,8 +81,6 @@ classDiagram
   class FromPosition { position: Position }
   class Subscription { begins: FromPosition | Start }
   class StreamSubscription { stream: NodeId }
-  class NoCheckpoint { subscription: Subscription }
-  class Checkpoint { subscription: Subscription; position: Position }
   class Attempt { root: int ≥ 1 }
   class Delivery { event: Event; attempt: Attempt }
   class End { ACKNOWLEDGE; REJECT; PARK }
@@ -101,7 +99,7 @@ classDiagram
   core_Event <|-- Disposition
 ```
 
-The unions: `ExpectedVersion` is `AtVersion | Expectation`; `StartingPoint` is `FromPosition | Start`; `Identity` is `StateIdentity | DeliveryIdentity | DispositionIdentity`. One file holds each meaning: `position`, `value`, `stream`, `event`, `append`, `read`, `state`, `read_model`, `subscription`, `checkpoint`, `delivery`, `identity`.
+The unions: `ExpectedVersion` is `AtVersion | Expectation`; `StartingPoint` is `FromPosition | Start`; `Identity` is `StateIdentity | DeliveryIdentity | DispositionIdentity`. One file holds each meaning: `position`, `value`, `stream`, `event`, `append`, `read`, `state`, `read_model`, `subscription`, `delivery`, `identity`.
 
 The interface, one row per action:
 
@@ -146,7 +144,7 @@ Each is stated as it stands. To change one, change it here and in the code in on
 
 **Interest in a kind of occurrence is refinement.** `Subscription` carries no field naming kinds; an organization subclasses it, because the class is the kind and a field of kinds is a registry. This rules out a subscription that filters by a type name.
 
-**A checkpoint is neither written nor asked for.** `Checkpoint` holds a subscription and a position, and no action persists or reads it, because the position a subscription has reached is derived from the deliveries it has acknowledged and a provider resumes from it unasked. This rules out a checkpoint write, a checkpoint read, and a checkpoint that carries a write claim.
+**Events has no checkpoint.** The position a subscription has reached is held by the provider, derived from the deliveries it has acknowledged, and resumed from unasked, because no sentence of event sourcing names the organization holding it. This rules out a checkpoint fact, a checkpoint write, and a checkpoint read in this module.
 
 **An ending is an action and a disposition is what it produced; how is a vocabulary.** `Ending` carries the delivery and an `End`; `Disposition` is a Core `Event` carrying the same, because the intent and the occurrence are different facts with different times, and the three ways to end carry the same fact and are interchange data, so they are one closed vocabulary rather than three identically shaped classes. This rules out a disposition field on `Delivery`, an ending that claims to have happened, and variants that cannot be told apart from input.
 
@@ -194,7 +192,6 @@ Each is stated as it stands. To change one, change it here and in the code in on
 | Fold | The condition reached by applying a stream's events in order, each to the prior condition. |
 | Read model | Conditions held as of a position. |
 | Subscription | A role's standing interest in events, toward a goal, from a starting point. |
-| Checkpoint | The position a subscription has reached. |
 | Delivery | A subscription's undertaking of one event, on a numbered attempt. |
 | End | How a delivery ends: acknowledge, reject, or park. |
 | Ending | A delivery to be ended, with its end. |

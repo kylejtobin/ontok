@@ -5,14 +5,10 @@ from ontok.nats.connection import ServerUrl as ServerUrl
 from ontok.nats.connection import User as User
 from ontok.nats.consumer import Ack as Ack
 from ontok.nats.consumer import AckPolicy as AckPolicy
-from ontok.nats.consumer import ConsumerInfo as ConsumerInfo
-from ontok.nats.consumer import ConsumerInfoReply as ConsumerInfoReply
-from ontok.nats.consumer import ConsumerInfoReplyConstructor as ConsumerInfoReplyConstructor
 from ontok.nats.consumer import ConsumerName as ConsumerName
 from ontok.nats.consumer import DeliveredMessage as DeliveredMessage
 from ontok.nats.consumer import DeliverPolicy as DeliverPolicy
 from ontok.nats.consumer import MaxDeliver as MaxDeliver
-from ontok.nats.consumer import NoAckFloor as NoAckFloor
 from ontok.nats.consumer import NumDelivered as NumDelivered
 from ontok.nats.consumer import NumPending as NumPending
 from ontok.nats.direct_get import NoMessages as NoMessages

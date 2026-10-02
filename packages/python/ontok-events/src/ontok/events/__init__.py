@@ -2,8 +2,6 @@ from ontok.events.append import Append as Append
 from ontok.events.append import AppendOutcome as AppendOutcome
 from ontok.events.append import AppendOutcomeConstructor as AppendOutcomeConstructor
 from ontok.events.append import Occurrences as Occurrences
-from ontok.events.checkpoint import Checkpoint as Checkpoint
-from ontok.events.checkpoint import NoCheckpoint as NoCheckpoint
 from ontok.events.delivery import Attempt as Attempt
 from ontok.events.delivery import Delivery as Delivery
 from ontok.events.event import Event as Event
