@@ -1,6 +1,5 @@
 from ontok.nats.batch import BatchId as BatchId
 from ontok.nats.batch import BatchSequence as BatchSequence
-from ontok.nats.connection import Account as Account
 from ontok.nats.connection import ServerUrl as ServerUrl
 from ontok.nats.connection import User as User
 from ontok.nats.consumer import Ack as Ack
@@ -9,19 +8,14 @@ from ontok.nats.consumer import ConsumerInfo as ConsumerInfo
 from ontok.nats.consumer import ConsumerInfoReply as ConsumerInfoReply
 from ontok.nats.consumer import ConsumerInfoReplyConstructor as ConsumerInfoReplyConstructor
 from ontok.nats.consumer import ConsumerName as ConsumerName
-from ontok.nats.consumer import ConsumerSequence as ConsumerSequence
 from ontok.nats.consumer import DeliveredMessage as DeliveredMessage
 from ontok.nats.consumer import DeliverPolicy as DeliverPolicy
 from ontok.nats.consumer import MaxDeliver as MaxDeliver
 from ontok.nats.consumer import NoAckFloor as NoAckFloor
 from ontok.nats.consumer import NumDelivered as NumDelivered
 from ontok.nats.consumer import NumPending as NumPending
-from ontok.nats.direct_get import DirectGetReply as DirectGetReply
-from ontok.nats.direct_get import DirectGetReplyConstructor as DirectGetReplyConstructor
-from ontok.nats.direct_get import EndOfBatch as EndOfBatch
 from ontok.nats.direct_get import NoMessages as NoMessages
 from ontok.nats.direct_get import Status as Status
-from ontok.nats.direct_get import StoredMessage as StoredMessage
 from ontok.nats.error import ApiError as ApiError
 from ontok.nats.error import ErrorCode as ErrorCode
 from ontok.nats.error import JetStreamError as JetStreamError

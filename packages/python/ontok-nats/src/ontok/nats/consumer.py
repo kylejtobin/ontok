@@ -17,16 +17,6 @@ class ConsumerName(RootModel[str]):
     root: str = Field(pattern=r"^[^\s.*>/\\]+$")
 
 
-class ConsumerSequence(RootModel[int]):
-    """The sequence number a consumer assigns to a delivery. The first delivery is 1."""
-
-    model_config = ConfigDict(
-        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
-    )
-
-    root: int = Field(ge=1)
-
-
 class NumDelivered(RootModel[int]):
     """How many times a message has been delivered to a consumer."""
 
@@ -85,7 +75,7 @@ class Ack(StrEnum):
 
 
 class DeliveredMessage(BaseModel):
-    """A message a consumer delivered: where it came from, where to answer, and its metadata."""
+    """A message a consumer delivered: its subject, where to answer, its sequence, and its count."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -98,11 +88,7 @@ class DeliveredMessage(BaseModel):
     subject: Subject = Field(description="The subject the message was published to.")
     reply: Subject = Field(description="The subject an Ack is sent to.")
     stream_sequence: Sequence = Field(validation_alias=AliasPath("metadata", "sequence", "stream"))
-    consumer_sequence: ConsumerSequence = Field(
-        validation_alias=AliasPath("metadata", "sequence", "consumer")
-    )
     num_delivered: NumDelivered = Field(validation_alias=AliasPath("metadata", "num_delivered"))
-    num_pending: NumPending = Field(validation_alias=AliasPath("metadata", "num_pending"))
 
 
 class ConsumerInfo(BaseModel):
