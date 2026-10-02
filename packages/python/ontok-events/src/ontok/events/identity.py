@@ -4,7 +4,7 @@ from uuid import NAMESPACE_OID, UUID
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from ontok.core import NodeId
-from ontok.events.delivery import Attempt, End
+from ontok.events.delivery import Attempt
 from ontok.events.position import Version
 
 
@@ -37,21 +37,7 @@ class DeliveryIdentity(BaseModel):
     attempt: Attempt = Field(description="Which delivery of this Event this is.")
 
 
-class DispositionIdentity(BaseModel):
-    """The content that identifies a Disposition: the Delivery and how it ended."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-    delivery: NodeId = Field(description="The Delivery that ended.")
-    end: End = Field(description="How it ended.")
-
-
-Identity = StateIdentity | DeliveryIdentity | DispositionIdentity
+Identity = StateIdentity | DeliveryIdentity
 IdentityConstructor: TypeAdapter[Identity] = TypeAdapter(Identity)
 
 
@@ -68,11 +54,11 @@ class IdentityInterpreter(BaseModel):
         arbitrary_types_allowed=True,
     )
     action: Identity = Field(description="The content the identity is derived from.")
-    derive: Callable[[UUID, str], UUID] = Field(
+    uuid5: Callable[[UUID, str], UUID] = Field(
         exclude=True, repr=False, description="The standard library's uuid5."
     )
 
     def execute(self) -> NodeId:
         return NodeId(
-            f"{UUID(int=self.derive(NAMESPACE_OID, self.action.model_dump_json()).int, version=8)}"
+            f"{UUID(int=self.uuid5(NAMESPACE_OID, self.action.model_dump_json()).int, version=8)}"
         )

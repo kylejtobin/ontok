@@ -1,4 +1,3 @@
-from ontok.nats.ack import AckReply as AckReply
 from ontok.nats.batch import BatchId as BatchId
 from ontok.nats.batch import BatchSequence as BatchSequence
 from ontok.nats.begin import Begin as Begin
