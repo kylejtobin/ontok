@@ -14,15 +14,27 @@ package = false
 members = ["packages/python/*"]
 
 [dependency-groups]
-dev = ["basedpyright", "import-linter", "pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.8", "testcontainers>=4"]
+dev = [
+    "bandit>=1.9.4",
+    "basedpyright",
+    "import-linter",
+    "pip-audit>=2.10.1",
+    "pre-commit>=4.6.2",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "semgrep>=1.179.0",
+    "testcontainers>=4",
+]
 
 [tool.pytest.ini_options]
-addopts = ["--import-mode=importlib"]
+addopts = ["--import-mode=importlib", "-m", "not nats"]
 testpaths = ["packages/python"]
 asyncio_mode = "strict"
 strict_config = true
 strict_markers = true
 xfail_strict = true
+markers = ["nats: conformance against a nats-server container"]
 
 [tool.ruff]
 target-version = "py313"
@@ -54,3 +66,9 @@ root_packages = ["ontok.nats", "ontok.events", "ontok.core"]
 name = "ONTOK modules follow workspace dependencies"
 type = "layers"
 layers = ["ontok.nats", "ontok.events", "ontok.core"]
+
+[tool.bandit]
+targets = ["."]
+exclude_dirs = [".venv", "venv", "tests", "build", "dist", "htmlcov", ".git"]
+confidence = "LOW"
+severity = "LOW"

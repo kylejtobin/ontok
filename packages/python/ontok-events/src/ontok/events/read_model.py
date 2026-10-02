@@ -1,13 +1,12 @@
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
-from ontok.core import Entity, NodeId, States
+from ontok.core import Entity, NodeId
 from ontok.events.position import Position
 
 
 class ReadModel(Entity):
-    """Conditions held as of a Position in the log."""
+    """Conditions held as of a Position in the log. A refinement adds the conditions it holds."""
 
-    state: States = Field(description="The conditions held.")
     position: Position = Field(description="The Position the conditions are as of.")
 
     @property

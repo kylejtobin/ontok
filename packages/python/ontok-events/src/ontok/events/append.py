@@ -1,7 +1,8 @@
 from pydantic import ConfigDict, Field, RootModel, TypeAdapter
 
 from ontok.core import Action, NodeId
-from ontok.events.event import Events, Occurrence
+from ontok.events.event import Occurrence
+from ontok.events.position import Position
 from ontok.events.value import ExpectedVersion, VersionMismatch
 
 
@@ -23,5 +24,5 @@ class Append(Action):
     occurrences: Occurrences = Field(description="The occurrences, in order.")
 
 
-AppendOutcome = Events | VersionMismatch
+AppendOutcome = Position | VersionMismatch
 AppendOutcomeConstructor: TypeAdapter[AppendOutcome] = TypeAdapter(AppendOutcome)

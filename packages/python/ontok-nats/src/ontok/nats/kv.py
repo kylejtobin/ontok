@@ -1,10 +1,24 @@
-from enum import StrEnum
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import AliasPath, BaseModel, ConfigDict, Field, Json, RootModel, TypeAdapter
+from pydantic import (
+    AliasChoices,
+    AliasPath,
+    Base64Bytes,
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    SerializeAsAny,
+    TypeAdapter,
+)
 
-from ontok.core import NodeId
-from ontok.nats.direct_get import NoMessages
+from nats.aio.client import Client
+from ontok.core import NodeId, PositiveDuration
+from ontok.events import ReadModel
+from ontok.nats.batch import ExpectedSequenceHeader
+from ontok.nats.error import ApiError, WrongLastSequence
+from ontok.nats.publish import PubAck, PublishReply, PublishReplyConstructor
+from ontok.nats.stream import Subject
 
 
 class Bucket(RootModel[str]):
@@ -37,52 +51,6 @@ class Revision(RootModel[int]):
     root: int = Field(ge=1)
 
 
-class Operation(StrEnum):
-    """What an entry did to its key."""
-
-    PUT = "PUT"
-    DEL = "DEL"
-    PURGE = "PURGE"
-
-
-class Entry(BaseModel):
-    """The last entry on a key, as a direct get returns it: a value put at a revision."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="ignore",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    revision: Json[Revision] = Field(validation_alias=AliasPath("headers", "Nats-Sequence"))
-    operation: Literal[Operation.PUT] = Field(
-        default=Operation.PUT, validation_alias=AliasPath("headers", "KV-Operation")
-    )
-
-
-class Deleted(BaseModel):
-    """The last entry on a key, as a direct get returns it: the key was deleted or purged."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="ignore",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    revision: Json[Revision] = Field(validation_alias=AliasPath("headers", "Nats-Sequence"))
-    operation: Literal[Operation.DEL, Operation.PURGE] = Field(
-        validation_alias=AliasPath("headers", "KV-Operation")
-    )
-
-
-KvReply = Entry | Deleted | NoMessages
-KvReplyConstructor: TypeAdapter[KvReply] = TypeAdapter(KvReply)
-
-
 class ReadModelKey(BaseModel):
     """The key a ReadModel is held under: its identity."""
 
@@ -99,3 +67,286 @@ class ReadModelKey(BaseModel):
     @property
     def key(self) -> Key:
         return Key(self.id.root)
+
+
+class Entry(BaseModel):
+    """The last message on a key, as the Get Message API returns it: a value at a revision."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="ignore",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    seq: Revision = Field(validation_alias=AliasPath("message", "seq"))
+    data: Base64Bytes = Field(validation_alias=AliasPath("message", "data"))
+
+    @property
+    def expected(self) -> ExpectedSequenceHeader:
+        return ExpectedSequenceHeader(f"{self.seq.root}")
+
+
+class Deleted(BaseModel):
+    """The last message on a key, as the Get Message API returns it: the key was deleted or
+    purged, so the message carries no value."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="ignore",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    seq: Revision = Field(validation_alias=AliasPath("message", "seq"))
+
+    @property
+    def expected(self) -> ExpectedSequenceHeader:
+        return ExpectedSequenceHeader(f"{self.seq.root}")
+
+
+KvReply = Annotated[Entry | Deleted | ApiError, Field(union_mode="left_to_right")]
+KvReplyConstructor: TypeAdapter[KvReply] = TypeAdapter(KvReply)
+
+
+class NoEntry(BaseModel):
+    """A key that has never held a message: the API found none."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    err_code: Literal[10037] = Field(validation_alias=AliasPath("error", "err_code", "root"))
+
+    @property
+    def expected(self) -> ExpectedSequenceHeader:
+        return ExpectedSequenceHeader("0")
+
+
+Prior = Entry | Deleted | NoEntry
+
+
+class ExpectedHeaders(BaseModel):
+    """The header asserting the sequence a subject is expected at."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    expected: ExpectedSequenceHeader = Field(
+        serialization_alias="Nats-Expected-Last-Subject-Sequence"
+    )
+
+
+class NewEntry(BaseModel):
+    """A ReadModel as NATS receives it: a value put on its key, expected after the entry the
+    key last held."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    bucket: Bucket = Field(description="The bucket.")
+    read_model: SerializeAsAny[ReadModel] = Field(description="The ReadModel.")
+    prior: Prior = Field(description="What the key last held.")
+
+    @property
+    def subject(self) -> Subject:
+        return Subject(f"$KV.{self.bucket.root}.{ReadModelKey(id=self.read_model.id).key.root}")
+
+    @property
+    def headers(self) -> ExpectedHeaders:
+        return ExpectedHeaders(expected=self.prior.expected)
+
+
+class EntryAck(BaseModel):
+    """An entry and the acknowledgement of its put: the ReadModel is held."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    entry: NewEntry = Field(description="The entry.")
+    ack: PubAck = Field(
+        validation_alias=AliasChoices("ack", "reply"),
+        description="The acknowledgement of its put.",
+    )
+
+    @property
+    def read_model(self) -> ReadModel:
+        return self.entry.read_model
+
+
+class EntryRefusal(BaseModel):
+    """An entry and the refusal of its put: the key was not at the expected revision."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    entry: NewEntry = Field(description="The entry.")
+    error: WrongLastSequence = Field(
+        validation_alias=AliasChoices("error", "reply"), description="The refusal."
+    )
+
+
+class EntryProviderRefusal(BaseModel):
+    """An entry and a reply that is no outcome of event sourcing."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    entry: NewEntry = Field(description="The entry.")
+    error: ApiError = Field(
+        validation_alias=AliasChoices("error", "reply"), description="The provider's refusal."
+    )
+
+
+Keeping = Annotated[
+    EntryAck | EntryRefusal | EntryProviderRefusal, Field(union_mode="left_to_right")
+]
+KeepingConstructor: TypeAdapter[Keeping] = TypeAdapter(Keeping)
+
+
+class EntryReply(BaseModel):
+    """An entry and NATS's reply to its put: held, or refused, chosen by what came back."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    entry: NewEntry = Field(description="The entry.")
+    reply: PublishReply = Field(description="NATS's reply to its put.")
+
+    @property
+    def keeping(self) -> Keeping:
+        return KeepingConstructor.validate_python(self, from_attributes=True)
+
+
+class LastBySubject(BaseModel):
+    """A Get Message request for the last message on one subject."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    last_by_subj: Subject = Field(description="The subject.")
+
+
+class KeyLookup(BaseModel):
+    """A ReadModelLookup as NATS receives it: the last message on the key in the bucket."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    bucket: Bucket = Field(description="The bucket.")
+    id: NodeId = Field(description="The ReadModel asked for.")
+
+    @property
+    def subject(self) -> Subject:
+        return Subject(f"$KV.{self.bucket.root}.{ReadModelKey(id=self.id).key.root}")
+
+    @property
+    def api(self) -> Subject:
+        return Subject(f"$JS.API.STREAM.MSG.GET.KV_{self.bucket.root}")
+
+    @property
+    def body(self) -> LastBySubject:
+        return LastBySubject(last_by_subj=self.subject)
+
+
+class EntryInterpreter(BaseModel):
+    """An entry put: the publish reply is NATS's answer."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+        arbitrary_types_allowed=True,
+    )
+
+    action: NewEntry = Field(description="The entry to put.")
+    wait: PositiveDuration = Field(description="How long the put waits for its reply.")
+    client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
+
+    async def execute(self) -> PublishReply:
+        return PublishReplyConstructor.validate_json(
+            (
+                await self.client.request(
+                    self.action.subject.root,
+                    self.action.read_model.model_dump_json().encode(),
+                    headers=self.action.headers.model_dump(by_alias=True),
+                    timeout=self.wait.root.total_seconds(),
+                )
+            ).data
+        )
+
+
+class MessageGetInterpreter(BaseModel):
+    """A key looked up: the Get Message reply is NATS's answer."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+        arbitrary_types_allowed=True,
+    )
+
+    action: KeyLookup = Field(description="The lookup.")
+    wait: PositiveDuration = Field(description="How long the lookup waits for its reply.")
+    client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
+
+    async def execute(self) -> KvReply:
+        return KvReplyConstructor.validate_json(
+            (
+                await self.client.request(
+                    self.action.api.root,
+                    self.action.body.model_dump_json().encode(),
+                    timeout=self.wait.root.total_seconds(),
+                )
+            ).data
+        )

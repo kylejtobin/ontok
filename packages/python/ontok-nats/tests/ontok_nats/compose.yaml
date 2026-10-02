@@ -1,0 +1,19 @@
+name: ontok-nats-conformance
+
+services:
+  nats:
+    image: nats@sha256:b270f5e2428354c0335612694d7dd2fb588148e567a5757fdff325ef9c9332e6
+    command: ["-c", "/etc/nats/nats.conf"]
+    ports:
+      - "127.0.0.1:34222:4222"
+    volumes:
+      - jetstream:/data
+      - ./nats.conf:/etc/nats/nats.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:8222/healthz"]
+      interval: 1s
+      timeout: 1s
+      retries: 10
+
+volumes:
+  jetstream:

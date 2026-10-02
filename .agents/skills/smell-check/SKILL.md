@@ -23,7 +23,7 @@ Every hit is a violation. There is no severity, no "edge work", no "serializatio
 | ISINSTANCE | `isinstance(x, T)` | a question the value already answered by existing as its variant. Behavior that differs by variant is a same-named property on each variant. |
 | LOOP | `for` or `while` | a fold whose result has no name. A fold is a comprehension inside the one returned expression of a derivation, with no `if`. |
 | CONDITIONAL | `if`, `elif`, `else`, `match`, `case`, ternary | a branch. The only branch in TCA is Pydantic construction choosing a union variant. Zero conditionals in a domain package, not "fewer". |
-| DICT | `dict[...]`, `dict(...)`, `{...}` | a shape nobody proved. A violation. See DICT hits. |
+| DICT | `dict[...]`, `dict(...)`, `{...}`, `JsonValue`, `Json[...]` | a shape nobody proved. A violation. See DICT hits. |
 | PARSE-METHOD | a method with parameters beyond `self`, a `staticmethod`, a validator, a `str()` call | procedure hung on a model. A derivation takes only `self` and its body is exactly one returned expression. A parameterized question is a frozen model holding its inputs. A validator is a procedure where a representation belongs. |
 
 ## What to do with a hit
@@ -36,4 +36,4 @@ If the construct you need is not on the whitelist, that is a reported constructi
 
 Every DICT hit is a violation. Fix the model.
 
-The one exception is a case table: a dict literal whose keys are every member of one `StrEnum` or `Literal`. If the hit is not exactly that, it is a violation.
+The one exception is a case table: a dict literal whose keys are every member of one `StrEnum` or `Literal`, indexed directly. The script recognizes that shape, a literal whose every key is `Enum.MEMBER` followed by `[`, and prints it as `CASE-TABLE` without failing. Whether every member is present is not visible on the line; that is the judge's question. Any other dict is `DICT` and a violation.

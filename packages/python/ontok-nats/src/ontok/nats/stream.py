@@ -60,3 +60,11 @@ class EventSubject(BaseModel):
     @property
     def subject(self) -> Subject:
         return Subject(f"event.{self.stream.root}")
+
+
+class Payload(RootModel[bytes]):
+    """The bytes a message carries."""
+
+    model_config = ConfigDict(
+        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
+    )
