@@ -44,6 +44,11 @@ class VersionMismatch(BaseModel):
     expected: AtVersion | Literal[Expectation.NO_STREAM] = Field(
         description="What was expected of the Stream."
     )
+
+
+class VersionMismatchAt(VersionMismatch):
+    """The Stream was not at the expected Version, and what it was at is known."""
+
     actual: AtVersion | Literal[Expectation.NO_STREAM] = Field(
         description="What was true of the Stream."
     )

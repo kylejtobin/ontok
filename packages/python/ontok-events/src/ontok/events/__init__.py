@@ -4,10 +4,14 @@ from ontok.events.append import AppendOutcomeConstructor as AppendOutcomeConstru
 from ontok.events.append import Occurrences as Occurrences
 from ontok.events.delivery import Attempt as Attempt
 from ontok.events.delivery import Delivery as Delivery
+from ontok.events.delivery import Disposition as Disposition
+from ontok.events.delivery import Ending as Ending
+from ontok.events.delivery import Outcome as Outcome
 from ontok.events.event import Event as Event
 from ontok.events.event import Events as Events
 from ontok.events.event import Occurrence as Occurrence
 from ontok.events.identity import DeliveryIdentity as DeliveryIdentity
+from ontok.events.identity import DispositionIdentity as DispositionIdentity
 from ontok.events.identity import Identity as Identity
 from ontok.events.identity import IdentityConstructor as IdentityConstructor
 from ontok.events.identity import IdentityInterpreter as IdentityInterpreter
@@ -35,3 +39,4 @@ from ontok.events.value import AtVersion as AtVersion
 from ontok.events.value import Expectation as Expectation
 from ontok.events.value import ExpectedVersion as ExpectedVersion
 from ontok.events.value import VersionMismatch as VersionMismatch
+from ontok.events.value import VersionMismatchAt as VersionMismatchAt

@@ -4,7 +4,7 @@ from uuid import NAMESPACE_OID, UUID
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from ontok.core import NodeId
-from ontok.events.delivery import Attempt
+from ontok.events.delivery import Attempt, Outcome
 from ontok.events.position import Version
 
 
@@ -37,7 +37,21 @@ class DeliveryIdentity(BaseModel):
     attempt: Attempt = Field(description="Which delivery of this Event this is.")
 
 
-Identity = StateIdentity | DeliveryIdentity
+class DispositionIdentity(BaseModel):
+    """The content that identifies a Disposition: the Delivery and the condition it is in."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+    delivery: NodeId = Field(description="The Delivery the condition goes on.")
+    outcome: Outcome = Field(description="The condition it is in.")
+
+
+Identity = StateIdentity | DeliveryIdentity | DispositionIdentity
 IdentityConstructor: TypeAdapter[Identity] = TypeAdapter(Identity)
 
 
