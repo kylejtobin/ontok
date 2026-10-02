@@ -10,12 +10,6 @@ from ontok.events.delivery import Outcome as Outcome
 from ontok.events.event import Event as Event
 from ontok.events.event import Events as Events
 from ontok.events.event import Occurrence as Occurrence
-from ontok.events.identity import DeliveryIdentity as DeliveryIdentity
-from ontok.events.identity import DispositionIdentity as DispositionIdentity
-from ontok.events.identity import Identity as Identity
-from ontok.events.identity import IdentityConstructor as IdentityConstructor
-from ontok.events.identity import IdentityInterpreter as IdentityInterpreter
-from ontok.events.identity import StateIdentity as StateIdentity
 from ontok.events.position import Position as Position
 from ontok.events.position import Version as Version
 from ontok.events.read import Read as Read
@@ -29,7 +23,6 @@ from ontok.events.read_model import ReadModel as ReadModel
 from ontok.events.read_model import ReadModelLookup as ReadModelLookup
 from ontok.events.state import Initial as Initial
 from ontok.events.state import State as State
-from ontok.events.stream import Stream as Stream
 from ontok.events.subscription import FromPosition as FromPosition
 from ontok.events.subscription import Start as Start
 from ontok.events.subscription import StartingPoint as StartingPoint
