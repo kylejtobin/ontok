@@ -1,4 +1,5 @@
 from ontok.nats.ack import AckConfirmation as AckConfirmation
+from ontok.nats.ack import Acked as Acked
 from ontok.nats.ack import AckInterpreter as AckInterpreter
 from ontok.nats.ack import AckReply as AckReply
 from ontok.nats.batch import BatchId as BatchId
@@ -36,9 +37,14 @@ from ontok.nats.consumer import MaxDeliveriesAdvisory as MaxDeliveriesAdvisory
 from ontok.nats.consumer import Messages as Messages
 from ontok.nats.consumer import Nanoseconds as Nanoseconds
 from ontok.nats.consumer import NextRequest as NextRequest
+from ontok.nats.consumer import NoMessages as NoMessages
+from ontok.nats.consumer import NoResponders as NoResponders
 from ontok.nats.consumer import NumDelivered as NumDelivered
 from ontok.nats.consumer import NumPending as NumPending
 from ontok.nats.consumer import Pull as Pull
+from ontok.nats.consumer import PullAnswer as PullAnswer
+from ontok.nats.consumer import PullAnswers as PullAnswers
+from ontok.nats.consumer import PullBatch as PullBatch
 from ontok.nats.consumer import PullConfig as PullConfig
 from ontok.nats.consumer import PullConsumer as PullConsumer
 from ontok.nats.consumer import PullConsumerConfig as PullConsumerConfig

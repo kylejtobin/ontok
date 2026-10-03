@@ -1,5 +1,7 @@
+from asyncio import timeout
 from datetime import timedelta
 from enum import StrEnum
+from itertools import chain
 from typing import Annotated, Literal
 
 from pydantic import AliasPath, BaseModel, ConfigDict, Field, RootModel, TypeAdapter
@@ -34,6 +36,16 @@ class ConsumerName(RootModel[str]):
 
 class NumDelivered(RootModel[int]):
     """How many times a message has been delivered to a consumer."""
+
+    model_config = ConfigDict(
+        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
+    )
+
+    root: int = Field(ge=1)
+
+
+class PullBatch(RootModel[int]):
+    """How many messages a pull asks for."""
 
     model_config = ConfigDict(
         frozen=True, strict=True, validate_default=True, revalidate_instances="never"
@@ -117,6 +129,59 @@ class DeliveredMessage(BaseModel):
     stream_sequence: Sequence = Field(validation_alias=AliasPath("metadata", "sequence", "stream"))
     num_delivered: NumDelivered = Field(validation_alias=AliasPath("metadata", "num_delivered"))
     payload: Payload = Field(validation_alias="data")
+
+    @property
+    def delivered(self) -> "tuple[DeliveredMessage, ...]":
+        return (self,)
+
+
+class NoMessages(BaseModel):
+    """The status NATS ends a pull's answer with when the consumer has nothing more."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="ignore",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    status: Literal["404"] = Field(validation_alias=AliasPath("headers", "Status"))
+
+    @property
+    def delivered(self) -> tuple[DeliveredMessage, ...]:
+        return ()
+
+
+class NoResponders(BaseModel):
+    """The status NATS answers a pull with when it has no consumer by that name."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="ignore",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    status: Literal["503"] = Field(validation_alias=AliasPath("headers", "Status"))
+
+    @property
+    def delivered(self) -> tuple[DeliveredMessage, ...]:
+        return ()
+
+
+PullAnswer = Annotated[
+    NoMessages | NoResponders | DeliveredMessage, Field(union_mode="left_to_right")
+]
+
+
+class PullAnswers(RootModel[tuple[PullAnswer, ...]]):
+    """What NATS sent in answer to one pull, in order."""
+
+    model_config = ConfigDict(
+        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
+    )
 
 
 class DeliveryRoute(BaseModel):
@@ -562,7 +627,7 @@ class NextRequest(BaseModel):
         revalidate_instances="never",
     )
 
-    batch: NumPending = Field(description="How many messages are asked for.")
+    batch: PullBatch = Field(description="How many messages are asked for.")
     no_wait: Literal[True] = Field(default=True, description="Answer at once.")
 
 
@@ -582,8 +647,8 @@ class ConsumerCreation(BaseModel):
 
 
 class Pull(BaseModel):
-    """A pull of every pending message from the consumer created for a Read: a pull of none is
-    empty."""
+    """A pull from the consumer created for a Read. It asks for one more message than the consumer
+    has pending, so NATS ends its answer with No Messages."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -595,7 +660,11 @@ class Pull(BaseModel):
 
     stream_name: StreamName = Field(validation_alias=AliasPath("creation", "reply", "stream_name"))
     consumer: ConsumerName = Field(validation_alias=AliasPath("creation", "reply", "name"))
-    batch: NumPending = Field(validation_alias=AliasPath("creation", "reply", "num_pending"))
+    pending: NumPending = Field(validation_alias=AliasPath("creation", "reply", "num_pending"))
+
+    @property
+    def batch(self) -> PullBatch:
+        return PullBatch(self.pending.root + 1)
 
     @property
     def api(self) -> Subject:
@@ -607,7 +676,8 @@ class Pull(BaseModel):
 
 
 class ReadRefusal(BaseModel):
-    """A Read whose consumer NATS refused to create: there is nothing to pull."""
+    """A Read whose consumer NATS refused to create. Its pull asks under the Read's own identity,
+    where NATS has no consumer, and NATS answers No Responders."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -618,7 +688,26 @@ class ReadRefusal(BaseModel):
     )
 
     read: Read = Field(validation_alias=AliasPath("read"))
+    stream_name: StreamName = Field(
+        validation_alias=AliasPath("creation", "request", "stream_name")
+    )
     error: ApiError = Field(validation_alias=AliasPath("creation", "reply"))
+
+    @property
+    def consumer(self) -> ConsumerName:
+        return ConsumerName(self.read.id.root)
+
+    @property
+    def batch(self) -> PullBatch:
+        return PullBatch(1)
+
+    @property
+    def api(self) -> Subject:
+        return Subject(f"$JS.API.CONSUMER.MSG.NEXT.{self.stream_name.root}.{self.consumer.root}")
+
+    @property
+    def request(self) -> NextRequest:
+        return NextRequest(batch=self.batch)
 
 
 Pulling = Annotated[Pull | ReadRefusal, Field(union_mode="left_to_right")]
@@ -626,8 +715,8 @@ PullingConstructor: TypeAdapter[Pulling] = TypeAdapter(Pulling)
 
 
 class ReadReply(BaseModel):
-    """A Read and the creation of the consumer requested for it: what there is to pull, or the
-    refusal."""
+    """A Read and the creation of the consumer requested for it: the pull that follows, from the
+    consumer created or from the refusal."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -646,7 +735,7 @@ class ReadReply(BaseModel):
 
 
 class Pulled(BaseModel):
-    """A pull and the messages it was answered with, in order."""
+    """A pull and what NATS sent in answer to it."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -656,8 +745,12 @@ class Pulled(BaseModel):
         revalidate_instances="never",
     )
 
-    pull: Pull = Field(description="The pull.")
-    messages: Messages = Field(description="The messages it was answered with.")
+    pull: Pulling = Field(description="The pull.")
+    answers: PullAnswers = Field(description="What NATS sent in answer, in order.")
+
+    @property
+    def messages(self) -> Messages:
+        return Messages(tuple(chain.from_iterable(a.delivered for a in self.answers.root)))
 
 
 class ConsumerInterpreter(BaseModel):
@@ -692,8 +785,8 @@ class ConsumerInterpreter(BaseModel):
 
 
 class PullInterpreter(BaseModel):
-    """A pull made: the request on the consumer's next subject, and the batch it is answered with
-    on an inbox."""
+    """A pull made: the request on the consumer's next subject, and NATS's answer on an inbox that
+    closes itself after the batch asked for."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -704,30 +797,23 @@ class PullInterpreter(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    action: Pull = Field(description="The pull.")
-    wait: PositiveDuration = Field(description="How long each message is waited for.")
+    action: Pulling = Field(description="The pull.")
+    wait: PositiveDuration = Field(description="How long the answer is waited for.")
     client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
 
     async def execute(self) -> Pulled:
-        inbox = await self.client.subscribe(self.client.new_inbox())  # pyright: ignore[reportUnknownMemberType]
+        inbox = await self.client.subscribe(  # pyright: ignore[reportUnknownMemberType]
+            self.client.new_inbox(), max_msgs=self.action.batch.root
+        )
         await self.client.publish(
             self.action.api.root,
             self.action.request.model_dump_json().encode(),
             reply=inbox.subject,
         )
-        pulled = Pulled(
-            pull=self.action,
-            messages=Messages(
-                tuple(
-                    [
-                        DeliveredMessage.model_validate(
-                            await inbox.next_msg(self.wait.root.total_seconds()),
-                            from_attributes=True,
-                        )
-                        for _ in range(self.action.batch.root)
-                    ]
-                )
-            ),
-        )
-        await inbox.unsubscribe()
-        return pulled
+        async with timeout(self.wait.root.total_seconds()):
+            return Pulled(
+                pull=self.action,
+                answers=PullAnswers.model_validate(
+                    tuple([message async for message in inbox.messages]), from_attributes=True
+                ),
+            )

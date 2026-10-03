@@ -40,9 +40,27 @@ class AckConfirmation(BaseModel):
     )
 
 
+class Acked(BaseModel):
+    """An Ack and the server's confirmation of it: the Delivery is ended as the Ending says."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    ack: AckReply = Field(description="The Ack sent.")
+    confirmation: AckConfirmation = Field(description="The server's confirmation of it.")
+
+    @property
+    def ending(self) -> Ending:
+        return self.ack.ending
+
+
 class AckInterpreter(BaseModel):
-    """An Ack sent as a request: the Ending is returned once the server's confirmation
-    constructs."""
+    """An Ack sent as a request: the server's confirmation is NATS's answer."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -57,13 +75,15 @@ class AckInterpreter(BaseModel):
     wait: PositiveDuration = Field(description="How long the Ack waits for its confirmation.")
     client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
 
-    async def execute(self) -> Ending:
-        AckConfirmation.model_validate(
-            await self.client.request(
-                self.action.reply.root,
-                self.action.ack.value.encode(),
-                timeout=self.wait.root.total_seconds(),
+    async def execute(self) -> Acked:
+        return Acked(
+            ack=self.action,
+            confirmation=AckConfirmation.model_validate(
+                await self.client.request(
+                    self.action.reply.root,
+                    self.action.ack.value.encode(),
+                    timeout=self.wait.root.total_seconds(),
+                ),
+                from_attributes=True,
             ),
-            from_attributes=True,
         )
-        return self.action.ending

@@ -24,19 +24,25 @@ from ontok.events import (
     StreamSubscription,
 )
 from ontok.nats import (
+    Ack,
+    Acked,
     AckInterpreter,
     AckReply,
     ApiError,
     Bucket,
     ConsumerDelivery,
     ConsumerInterpreter,
+    DeliveredMessage,
     EphemeralConsumerRequest,
     KeyLookup,
     MessageGetInterpreter,
     NatsConfig,
     NoEntry,
+    NoMessages,
+    NoResponders,
     Pull,
     PullConsumer,
+    PullInterpreter,
     ReadRefusal,
     ReadReply,
     StreamName,
@@ -92,9 +98,15 @@ async def test_a_read_of_a_stream_nats_does_not_have_is_a_refusal_with_nothing_t
     assert type(pulling) is ReadRefusal
     assert pulling.read == read
     assert pulling.error == reply.creation.reply
+    pulled = await PullInterpreter(
+        action=pulling, wait=config.reply_wait, client=connection
+    ).execute()
+    assert pulled.pull == pulling
+    assert [type(answer) for answer in pulled.answers.root] == [NoResponders]
+    assert pulled.messages.root == ()
 
 
-async def test_a_read_of_the_stream_nats_has_is_a_pull(
+async def test_a_read_of_a_stream_with_no_events_is_a_pull_answered_with_no_messages(
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
     read = Read(id=mint(), role=TELLER, goal=BOOKS_BALANCED, stream=mint(), after=Start.BEGINNING)
@@ -111,10 +123,15 @@ async def test_a_read_of_the_stream_nats_has_is_a_pull(
     pulling = reply.pulling
     assert type(pulling) is Pull
     assert pulling.stream_name == config.stream
-    assert pulling.batch.root == 0
+    assert pulling.pending.root == 0
+    pulled = await PullInterpreter(
+        action=pulling, wait=config.reply_wait, client=connection
+    ).execute()
+    assert [type(answer) for answer in pulled.answers.root] == [NoMessages]
+    assert pulled.messages.root == ()
 
 
-async def test_the_ack_interpreter_returns_the_ending_it_was_given(
+async def test_the_ack_interpreter_returns_the_ack_with_its_confirmation_and_the_ending(
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
     account = mint()
@@ -138,7 +155,7 @@ async def test_the_ack_interpreter_returns_the_ending_it_was_given(
         id=mint(), role=TELLER, goal=BOOKS_BALANCED, begins=Start.BEGINNING, stream=account
     )
     given: asyncio.Future[Ending] = asyncio.get_running_loop().create_future()
-    returned: asyncio.Future[Ending] = asyncio.get_running_loop().create_future()
+    returned: asyncio.Future[Acked] = asyncio.get_running_loop().create_future()
 
     async def receive(msg: Msg) -> None:
         route = BankRoute.receive(msg)
@@ -156,7 +173,53 @@ async def test_the_ack_interpreter_returns_the_ending_it_was_given(
         )
 
     await subscribe(connection, config, subscription, receive)
-    ending = await asyncio.wait_for(returned, timeout=5.0)
-    assert ending == await given
-    assert ending.outcome is Outcome.COMPLETE
-    assert ending.delivery.event.position == landed
+    acked = await asyncio.wait_for(returned, timeout=5.0)
+    assert acked.ending == await given
+    assert acked.ack.ack is Ack.ACK
+    assert acked.ending.outcome is Outcome.COMPLETE
+    assert acked.ending.delivery.event.position == landed
+
+
+async def test_a_pull_is_answered_with_every_pending_message_then_no_messages(
+    connection: Client, jetstream: JetStreamContext, config: NatsConfig
+) -> None:
+    account = mint()
+    deposits = tuple(
+        Deposited(id=mint(), occurred=NOW, amount=Amount(Decimal(n))) for n in (1, 2, 3)
+    )
+    landed = await append(
+        connection,
+        config,
+        Append(
+            id=mint(),
+            role=TELLER,
+            goal=BOOKS_BALANCED,
+            stream=account,
+            expected=Expectation.NO_STREAM,
+            occurrences=Occurrences(deposits),
+        ),
+        Initial(id=mint(), stream=account),
+    )
+    assert isinstance(landed, Position)
+    read = Read(id=mint(), role=TELLER, goal=BOOKS_BALANCED, stream=account, after=Start.BEGINNING)
+    pulled = await PullInterpreter(
+        action=ReadReply(
+            read=read,
+            creation=await ConsumerInterpreter(
+                action=EphemeralConsumerRequest(
+                    stream_name=config.stream, config=PullConsumer(read=read).config
+                ),
+                wait=config.reply_wait,
+                client=connection,
+            ).execute(),
+        ).pulling,
+        wait=config.reply_wait,
+        client=connection,
+    ).execute()
+    assert [type(answer) for answer in pulled.answers.root] == [
+        DeliveredMessage,
+        DeliveredMessage,
+        DeliveredMessage,
+        NoMessages,
+    ]
+    assert [BankRoute(message=m).occurrence for m in pulled.messages.root] == list(deposits)
