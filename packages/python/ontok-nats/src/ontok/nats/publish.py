@@ -509,7 +509,7 @@ class BatchInterpreter(BaseModel):
     wait: PositiveDuration = Field(description="How long the commit waits for its reply.")
     client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
 
-    async def execute(self) -> PublishReply:
+    async def execute(self) -> BatchReply:
         await gather(
             *(
                 self.client.publish(
@@ -520,13 +520,16 @@ class BatchInterpreter(BaseModel):
                 for message in self.action.messages
             )
         )
-        return PublishReplyConstructor.validate_json(
-            (
-                await self.client.request(
-                    self.action.closing.subject.root,
-                    self.action.closing.payload.model_dump_json().encode(),
-                    headers=self.action.closing.headers.model_dump(by_alias=True),
-                    timeout=self.wait.root.total_seconds(),
-                )
-            ).data
+        return BatchReply(
+            batch=self.action,
+            reply=PublishReplyConstructor.validate_json(
+                (
+                    await self.client.request(
+                        self.action.closing.subject.root,
+                        self.action.closing.payload.model_dump_json().encode(),
+                        headers=self.action.closing.headers.model_dump(by_alias=True),
+                        timeout=self.wait.root.total_seconds(),
+                    )
+                ).data
+            ),
         )

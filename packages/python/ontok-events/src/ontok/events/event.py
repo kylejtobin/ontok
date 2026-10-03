@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, RootModel, SerializeAsAny
+from pydantic import AliasPath, BaseModel, ConfigDict, Field, RootModel, SerializeAsAny
 
 from ontok import core
 from ontok.core import NodeId
@@ -28,10 +28,32 @@ class Event(BaseModel):
 
 
 class Events(RootModel[tuple[Event, ...]]):
-    """The Events of one Stream, read whole."""
+    """The Events of one Stream a read returned, in order."""
 
     model_config = ConfigDict(
         frozen=True, strict=True, validate_default=True, revalidate_instances="never"
     )
 
     root: tuple[Event, ...] = Field(min_length=1)
+
+    @property
+    def events(self) -> tuple[Event, ...]:
+        return self.root
+
+    @property
+    def last(self) -> Position:
+        return LastEvent.model_validate(self, from_attributes=True).event.position
+
+
+class LastEvent(BaseModel):
+    """The last Event of a read."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    event: Event = Field(validation_alias=AliasPath("root", -1))

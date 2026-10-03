@@ -18,7 +18,12 @@ repos:
     rev: fc1c132de9c4f9c13111e5db4eaed358d30f45d5
     hooks:
       - id: smell-check
-        exclude: (^|/)tests/
+        pass_filenames: false
+        args:
+          - packages/python/ontok-core/src
+          - packages/python/ontok-events/src
+          - packages/python/ontok-nats/src
+          - packages/python/ontok-bank/src
 
   - repo: local
     hooks:

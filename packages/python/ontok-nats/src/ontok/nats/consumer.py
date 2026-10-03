@@ -5,11 +5,9 @@ from typing import Annotated, Literal
 from pydantic import AliasPath, BaseModel, ConfigDict, Field, RootModel, TypeAdapter
 
 from nats.aio.client import Client
-from nats.js.client import JetStreamContext
 from ontok.core import NodeId, PositiveDuration
 from ontok.events import (
     Attempt,
-    Frontier,
     Position,
     Read,
     Subscription,
@@ -62,16 +60,6 @@ class MaxDeliver(RootModel[int]):
 
 class Nanoseconds(RootModel[int]):
     """A duration as a consumer configuration states it."""
-
-    model_config = ConfigDict(
-        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
-    )
-
-    root: int = Field(ge=1)
-
-
-class PullBatch(RootModel[int]):
-    """How many messages one pull asks for."""
 
     model_config = ConfigDict(
         frozen=True, strict=True, validate_default=True, revalidate_instances="never"
@@ -518,8 +506,23 @@ ConsumerReply = ConsumerInfo | ApiError
 ConsumerReplyConstructor: TypeAdapter[ConsumerReply] = TypeAdapter(ConsumerReply)
 
 
+class NextRequest(BaseModel):
+    """A pull request: a batch, answered at once with what is available and no waiting."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    batch: NumPending = Field(description="How many messages are asked for.")
+    no_wait: Literal[True] = Field(default=True, description="Answer at once.")
+
+
 class Pull(BaseModel):
-    """A pull of every pending message from a consumer."""
+    """A pull of every pending message from a consumer: a pull of none is empty."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -531,45 +534,15 @@ class Pull(BaseModel):
 
     stream_name: StreamName = Field(validation_alias=AliasPath("info", "stream_name"))
     consumer: ConsumerName = Field(validation_alias=AliasPath("info", "name"))
-    batch: PullBatch = Field(validation_alias=AliasPath("info", "num_pending", "root"))
-
-
-class AtFrontier(BaseModel):
-    """A Read after a Position with nothing pending: the Stream's frontier is that Position."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    num_pending: Literal[0] = Field(validation_alias=AliasPath("info", "num_pending", "root"))
-    position: Position = Field(validation_alias=AliasPath("read", "after", "position"))
+    batch: NumPending = Field(validation_alias=AliasPath("info", "num_pending"))
 
     @property
-    def frontier(self) -> Frontier:
-        return Frontier(position=self.position)
+    def api(self) -> Subject:
+        return Subject(f"$JS.API.CONSUMER.MSG.NEXT.{self.stream_name.root}.{self.consumer.root}")
 
-
-class NoStream(BaseModel):
-    """A Read from the beginning with nothing pending: the Stream holds no Event."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    num_pending: Literal[0] = Field(validation_alias=AliasPath("info", "num_pending", "root"))
-    value: Literal["beginning"] = Field(validation_alias=AliasPath("read", "after", "value"))
-
-
-Pending = Annotated[Pull | AtFrontier | NoStream, Field(union_mode="left_to_right")]
-PendingConstructor: TypeAdapter[Pending] = TypeAdapter(Pending)
+    @property
+    def request(self) -> NextRequest:
+        return NextRequest(batch=self.batch)
 
 
 class ReadReply(BaseModel):
@@ -587,8 +560,8 @@ class ReadReply(BaseModel):
     info: ConsumerInfo = Field(description="The consumer created for it.")
 
     @property
-    def pending(self) -> Pending:
-        return PendingConstructor.validate_python(self, from_attributes=True)
+    def pull(self) -> Pull:
+        return Pull.model_validate(self, from_attributes=True)
 
 
 class ConsumerInterpreter(BaseModel):
@@ -620,7 +593,8 @@ class ConsumerInterpreter(BaseModel):
 
 
 class PullInterpreter(BaseModel):
-    """A pull made: the messages the consumer delivered."""
+    """A pull made: the request on the consumer's next subject, and the batch it is answered with
+    on an inbox."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -632,17 +606,63 @@ class PullInterpreter(BaseModel):
     )
 
     action: Pull = Field(description="The pull.")
-    wait: PositiveDuration = Field(description="How long the pull waits for its messages.")
-    client: JetStreamContext = Field(exclude=True, repr=False, description="The JetStream context.")
+    wait: PositiveDuration = Field(description="How long each message is waited for.")
+    client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
 
     async def execute(self) -> Messages:
-        return Messages(
+        inbox = await self.client.subscribe(self.client.new_inbox())  # pyright: ignore[reportUnknownMemberType]
+        await self.client.publish(
+            self.action.api.root,
+            self.action.request.model_dump_json().encode(),
+            reply=inbox.subject,
+        )
+        messages = Messages(
             tuple(
-                DeliveredMessage.model_validate(message, from_attributes=True)
-                for message in await (
-                    await self.client.pull_subscribe_bind(
-                        self.action.consumer.root, stream=self.action.stream_name.root
+                [
+                    DeliveredMessage.model_validate(
+                        await inbox.next_msg(self.wait.root.total_seconds()), from_attributes=True
                     )
-                ).fetch(self.action.batch.root, timeout=self.wait.root.total_seconds())
+                    for _ in range(self.action.batch.root)
+                ]
             )
         )
+        await inbox.unsubscribe()
+        return messages
+
+
+class ReadInterpreter(BaseModel):
+    """A Read made: the consumer created for it, then the pull of what it has pending."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+        arbitrary_types_allowed=True,
+    )
+
+    action: Read = Field(description="The Read.")
+    stream_name: StreamName = Field(description="The stream read.")
+    wait: PositiveDuration = Field(description="How long each request waits for its reply.")
+    client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
+
+    async def execute(self) -> Messages:
+        return await PullInterpreter(
+            action=ReadReply(
+                read=self.action,
+                info=ConsumerInfo.model_validate(
+                    await ConsumerInterpreter(
+                        action=EphemeralConsumerRequest(
+                            stream_name=self.stream_name,
+                            config=PullConsumer(read=self.action).config,
+                        ),
+                        wait=self.wait,
+                        client=self.client,
+                    ).execute(),
+                    from_attributes=True,
+                ),
+            ).pull,
+            wait=self.wait,
+            client=self.client,
+        ).execute()

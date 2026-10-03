@@ -13,7 +13,6 @@ from ontok.nats.consumer import AckPolicy as AckPolicy
 from ontok.nats.consumer import After as After
 from ontok.nats.consumer import AfterPosition as AfterPosition
 from ontok.nats.consumer import AllFilter as AllFilter
-from ontok.nats.consumer import AtFrontier as AtFrontier
 from ontok.nats.consumer import Begin as Begin
 from ontok.nats.consumer import BeginAfter as BeginAfter
 from ontok.nats.consumer import BeginAll as BeginAll
@@ -34,13 +33,10 @@ from ontok.nats.consumer import MaxDeliver as MaxDeliver
 from ontok.nats.consumer import MaxDeliveriesAdvisory as MaxDeliveriesAdvisory
 from ontok.nats.consumer import Messages as Messages
 from ontok.nats.consumer import Nanoseconds as Nanoseconds
-from ontok.nats.consumer import NoStream as NoStream
+from ontok.nats.consumer import NextRequest as NextRequest
 from ontok.nats.consumer import NumDelivered as NumDelivered
 from ontok.nats.consumer import NumPending as NumPending
-from ontok.nats.consumer import Pending as Pending
-from ontok.nats.consumer import PendingConstructor as PendingConstructor
 from ontok.nats.consumer import Pull as Pull
-from ontok.nats.consumer import PullBatch as PullBatch
 from ontok.nats.consumer import PullConfig as PullConfig
 from ontok.nats.consumer import PullConsumer as PullConsumer
 from ontok.nats.consumer import PullConsumerConfig as PullConsumerConfig
@@ -50,6 +46,7 @@ from ontok.nats.consumer import PushConfig as PushConfig
 from ontok.nats.consumer import PushConsumer as PushConsumer
 from ontok.nats.consumer import PushConsumerConfig as PushConsumerConfig
 from ontok.nats.consumer import PushConsumerFromConfig as PushConsumerFromConfig
+from ontok.nats.consumer import ReadInterpreter as ReadInterpreter
 from ontok.nats.consumer import ReadReply as ReadReply
 from ontok.nats.consumer import StreamFilter as StreamFilter
 from ontok.nats.error import ApiError as ApiError
@@ -73,10 +70,12 @@ from ontok.nats.kv import KeyLookup as KeyLookup
 from ontok.nats.kv import KvReply as KvReply
 from ontok.nats.kv import KvReplyConstructor as KvReplyConstructor
 from ontok.nats.kv import LastBySubject as LastBySubject
+from ontok.nats.kv import LookupReply as LookupReply
 from ontok.nats.kv import MessageGetInterpreter as MessageGetInterpreter
 from ontok.nats.kv import NewEntry as NewEntry
 from ontok.nats.kv import NoEntry as NoEntry
 from ontok.nats.kv import Prior as Prior
+from ontok.nats.kv import PriorConstructor as PriorConstructor
 from ontok.nats.kv import ReadModelKey as ReadModelKey
 from ontok.nats.kv import Revision as Revision
 from ontok.nats.publish import Batch as Batch

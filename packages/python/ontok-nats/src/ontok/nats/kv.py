@@ -8,13 +8,12 @@ from pydantic import (
     ConfigDict,
     Field,
     RootModel,
-    SerializeAsAny,
     TypeAdapter,
 )
 
 from nats.aio.client import Client
 from ontok.core import NodeId, PositiveDuration
-from ontok.events import ReadModel
+from ontok.events import Outcome, PersistReadModel, ReadModel, ReadModelLookup
 from ontok.nats.batch import ExpectedSequenceHeader
 from ontok.nats.error import ApiError, WrongLastSequence
 from ontok.nats.publish import PubAck, PublishReply, PublishReplyConstructor
@@ -129,7 +128,8 @@ class NoEntry(BaseModel):
         return ExpectedSequenceHeader("0")
 
 
-Prior = Entry | Deleted | NoEntry
+Prior = Annotated[Entry | Deleted | NoEntry, Field(union_mode="left_to_right")]
+PriorConstructor: TypeAdapter[Prior] = TypeAdapter(Prior)
 
 
 class ExpectedHeaders(BaseModel):
@@ -161,8 +161,12 @@ class NewEntry(BaseModel):
     )
 
     bucket: Bucket = Field(description="The bucket.")
-    read_model: SerializeAsAny[ReadModel] = Field(description="The ReadModel.")
+    action: PersistReadModel = Field(description="The ReadModel to record.")
     prior: Prior = Field(description="What the key last held.")
+
+    @property
+    def read_model(self) -> ReadModel:
+        return self.action.read_model
 
     @property
     def subject(self) -> Subject:
@@ -194,6 +198,10 @@ class EntryAck(BaseModel):
     def read_model(self) -> ReadModel:
         return self.entry.read_model
 
+    @property
+    def outcome(self) -> Outcome:
+        return Outcome.COMPLETE
+
 
 class EntryRefusal(BaseModel):
     """An entry and the refusal of its put: the key was not at the expected revision."""
@@ -210,6 +218,10 @@ class EntryRefusal(BaseModel):
     error: WrongLastSequence = Field(
         validation_alias=AliasChoices("error", "reply"), description="The refusal."
     )
+
+    @property
+    def outcome(self) -> Outcome:
+        return Outcome.RETURNED
 
 
 Keeping = Annotated[EntryAck | EntryRefusal, Field(union_mode="left_to_right")]
@@ -261,11 +273,11 @@ class KeyLookup(BaseModel):
     )
 
     bucket: Bucket = Field(description="The bucket.")
-    id: NodeId = Field(description="The ReadModel asked for.")
+    action: ReadModelLookup = Field(description="The ReadModel asked for.")
 
     @property
     def subject(self) -> Subject:
-        return Subject(f"$KV.{self.bucket.root}.{ReadModelKey(id=self.id).key.root}")
+        return Subject(f"$KV.{self.bucket.root}.{ReadModelKey(id=self.action.id).key.root}")
 
     @property
     def api(self) -> Subject:
@@ -274,6 +286,25 @@ class KeyLookup(BaseModel):
     @property
     def body(self) -> LastBySubject:
         return LastBySubject(last_by_subj=self.subject)
+
+
+class LookupReply(BaseModel):
+    """A lookup and NATS's reply to it: what the key last held, which a put is expected after."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    lookup: KeyLookup = Field(description="The lookup.")
+    reply: KvReply = Field(description="NATS's reply to it.")
+
+    @property
+    def prior(self) -> Prior:
+        return PriorConstructor.validate_python(self.reply, from_attributes=True)
 
 
 class EntryInterpreter(BaseModel):
@@ -292,16 +323,19 @@ class EntryInterpreter(BaseModel):
     wait: PositiveDuration = Field(description="How long the put waits for its reply.")
     client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
 
-    async def execute(self) -> PublishReply:
-        return PublishReplyConstructor.validate_json(
-            (
-                await self.client.request(
-                    self.action.subject.root,
-                    self.action.read_model.model_dump_json().encode(),
-                    headers=self.action.headers.model_dump(by_alias=True),
-                    timeout=self.wait.root.total_seconds(),
-                )
-            ).data
+    async def execute(self) -> EntryReply:
+        return EntryReply(
+            entry=self.action,
+            reply=PublishReplyConstructor.validate_json(
+                (
+                    await self.client.request(
+                        self.action.subject.root,
+                        self.action.read_model.model_dump_json().encode(),
+                        headers=self.action.headers.model_dump(by_alias=True),
+                        timeout=self.wait.root.total_seconds(),
+                    )
+                ).data
+            ),
         )
 
 
@@ -321,13 +355,16 @@ class MessageGetInterpreter(BaseModel):
     wait: PositiveDuration = Field(description="How long the lookup waits for its reply.")
     client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
 
-    async def execute(self) -> KvReply:
-        return KvReplyConstructor.validate_json(
-            (
-                await self.client.request(
-                    self.action.api.root,
-                    self.action.body.model_dump_json().encode(),
-                    timeout=self.wait.root.total_seconds(),
-                )
-            ).data
+    async def execute(self) -> LookupReply:
+        return LookupReply(
+            lookup=self.action,
+            reply=KvReplyConstructor.validate_json(
+                (
+                    await self.client.request(
+                        self.action.api.root,
+                        self.action.body.model_dump_json().encode(),
+                        timeout=self.wait.root.total_seconds(),
+                    )
+                ).data
+            ),
         )

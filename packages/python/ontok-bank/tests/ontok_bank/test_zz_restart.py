@@ -12,6 +12,8 @@ from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 from testcontainers.compose import DockerCompose
 
+from ontok.bank import Amount, Deposited, HeldBalance, Withdrawn
+from ontok.bank.main import append, lookup, mint, read, subscribe
 from ontok.core import Instant, NodeId, Timestamp
 from ontok.events import (
     Append,
@@ -19,17 +21,19 @@ from ontok.events import (
     Events,
     Expectation,
     Initial,
+    NoStream,
     Occurrences,
     Position,
     Read,
+    ReadModelLookup,
     Start,
     StreamSubscription,
     Version,
 )
-from ontok.nats import Batch, Entry, NatsConfig
+from ontok.nats import Batch, NatsConfig
 
-from .acts import Bookkeeper, Clerk, Silent, append, balance_of, lookup, mint, read, subscribe
-from .world import BOOKS_BALANCED, TELLER, Amount, Balance, Deposited, Withdrawn
+from .acts import Bookkeeper, Clerk, Silent, balance_of
+from .world import BOOKS_BALANCED, TELLER
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 
@@ -82,7 +86,7 @@ async def test_an_acknowledged_append_survives_a_kill(
     )
     assert isinstance(landed, Position)
     await kill_and_restart(server, connection)
-    assert await read(connection, jetstream, config, a_read(account)) == Events(
+    assert await read(connection, config, a_read(account)) == Events(
         (Event(occurrence=w, stream=account, version=Version(1), position=landed),)
     )
 
@@ -101,11 +105,11 @@ async def test_a_batch_cut_by_a_kill_lands_nothing_and_the_stream_stays_free(
         )
     await connection.flush()
     await kill_and_restart(server, connection)
-    assert await read(connection, jetstream, config, a_read(account)) is Expectation.NO_STREAM
+    assert await read(connection, config, a_read(account)) == NoStream()
     fresh = an_append(account, deposit(4))
     landed = await append(connection, config, fresh, opening_fold)
     assert isinstance(landed, Position)
-    assert await read(connection, jetstream, config, a_read(account)) == Events(
+    assert await read(connection, config, a_read(account)) == Events(
         (
             Event(
                 occurrence=fresh.occurrences.root[0],
@@ -184,7 +188,6 @@ async def test_the_books_balance_across_a_kill_in_the_middle_of_the_day(
     opening_fold = Initial(id=mint(), stream=account)
     books = Bookkeeper(
         connection,
-        jetstream,
         StreamSubscription(
             id=mint(), role=TELLER, goal=BOOKS_BALANCED, begins=Start.BEGINNING, stream=account
         ),
@@ -206,8 +209,8 @@ async def test_the_books_balance_across_a_kill_in_the_middle_of_the_day(
     assert isinstance(await append(connection, config, later, opening_fold), Position)
     await books.until(len(books.deliveries) + 1)
     await asyncio.sleep(config.ack_wait.root.total_seconds() + 0.5)
-    held = await lookup(connection, config, account)
-    assert isinstance(held, Entry)
-    whole = await read(connection, jetstream, config, a_read(account))
+    held = await lookup(connection, config, ReadModelLookup(id=account))
+    assert isinstance(held, HeldBalance)
+    whole = await read(connection, config, a_read(account))
     assert isinstance(whole, Events)
-    assert Balance.model_validate_json(held.data) == balance_of(whole)
+    assert held.balance == balance_of(whole)

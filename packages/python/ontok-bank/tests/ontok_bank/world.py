@@ -2,10 +2,8 @@
 
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Literal
 
-from pydantic import ConfigDict, Field, RootModel
-
+from ontok.bank import Amount, Balance, Deposited, Withdrawn
 from ontok.core import Goal, Instant, NodeId, Role, Timestamp
 from ontok.events import (
     Append,
@@ -15,11 +13,9 @@ from ontok.events import (
     Expectation,
     FromPosition,
     Initial,
-    Occurrence,
     Occurrences,
     Position,
     Read,
-    ReadModel,
     Start,
     State,
     StreamSubscription,
@@ -27,45 +23,6 @@ from ontok.events import (
     Version,
     VersionMismatch,
 )
-
-
-class Amount(RootModel[Decimal]):
-    """A sum of money."""
-
-    model_config = ConfigDict(
-        frozen=True, strict=True, validate_default=True, revalidate_instances="never"
-    )
-
-    root: Decimal = Field(decimal_places=2)
-
-
-class Deposited(Occurrence):
-    """Money came into an account."""
-
-    kind: Literal["deposited"] = Field(default="deposited", description="Which transaction.")
-    amount: Amount = Field(description="How much.")
-
-    @property
-    def signed(self) -> Amount:
-        return Amount(self.amount.root)
-
-
-class Withdrawn(Occurrence):
-    """Money left an account."""
-
-    kind: Literal["withdrawn"] = Field(default="withdrawn", description="Which transaction.")
-    amount: Amount = Field(description="How much.")
-
-    @property
-    def signed(self) -> Amount:
-        return Amount(-self.amount.root)
-
-
-class Balance(ReadModel):
-    """What an account holds, as of a position."""
-
-    amount: Amount = Field(description="What it holds.")
-
 
 OPENING = Instant(at=Timestamp(datetime(2026, 10, 2, 9, 0, tzinfo=UTC)))
 

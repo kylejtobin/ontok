@@ -4,12 +4,13 @@ import pytest
 from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 
-from ontok.events import Events, Expectation, VersionMismatch
-from ontok.nats import Deleted, Entry, EntryAck, EntryRefusal, NatsConfig, NoEntry
+from ontok.bank import HeldBalance, NoHeldBalance, TransactionConstructor
+from ontok.bank.main import append, lookup, persist, read, subscribe
+from ontok.events import Events, NoStream, ReadModelLookup, VersionMismatch
+from ontok.nats import EntryAck, EntryRefusal, NatsConfig, NoEntry
 
 from . import world as w
-from .acts import Bookkeeper, Clerk, append, balance_of, lookup, persist, read, subscribe
-from .program import TransactionConstructor
+from .acts import Bookkeeper, Clerk, balance_of
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 
@@ -45,14 +46,14 @@ async def test_the_cash_machine_asserts_nothing(
 async def test_both_streams_read_back_whole(
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
-    assert await read(connection, jetstream, config, w.READ_A) == w.A_EVENTS
-    assert await read(connection, jetstream, config, w.READ_B) == w.B_EVENTS
+    assert await read(connection, config, w.READ_A) == w.A_EVENTS
+    assert await read(connection, config, w.READ_B) == w.B_EVENTS
 
 
 async def test_an_unknown_stream_reads_as_no_stream(
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
-    assert await read(connection, jetstream, config, w.READ_NOWHERE) is Expectation.NO_STREAM
+    assert await read(connection, config, w.READ_NOWHERE) == NoStream()
 
 
 async def test_the_clerk_sees_everything_once_each_except_what_she_returns(
@@ -120,38 +121,32 @@ async def test_the_auditor_begins_after_the_second_event_on_b(
 async def test_the_statement_is_written_only_against_what_was_read(
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
-    none = await lookup(connection, config, w.BALANCE_A)
-    first = await persist(
-        connection, config, w.BALANCE_A_MORNING, NoEntry.model_validate(none, from_attributes=True)
-    )
+    none = await lookup(connection, config, ReadModelLookup(id=w.BALANCE_A))
+    assert isinstance(none, NoHeldBalance)
+    assert isinstance(none.prior, NoEntry)
+    first = await persist(connection, config, w.BALANCE_A_MORNING, none.prior)
     assert isinstance(first, EntryAck)
-    held = await lookup(connection, config, w.BALANCE_A)
-    assert isinstance(held, Entry)
-    assert w.Balance.model_validate_json(held.data) == w.BALANCE_A_MORNING
-    stale = await persist(
-        connection,
-        config,
-        w.BALANCE_A_AFTER_TRANSFER,
-        NoEntry.model_validate(none, from_attributes=True),
-    )
+    held = await lookup(connection, config, ReadModelLookup(id=w.BALANCE_A))
+    assert isinstance(held, HeldBalance)
+    assert held.balance == w.BALANCE_A_MORNING
+    stale = await persist(connection, config, w.BALANCE_A_AFTER_TRANSFER, none.prior)
     assert isinstance(stale, EntryRefusal)
-    second = await persist(connection, config, w.BALANCE_A_AFTER_TRANSFER, held)
+    second = await persist(connection, config, w.BALANCE_A_AFTER_TRANSFER, held.prior)
     assert isinstance(second, EntryAck)
-    now = await lookup(connection, config, w.BALANCE_A)
-    assert isinstance(now, Entry)
-    assert w.Balance.model_validate_json(now.data) == w.BALANCE_A_AFTER_TRANSFER
-    assert not isinstance(now, Deleted)
+    now = await lookup(connection, config, ReadModelLookup(id=w.BALANCE_A))
+    assert isinstance(now, HeldBalance)
+    assert now.balance == w.BALANCE_A_AFTER_TRANSFER
 
 
 async def test_the_books_balance_whatever_the_delivery_did(
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
-    books = Bookkeeper(connection, jetstream, w.BOOKKEEPER, config)
+    books = Bookkeeper(connection, w.BOOKKEEPER, config)
     await subscribe(connection, config, w.BOOKKEEPER, books.receive)
     await books.until(9)
     for account, reading in ((w.ACCOUNT_A, w.READ_A), (w.ACCOUNT_B, w.READ_B)):
-        held = await lookup(connection, config, account)
-        assert isinstance(held, Entry)
-        whole = await read(connection, jetstream, config, reading)
+        held = await lookup(connection, config, ReadModelLookup(id=account))
+        assert isinstance(held, HeldBalance)
+        whole = await read(connection, config, reading)
         assert isinstance(whole, Events)
-        assert w.Balance.model_validate_json(held.data) == balance_of(whole)
+        assert held.balance == balance_of(whole)

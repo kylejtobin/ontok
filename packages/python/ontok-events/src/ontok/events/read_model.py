@@ -1,8 +1,10 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from ontok.core import Entity, NodeId
 from ontok.events.position import Position
-from ontok.events.subscription import FromPosition
+from ontok.events.subscription import FromPosition, Start
 
 
 class ReadModel(Entity):
@@ -60,6 +62,10 @@ class NoReadModel(BaseModel):
     )
 
     id: NodeId = Field(description="The identity nothing is held under.")
+
+    @property
+    def after(self) -> Literal[Start.BEGINNING]:
+        return Start.BEGINNING
 
 
 LookupOutcome = ReadModel | NoReadModel

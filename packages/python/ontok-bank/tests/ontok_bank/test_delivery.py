@@ -11,6 +11,8 @@ from nats.aio.client import Client
 from nats.aio.msg import Msg
 from nats.js.client import JetStreamContext
 
+from ontok.bank import Amount, BankRoute, Deposited, Withdrawn
+from ontok.bank.main import append, mint, subscribe
 from ontok.core import Instant, NodeId, Timestamp
 from ontok.events import (
     Append,
@@ -36,9 +38,8 @@ from ontok.nats import (
     Sequence,
 )
 
-from .acts import Clerk, Silent, Slow, append, delivered, mint, subscribe
-from .program import BankRoute
-from .world import BOOKS_BALANCED, TELLER, Amount, Deposited, Withdrawn
+from .acts import Clerk, Silent, Slow, delivered
+from .world import BOOKS_BALANCED, TELLER
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 
@@ -179,9 +180,7 @@ async def test_a_forged_stream_header_lands_where_it_claims_and_nowhere_else(
         config,
     )
     await subscribe(connection, config, everything.subscription, everything.receive)
-    deliveries = [
-        d for d in await everything.until(1, timeout=3.0) if d.event.occurrence.id == liar.id
-    ]
+    deliveries = await everything.until_seen(liar.id, timeout=10.0)
     assert len(deliveries) == 1
     assert deliveries[0].event.stream == account_a
     watcher_b = Completer(connection, watching(account_b), config)

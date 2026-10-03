@@ -7,12 +7,11 @@ import pytest
 from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 
+from ontok.bank import Amount, Balance, HeldBalance
+from ontok.bank.main import lookup, mint, persist
 from ontok.core import NodeId
-from ontok.events import Position
-from ontok.nats import Deleted, Entry, EntryAck, EntryRefusal, NatsConfig, NoEntry
-
-from .acts import lookup, mint, persist
-from .world import Amount, Balance
+from ontok.events import Position, ReadModelLookup
+from ontok.nats import Deleted, EntryAck, EntryRefusal, NatsConfig, NoEntry, Prior
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 
@@ -23,11 +22,16 @@ def balance(identity: NodeId, amount: int, position: int) -> Balance:
     )
 
 
+async def prior_of(client: Client, config: NatsConfig, identity: NodeId) -> Prior:
+    return (await lookup(client, config, ReadModelLookup(id=identity))).prior
+
+
 async def test_two_writers_with_the_same_prior_and_exactly_one_is_kept(
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
     identity = mint()
-    none = NoEntry.model_validate(await lookup(connection, config, identity), from_attributes=True)
+    none = await prior_of(connection, config, identity)
+    assert isinstance(none, NoEntry)
     outcomes = await asyncio.gather(
         persist(connection, config, balance(identity, 1, 1), none),
         persist(connection, config, balance(identity, 2, 1), none),
@@ -39,26 +43,28 @@ async def test_a_write_against_a_stale_prior_is_refused_and_the_old_balance_stan
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
     identity = mint()
-    none = NoEntry.model_validate(await lookup(connection, config, identity), from_attributes=True)
+    none = await prior_of(connection, config, identity)
+    assert isinstance(none, NoEntry)
     assert isinstance(await persist(connection, config, balance(identity, 10, 1), none), EntryAck)
-    first = await lookup(connection, config, identity)
-    assert isinstance(first, Entry)
+    first = await lookup(connection, config, ReadModelLookup(id=identity))
+    assert isinstance(first, HeldBalance)
     assert isinstance(
         await persist(connection, config, balance(identity, 20, 2), none), EntryRefusal
     )
-    assert await lookup(connection, config, identity) == first
+    assert await lookup(connection, config, ReadModelLookup(id=identity)) == first
 
 
 async def test_a_deleted_key_is_written_against_its_deletion(
     connection: Client, jetstream: JetStreamContext, config: NatsConfig
 ) -> None:
     identity = mint()
-    none = NoEntry.model_validate(await lookup(connection, config, identity), from_attributes=True)
+    none = await prior_of(connection, config, identity)
+    assert isinstance(none, NoEntry)
     assert isinstance(await persist(connection, config, balance(identity, 10, 1), none), EntryAck)
     bucket = await jetstream.key_value(config.bucket.root)  # pyright: ignore[reportUnknownMemberType]
     await bucket.delete(identity.root)  # pyright: ignore[reportUnknownMemberType]
-    gone = await lookup(connection, config, identity)
+    gone = await prior_of(connection, config, identity)
     assert isinstance(gone, Deleted)
     assert isinstance(await persist(connection, config, balance(identity, 30, 3), gone), EntryAck)
-    again = await lookup(connection, config, identity)
-    assert isinstance(again, Entry) and again.seq.root > gone.seq.root
+    again = await lookup(connection, config, ReadModelLookup(id=identity))
+    assert isinstance(again, HeldBalance) and again.entry.seq.root > gone.seq.root

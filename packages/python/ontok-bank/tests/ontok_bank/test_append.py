@@ -9,6 +9,8 @@ import pytest
 from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 
+from ontok.bank import Amount, Deposited, Withdrawn
+from ontok.bank.main import append, mint, read
 from ontok.core import Instant, NodeId, Timestamp
 from ontok.events import (
     Append,
@@ -17,6 +19,7 @@ from ontok.events import (
     Events,
     Expectation,
     Initial,
+    NoStream,
     Occurrences,
     Position,
     Read,
@@ -28,8 +31,7 @@ from ontok.events import (
 )
 from ontok.nats import Batch, DuplicateMessage, NatsConfig, PubAck, PublishReplyConstructor
 
-from .acts import append, mint, read
-from .world import BOOKS_BALANCED, TELLER, Amount, Deposited, Withdrawn
+from .world import BOOKS_BALANCED, TELLER
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 
@@ -76,7 +78,7 @@ async def test_two_tellers_race_the_same_fold_and_exactly_one_wins(
     positions = [o for o in outcomes if isinstance(o, Position)]
     refusals = [o for o in outcomes if isinstance(o, VersionMismatch)]
     assert len(positions) == 1 and len(refusals) == 1
-    held = await read(connection, jetstream, config, a_read(account))
+    held = await read(connection, config, a_read(account))
     assert isinstance(held, Events)
     winner = left if len(held.root) == 2 else right
     assert tuple(e.occurrence for e in held.root) == winner.occurrences.root
@@ -107,7 +109,7 @@ async def test_a_batch_with_a_gap_lands_nothing(
         ).data
     )
     assert not isinstance(reply, PubAck)
-    assert await read(connection, jetstream, config, a_read(account)) is Expectation.NO_STREAM
+    assert await read(connection, config, a_read(account)) == NoStream()
 
 
 async def test_a_batch_never_committed_is_abandoned_and_the_stream_stays_free(
@@ -125,13 +127,13 @@ async def test_a_batch_never_committed_is_abandoned_and_the_stream_stays_free(
         headers=opening.headers.model_dump(by_alias=True),
     )
     await connection.flush()
-    assert await read(connection, jetstream, config, a_read(account)) is Expectation.NO_STREAM
+    assert await read(connection, config, a_read(account)) == NoStream()
     await asyncio.sleep(11)
     fresh = an_append(account, Expectation.NO_STREAM, deposit(9))
     assert await append(connection, config, fresh, opening_fold) == Position(
-        await_position_of(await read(connection, jetstream, config, a_read(account)))
+        await_position_of(await read(connection, config, a_read(account)))
     )
-    held = await read(connection, jetstream, config, a_read(account))
+    held = await read(connection, config, a_read(account))
     assert (
         isinstance(held, Events)
         and tuple(e.occurrence for e in held.root) == fresh.occurrences.root
@@ -173,7 +175,7 @@ async def test_an_expectation_on_a_following_message_kills_the_batch(
         ).data
     )
     assert not isinstance(reply, PubAck)
-    assert await read(connection, jetstream, config, a_read(account)) is Expectation.NO_STREAM
+    assert await read(connection, config, a_read(account)) == NoStream()
 
 
 async def test_the_same_occurrence_appended_twice_is_refused_and_held_once(
@@ -195,7 +197,7 @@ async def test_the_same_occurrence_appended_twice_is_refused_and_held_once(
         connection, config, an_append(account, AtVersion(version=Version(1)), once), after_first
     )
     assert isinstance(second, DuplicateMessage)
-    held = await read(connection, jetstream, config, a_read(account))
+    held = await read(connection, config, a_read(account))
     assert isinstance(held, Events)
     assert [e.occurrence.id for e in held.root] == [once.id]
 
@@ -255,7 +257,7 @@ async def test_a_stream_of_three_hundred_reads_back_whole_in_one_pull(
     many = an_append(account, Expectation.NO_STREAM, *(withdrawal(i + 1) for i in range(300)))
     landed = await append(connection, config, many, Initial(id=mint(), stream=account))
     assert isinstance(landed, Position)
-    held = await read(connection, jetstream, config, a_read(account))
+    held = await read(connection, config, a_read(account))
     assert isinstance(held, Events)
     assert len(held.root) == 300
     first = landed.root - 300 + 1
