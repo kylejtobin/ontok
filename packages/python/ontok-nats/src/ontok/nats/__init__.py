@@ -17,6 +17,8 @@ from ontok.nats.consumer import Begin as Begin
 from ontok.nats.consumer import BeginAfter as BeginAfter
 from ontok.nats.consumer import BeginAll as BeginAll
 from ontok.nats.consumer import BeginNew as BeginNew
+from ontok.nats.consumer import ConsumerCreation as ConsumerCreation
+from ontok.nats.consumer import ConsumerDelivery as ConsumerDelivery
 from ontok.nats.consumer import ConsumerInfo as ConsumerInfo
 from ontok.nats.consumer import ConsumerInterpreter as ConsumerInterpreter
 from ontok.nats.consumer import ConsumerName as ConsumerName
@@ -41,12 +43,15 @@ from ontok.nats.consumer import PullConfig as PullConfig
 from ontok.nats.consumer import PullConsumer as PullConsumer
 from ontok.nats.consumer import PullConsumerConfig as PullConsumerConfig
 from ontok.nats.consumer import PullConsumerFromConfig as PullConsumerFromConfig
+from ontok.nats.consumer import Pulled as Pulled
+from ontok.nats.consumer import Pulling as Pulling
+from ontok.nats.consumer import PullingConstructor as PullingConstructor
 from ontok.nats.consumer import PullInterpreter as PullInterpreter
 from ontok.nats.consumer import PushConfig as PushConfig
 from ontok.nats.consumer import PushConsumer as PushConsumer
 from ontok.nats.consumer import PushConsumerConfig as PushConsumerConfig
 from ontok.nats.consumer import PushConsumerFromConfig as PushConsumerFromConfig
-from ontok.nats.consumer import ReadInterpreter as ReadInterpreter
+from ontok.nats.consumer import ReadRefusal as ReadRefusal
 from ontok.nats.consumer import ReadReply as ReadReply
 from ontok.nats.consumer import StreamFilter as StreamFilter
 from ontok.nats.error import ApiError as ApiError
@@ -75,7 +80,6 @@ from ontok.nats.kv import MessageGetInterpreter as MessageGetInterpreter
 from ontok.nats.kv import NewEntry as NewEntry
 from ontok.nats.kv import NoEntry as NoEntry
 from ontok.nats.kv import Prior as Prior
-from ontok.nats.kv import PriorConstructor as PriorConstructor
 from ontok.nats.kv import ReadModelKey as ReadModelKey
 from ontok.nats.kv import Revision as Revision
 from ontok.nats.publish import Batch as Batch

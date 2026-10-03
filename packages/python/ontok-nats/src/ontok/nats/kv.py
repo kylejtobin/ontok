@@ -106,30 +106,28 @@ class Deleted(BaseModel):
         return ExpectedSequenceHeader(f"{self.seq.root}")
 
 
-KvReply = Annotated[Entry | Deleted | ApiError, Field(union_mode="left_to_right")]
-KvReplyConstructor: TypeAdapter[KvReply] = TypeAdapter(KvReply)
-
-
 class NoEntry(BaseModel):
-    """A key that has never held a message: the API found none."""
+    """The Get Message API's reply for a key that has never held a message: it found none."""
 
     model_config = ConfigDict(
         frozen=True,
-        extra="forbid",
+        extra="ignore",
         strict=True,
         validate_default=True,
         revalidate_instances="never",
     )
 
-    err_code: Literal[10037] = Field(validation_alias=AliasPath("error", "err_code", "root"))
+    err_code: Literal[10037] = Field(validation_alias=AliasPath("error", "err_code"))
 
     @property
     def expected(self) -> ExpectedSequenceHeader:
         return ExpectedSequenceHeader("0")
 
 
-Prior = Annotated[Entry | Deleted | NoEntry, Field(union_mode="left_to_right")]
-PriorConstructor: TypeAdapter[Prior] = TypeAdapter(Prior)
+KvReply = Annotated[Entry | Deleted | NoEntry | ApiError, Field(union_mode="left_to_right")]
+KvReplyConstructor: TypeAdapter[KvReply] = TypeAdapter(KvReply)
+
+Prior = Entry | Deleted | NoEntry
 
 
 class ExpectedHeaders(BaseModel):
@@ -289,7 +287,7 @@ class KeyLookup(BaseModel):
 
 
 class LookupReply(BaseModel):
-    """A lookup and NATS's reply to it: what the key last held, which a put is expected after."""
+    """A lookup and NATS's reply to it: what the key last held, or the refusal."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -301,10 +299,6 @@ class LookupReply(BaseModel):
 
     lookup: KeyLookup = Field(description="The lookup.")
     reply: KvReply = Field(description="NATS's reply to it.")
-
-    @property
-    def prior(self) -> Prior:
-        return PriorConstructor.validate_python(self.reply, from_attributes=True)
 
 
 class EntryInterpreter(BaseModel):

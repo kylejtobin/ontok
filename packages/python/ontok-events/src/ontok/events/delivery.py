@@ -2,7 +2,6 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
-from ontok import core
 from ontok.core import Work
 from ontok.events.event import Event
 
@@ -46,10 +45,3 @@ class Ending(BaseModel):
 
     delivery: Delivery = Field(description="The Delivery to end.")
     outcome: Outcome = Field(description="The condition it is to be in.")
-
-
-class Disposition(core.State):
-    """The condition a Delivery is in once ended."""
-
-    delivery: Delivery = Field(description="The Delivery this condition goes on.")
-    outcome: Outcome = Field(description="The condition it is in.")

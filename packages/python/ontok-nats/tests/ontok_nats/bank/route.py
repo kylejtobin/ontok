@@ -7,14 +7,13 @@ from nats.aio.msg import Msg
 from pydantic import AliasPath, BaseModel, ConfigDict, Field, TypeAdapter
 
 from ontok.core import NodeId
-from ontok.events import Event
-from ontok.nats import DeliveredMessage, DeliveryRoute, Entry, Prior
+from ontok.nats import Deleted, DeliveredMessage, DeliveryRoute, Entry, NoEntry, Prior
 
 from .account import Balance, NoBalance, Transaction, TransactionConstructor
 
 
 class BankRoute(DeliveryRoute):
-    """The bank's delivered message: the transaction it carries and the Event it is."""
+    """The bank's delivered message: the transaction it carries."""
 
     @classmethod
     def receive(cls, raw: Msg) -> "BankRoute":
@@ -23,15 +22,6 @@ class BankRoute(DeliveryRoute):
     @property
     def occurrence(self) -> Transaction:
         return TransactionConstructor.validate_json(self.message.payload.root)
-
-    @property
-    def event(self) -> Event:
-        return Event(
-            occurrence=self.occurrence,
-            stream=self.stream,
-            version=self.version,
-            position=self.position,
-        )
 
 
 class HeldBalance(BaseModel):
@@ -70,7 +60,7 @@ class NoHeldBalance(BaseModel):
     )
 
     id: NodeId = Field(validation_alias=AliasPath("lookup", "action", "id"))
-    prior: Prior = Field(validation_alias=AliasPath("prior"))
+    prior: Deleted | NoEntry = Field(validation_alias=AliasPath("reply"))
 
     @property
     def balance(self) -> NoBalance:

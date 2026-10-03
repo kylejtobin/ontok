@@ -8,6 +8,10 @@ from nats.aio.client import Client
 from ontok.core import NodeId, PositiveDuration
 from ontok.events import (
     Attempt,
+    Delivery,
+    DeliveryIdentity,
+    Event,
+    Occurrence,
     Position,
     Read,
     Subscription,
@@ -117,8 +121,8 @@ class DeliveredMessage(BaseModel):
 
 class DeliveryRoute(BaseModel):
     """A delivered message as a program receives it: the Stream, the Version, the Position, and
-    the Attempt are NATS's; an organization refines this route to construct its own occurrence
-    from the payload and the Event from all of them."""
+    the Attempt are NATS's, and the Event is all of them with the occurrence the payload carries.
+    An organization refines this route to construct its own occurrence from the payload."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -145,6 +149,47 @@ class DeliveryRoute(BaseModel):
     @property
     def attempt(self) -> Attempt:
         return Attempt(self.message.num_delivered.root)
+
+    @property
+    def occurrence(self) -> Occurrence:
+        return Occurrence.model_validate_json(self.message.payload.root)
+
+    @property
+    def event(self) -> Event:
+        return Event(
+            occurrence=self.occurrence,
+            stream=self.stream,
+            version=self.version,
+            position=self.position,
+        )
+
+
+class ConsumerDelivery(BaseModel):
+    """A message a Subscription's consumer delivered, as the Delivery it is."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    route: DeliveryRoute = Field(description="The delivered message.")
+    subscription: Subscription = Field(description="The Subscription it was delivered to.")
+
+    @property
+    def delivery(self) -> Delivery:
+        return Delivery(
+            id=DeliveryIdentity(
+                subscription=self.subscription.id,
+                event=self.route.event.occurrence.id,
+                attempt=self.route.attempt,
+            ).id,
+            action=self.subscription,
+            event=self.route.event,
+            attempt=self.route.attempt,
+        )
 
 
 class MaxDeliveriesAdvisory(BaseModel):
@@ -521,8 +566,8 @@ class NextRequest(BaseModel):
     no_wait: Literal[True] = Field(default=True, description="Answer at once.")
 
 
-class Pull(BaseModel):
-    """A pull of every pending message from a consumer: a pull of none is empty."""
+class ConsumerCreation(BaseModel):
+    """A consumer request and NATS's reply to it."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -532,9 +577,25 @@ class Pull(BaseModel):
         revalidate_instances="never",
     )
 
-    stream_name: StreamName = Field(validation_alias=AliasPath("info", "stream_name"))
-    consumer: ConsumerName = Field(validation_alias=AliasPath("info", "name"))
-    batch: NumPending = Field(validation_alias=AliasPath("info", "num_pending"))
+    request: EphemeralConsumerRequest | DurableConsumerRequest = Field(description="The request.")
+    reply: ConsumerReply = Field(description="NATS's reply to it.")
+
+
+class Pull(BaseModel):
+    """A pull of every pending message from the consumer created for a Read: a pull of none is
+    empty."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    stream_name: StreamName = Field(validation_alias=AliasPath("creation", "reply", "stream_name"))
+    consumer: ConsumerName = Field(validation_alias=AliasPath("creation", "reply", "name"))
+    batch: NumPending = Field(validation_alias=AliasPath("creation", "reply", "num_pending"))
 
     @property
     def api(self) -> Subject:
@@ -545,8 +606,28 @@ class Pull(BaseModel):
         return NextRequest(batch=self.batch)
 
 
+class ReadRefusal(BaseModel):
+    """A Read whose consumer NATS refused to create: there is nothing to pull."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    read: Read = Field(validation_alias=AliasPath("read"))
+    error: ApiError = Field(validation_alias=AliasPath("creation", "reply"))
+
+
+Pulling = Annotated[Pull | ReadRefusal, Field(union_mode="left_to_right")]
+PullingConstructor: TypeAdapter[Pulling] = TypeAdapter(Pulling)
+
+
 class ReadReply(BaseModel):
-    """A Read and the consumer NATS created for it: what there is to pull."""
+    """A Read and the creation of the consumer requested for it: what there is to pull, or the
+    refusal."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -557,11 +638,26 @@ class ReadReply(BaseModel):
     )
 
     read: Read = Field(description="The Read.")
-    info: ConsumerInfo = Field(description="The consumer created for it.")
+    creation: ConsumerCreation = Field(description="The creation of its consumer.")
 
     @property
-    def pull(self) -> Pull:
-        return Pull.model_validate(self, from_attributes=True)
+    def pulling(self) -> Pulling:
+        return PullingConstructor.validate_python(self, from_attributes=True)
+
+
+class Pulled(BaseModel):
+    """A pull and the messages it was answered with, in order."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        revalidate_instances="never",
+    )
+
+    pull: Pull = Field(description="The pull.")
+    messages: Messages = Field(description="The messages it was answered with.")
 
 
 class ConsumerInterpreter(BaseModel):
@@ -580,15 +676,18 @@ class ConsumerInterpreter(BaseModel):
     wait: PositiveDuration = Field(description="How long the request waits for its reply.")
     client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
 
-    async def execute(self) -> ConsumerReply:
-        return ConsumerReplyConstructor.validate_json(
-            (
-                await self.client.request(
-                    self.action.api.root,
-                    self.action.model_dump_json(by_alias=True).encode(),
-                    timeout=self.wait.root.total_seconds(),
-                )
-            ).data
+    async def execute(self) -> ConsumerCreation:
+        return ConsumerCreation(
+            request=self.action,
+            reply=ConsumerReplyConstructor.validate_json(
+                (
+                    await self.client.request(
+                        self.action.api.root,
+                        self.action.model_dump_json(by_alias=True).encode(),
+                        timeout=self.wait.root.total_seconds(),
+                    )
+                ).data
+            ),
         )
 
 
@@ -609,60 +708,26 @@ class PullInterpreter(BaseModel):
     wait: PositiveDuration = Field(description="How long each message is waited for.")
     client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
 
-    async def execute(self) -> Messages:
+    async def execute(self) -> Pulled:
         inbox = await self.client.subscribe(self.client.new_inbox())  # pyright: ignore[reportUnknownMemberType]
         await self.client.publish(
             self.action.api.root,
             self.action.request.model_dump_json().encode(),
             reply=inbox.subject,
         )
-        messages = Messages(
-            tuple(
-                [
-                    DeliveredMessage.model_validate(
-                        await inbox.next_msg(self.wait.root.total_seconds()), from_attributes=True
-                    )
-                    for _ in range(self.action.batch.root)
-                ]
-            )
+        pulled = Pulled(
+            pull=self.action,
+            messages=Messages(
+                tuple(
+                    [
+                        DeliveredMessage.model_validate(
+                            await inbox.next_msg(self.wait.root.total_seconds()),
+                            from_attributes=True,
+                        )
+                        for _ in range(self.action.batch.root)
+                    ]
+                )
+            ),
         )
         await inbox.unsubscribe()
-        return messages
-
-
-class ReadInterpreter(BaseModel):
-    """A Read made: the consumer created for it, then the pull of what it has pending."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-        arbitrary_types_allowed=True,
-    )
-
-    action: Read = Field(description="The Read.")
-    stream_name: StreamName = Field(description="The stream read.")
-    wait: PositiveDuration = Field(description="How long each request waits for its reply.")
-    client: Client = Field(exclude=True, repr=False, description="The NATS connection.")
-
-    async def execute(self) -> Messages:
-        return await PullInterpreter(
-            action=ReadReply(
-                read=self.action,
-                info=ConsumerInfo.model_validate(
-                    await ConsumerInterpreter(
-                        action=EphemeralConsumerRequest(
-                            stream_name=self.stream_name,
-                            config=PullConsumer(read=self.action).config,
-                        ),
-                        wait=self.wait,
-                        client=self.client,
-                    ).execute(),
-                    from_attributes=True,
-                ),
-            ).pull,
-            wait=self.wait,
-            client=self.client,
-        ).execute()
+        return pulled

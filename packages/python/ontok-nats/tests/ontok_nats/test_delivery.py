@@ -15,6 +15,7 @@ from ontok.core import Instant, NodeId, Timestamp
 from ontok.events import (
     Append,
     AtVersion,
+    Ending,
     Event,
     Expectation,
     Initial,
@@ -30,13 +31,14 @@ from ontok.events import (
 from ontok.nats import (
     AckInterpreter,
     AckReply,
+    ConsumerDelivery,
     EventSubject,
     MaxDeliveriesAdvisory,
     NatsConfig,
     Sequence,
 )
 
-from .acts import Clerk, Silent, Slow, delivered
+from .acts import Clerk, Silent, Slow
 from .bank import Amount, BankRoute, Deposited, Withdrawn
 from .bank.main import append, mint, subscribe
 from .world import BOOKS_BALANCED, TELLER
@@ -86,9 +88,13 @@ class Completer(Clerk):
 
     async def receive(self, msg: Msg) -> None:
         route = BankRoute.receive(msg)
-        self.deliveries.append(delivered(self.subscription, route))
+        delivery = ConsumerDelivery(route=route, subscription=self.subscription).delivery
+        self.deliveries.append(delivery)
         await AckInterpreter(
-            action=AckReply(reply=route.message.reply, outcome=Outcome.COMPLETE),
+            action=AckReply(
+                ending=Ending(delivery=delivery, outcome=Outcome.COMPLETE),
+                reply=route.message.reply,
+            ),
             wait=self.config.reply_wait,
             client=self.client,
         ).execute()

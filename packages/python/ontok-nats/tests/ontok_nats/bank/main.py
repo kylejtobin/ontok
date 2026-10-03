@@ -14,6 +14,7 @@ from ontok.core import Goal, NodeId, Role
 from ontok.events import (
     Append,
     AppendOutcome,
+    Ending,
     Initial,
     Page,
     Read,
@@ -24,24 +25,28 @@ from ontok.events import (
     Subscription,
 )
 from ontok.nats import (
-    AckConfirmation,
     AckInterpreter,
     AckReply,
     Batch,
     BatchInterpreter,
+    ConsumerDelivery,
     ConsumerInterpreter,
     ConsumerReply,
     DuplicateMessage,
     DurableConsumerRequest,
     EntryInterpreter,
+    EphemeralConsumerRequest,
     Keeping,
     KeyLookup,
     MessageGetInterpreter,
     NatsConfig,
     NewEntry,
     Prior,
+    Pull,
+    PullConsumer,
+    PullInterpreter,
     PushConsumer,
-    ReadInterpreter,
+    ReadReply,
 )
 
 from .account import Balance, Statement
@@ -70,10 +75,24 @@ async def page(client: Client, config: NatsConfig, action: Read) -> Page:
         events=tuple(
             BankRoute(message=message).event
             for message in (
-                await ReadInterpreter(
-                    action=action, stream_name=config.stream, wait=config.reply_wait, client=client
+                await PullInterpreter(
+                    action=Pull.model_validate(
+                        ReadReply(
+                            read=action,
+                            creation=await ConsumerInterpreter(
+                                action=EphemeralConsumerRequest(
+                                    stream_name=config.stream,
+                                    config=PullConsumer(read=action).config,
+                                ),
+                                wait=config.reply_wait,
+                                client=client,
+                            ).execute(),
+                        ).pulling
+                    ),
+                    wait=config.reply_wait,
+                    client=client,
                 ).execute()
-            ).root
+            ).messages.root
         ),
     )
 
@@ -103,11 +122,16 @@ async def persist(client: Client, config: NatsConfig, balance: Balance, prior: P
     ).keeping
 
 
-async def rule(client: Client, config: NatsConfig, route: BankRoute) -> AckConfirmation:
+async def rule(
+    client: Client, config: NatsConfig, subscription: Subscription, route: BankRoute
+) -> Ending:
     return await AckInterpreter(
         action=AckReply(
+            ending=Ending(
+                delivery=ConsumerDelivery(route=route, subscription=subscription).delivery,
+                outcome=RulingConstructor.validate_python(route, from_attributes=True).outcome,
+            ),
             reply=route.message.reply,
-            outcome=RulingConstructor.validate_python(route, from_attributes=True).outcome,
         ),
         wait=config.reply_wait,
         client=client,
@@ -116,33 +140,38 @@ async def rule(client: Client, config: NatsConfig, route: BankRoute) -> AckConfi
 
 async def book(
     client: Client, config: NatsConfig, subscription: Subscription, route: BankRoute
-) -> AckConfirmation:
+) -> Ending:
     return await AckInterpreter(
         action=AckReply(
-            reply=route.message.reply,
-            outcome=(
-                await persist(
-                    client,
-                    config,
-                    Statement(
-                        held=(
-                            books := await lookup(client, config, ReadModelLookup(id=route.stream))
-                        ).balance,
-                        page=await page(
-                            client,
-                            config,
-                            Read(
-                                id=mint(),
-                                role=subscription.role,
-                                goal=subscription.goal,
-                                stream=route.stream,
-                                after=books.balance.after,
+            ending=Ending(
+                delivery=ConsumerDelivery(route=route, subscription=subscription).delivery,
+                outcome=(
+                    await persist(
+                        client,
+                        config,
+                        Statement(
+                            held=(
+                                books := await lookup(
+                                    client, config, ReadModelLookup(id=route.stream)
+                                )
+                            ).balance,
+                            page=await page(
+                                client,
+                                config,
+                                Read(
+                                    id=mint(),
+                                    role=subscription.role,
+                                    goal=subscription.goal,
+                                    stream=route.stream,
+                                    after=books.balance.after,
+                                ),
                             ),
-                        ),
-                    ).balance,
-                    books.prior,
-                )
-            ).outcome,
+                        ).balance,
+                        books.prior,
+                    )
+                ).outcome,
+            ),
+            reply=route.message.reply,
         ),
         wait=config.reply_wait,
         client=client,
@@ -158,7 +187,7 @@ async def subscribe(
     consumer = PushConsumer(
         subscription=subscription, ack_wait=config.ack_wait, max_deliver=config.max_deliver
     )
-    reply = await ConsumerInterpreter(
+    creation = await ConsumerInterpreter(
         action=DurableConsumerRequest(stream_name=config.stream, config=consumer.config),
         wait=config.reply_wait,
         client=client,
@@ -166,11 +195,11 @@ async def subscribe(
     await client.subscribe(  # pyright: ignore[reportUnknownMemberType]
         consumer.deliver_subject.root, queue=consumer.durable_name.root, cb=callback
     )
-    return reply
+    return creation.reply
 
 
-async def ruled(client: Client, config: NatsConfig, msg: Msg) -> None:
-    await rule(client, config, BankRoute.receive(msg))
+async def ruled(client: Client, config: NatsConfig, subscription: Subscription, msg: Msg) -> None:
+    await rule(client, config, subscription, BankRoute.receive(msg))
 
 
 async def booked(client: Client, config: NatsConfig, subscription: Subscription, msg: Msg) -> None:
@@ -191,7 +220,7 @@ async def main() -> None:
     bookkeeper = Subscription(
         id=bank.bookkeeper, role=teller, goal=books_balanced, begins=Start.BEGINNING
     )
-    await subscribe(client, config, clerk, partial(ruled, client, config))
+    await subscribe(client, config, clerk, partial(ruled, client, config, clerk))
     await subscribe(client, config, bookkeeper, partial(booked, client, config, bookkeeper))
     await asyncio.Event().wait()
 

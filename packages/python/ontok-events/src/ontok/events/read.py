@@ -90,16 +90,16 @@ class AtFrontier(BaseModel):
         revalidate_instances="never",
     )
 
-    events: tuple[()] = Field(validation_alias=AliasPath("events"))
-    position: Position = Field(validation_alias=AliasPath("after", "position"))
+    events: tuple[()] = Field(description="Nothing was returned.")
+    after: FromPosition = Field(description="Where the read began.")
 
     @property
     def outcome(self) -> Frontier:
-        return Frontier(position=self.position)
+        return Frontier(position=self.after.position)
 
     @property
     def last(self) -> Position:
-        return self.position
+        return self.after.position
 
 
 class Empty(BaseModel):
@@ -113,8 +113,8 @@ class Empty(BaseModel):
         revalidate_instances="never",
     )
 
-    events: tuple[()] = Field(validation_alias=AliasPath("events"))
-    value: Literal["beginning"] = Field(validation_alias=AliasPath("after", "value"))
+    events: tuple[()] = Field(description="Nothing was returned.")
+    after: Literal[Start.BEGINNING] = Field(description="Where the read began.")
 
     @property
     def outcome(self) -> NoStream:

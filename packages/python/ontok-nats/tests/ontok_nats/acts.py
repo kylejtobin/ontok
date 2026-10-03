@@ -2,7 +2,6 @@
 the bank's callback, and the balance a test computes for itself from a whole read."""
 
 import asyncio
-import uuid
 from decimal import Decimal
 
 from nats.aio.client import Client
@@ -10,25 +9,11 @@ from nats.aio.msg import Msg
 from pydantic import ValidationError
 
 from ontok.core import NodeId
-from ontok.events import Delivery, DeliveryIdentity, Events, IdentityInterpreter, Subscription
-from ontok.nats import NatsConfig
+from ontok.events import Delivery, Events, Subscription
+from ontok.nats import ConsumerDelivery, NatsConfig
 
 from .bank import Amount, Balance, BankRoute, TransactionConstructor
 from .bank.main import book, rule
-
-
-def delivered(subscription: Subscription, route: BankRoute) -> Delivery:
-    return Delivery(
-        id=IdentityInterpreter(
-            action=DeliveryIdentity(
-                subscription=subscription.id, event=route.event.occurrence.id, attempt=route.attempt
-            ),
-            uuid5=uuid.uuid5,
-        ).execute(),
-        action=subscription,
-        event=route.event,
-        attempt=route.attempt,
-    )
 
 
 class Clerk:
@@ -44,12 +29,12 @@ class Clerk:
     async def receive(self, msg: Msg) -> None:
         route = BankRoute.receive(msg)
         try:
-            delivery = delivered(self.subscription, route)
+            delivery = ConsumerDelivery(route=route, subscription=self.subscription).delivery
         except ValidationError:
             self.refused.append(route.message.payload.root)
             return
         self.deliveries.append(delivery)
-        await rule(self.client, self.config, route)
+        await rule(self.client, self.config, self.subscription, route)
 
     async def until(self, count: int, timeout: float = 5.0) -> list[Delivery]:
         deadline = asyncio.get_running_loop().time() + timeout
@@ -72,7 +57,9 @@ class Silent(Clerk):
 
     async def receive(self, msg: Msg) -> None:
         route = BankRoute.receive(msg)
-        self.deliveries.append(delivered(self.subscription, route))
+        self.deliveries.append(
+            ConsumerDelivery(route=route, subscription=self.subscription).delivery
+        )
 
 
 class Slow(Clerk):
@@ -86,9 +73,11 @@ class Slow(Clerk):
 
     async def receive(self, msg: Msg) -> None:
         route = BankRoute.receive(msg)
-        self.deliveries.append(delivered(self.subscription, route))
+        self.deliveries.append(
+            ConsumerDelivery(route=route, subscription=self.subscription).delivery
+        )
         await asyncio.sleep(self.delay)
-        await rule(self.client, self.config, route)
+        await rule(self.client, self.config, self.subscription, route)
 
 
 class Bookkeeper(Clerk):
@@ -96,7 +85,9 @@ class Bookkeeper(Clerk):
 
     async def receive(self, msg: Msg) -> None:
         route = BankRoute.receive(msg)
-        self.deliveries.append(delivered(self.subscription, route))
+        self.deliveries.append(
+            ConsumerDelivery(route=route, subscription=self.subscription).delivery
+        )
         await book(self.client, self.config, self.subscription, route)
 
 
