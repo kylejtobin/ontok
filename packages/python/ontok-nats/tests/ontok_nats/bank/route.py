@@ -6,10 +6,11 @@ from typing import Annotated
 from nats.aio.msg import Msg
 from pydantic import AliasPath, BaseModel, ConfigDict, Field, TypeAdapter
 
-from ontok.bank.account import Balance, NoBalance, Transaction, TransactionConstructor
 from ontok.core import NodeId
 from ontok.events import Event
 from ontok.nats import DeliveredMessage, DeliveryRoute, Entry, Prior
+
+from .account import Balance, NoBalance, Transaction, TransactionConstructor
 
 
 class BankRoute(DeliveryRoute):

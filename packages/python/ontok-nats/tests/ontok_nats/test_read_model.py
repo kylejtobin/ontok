@@ -7,11 +7,12 @@ import pytest
 from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 
-from ontok.bank import Amount, Balance, HeldBalance
-from ontok.bank.main import lookup, mint, persist
 from ontok.core import NodeId
 from ontok.events import Position, ReadModelLookup
 from ontok.nats import Deleted, EntryAck, EntryRefusal, NatsConfig, NoEntry, Prior
+
+from .bank import Amount, Balance, HeldBalance
+from .bank.main import lookup, mint, persist
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 

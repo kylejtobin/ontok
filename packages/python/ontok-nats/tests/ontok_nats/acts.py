@@ -9,11 +9,12 @@ from nats.aio.client import Client
 from nats.aio.msg import Msg
 from pydantic import ValidationError
 
-from ontok.bank import Amount, Balance, BankRoute, TransactionConstructor
-from ontok.bank.main import book, rule
 from ontok.core import NodeId
 from ontok.events import Delivery, DeliveryIdentity, Events, IdentityInterpreter, Subscription
 from ontok.nats import NatsConfig
+
+from .bank import Amount, Balance, BankRoute, TransactionConstructor
+from .bank.main import book, rule
 
 
 def delivered(subscription: Subscription, route: BankRoute) -> Delivery:

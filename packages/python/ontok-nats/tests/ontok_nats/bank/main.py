@@ -10,10 +10,6 @@ import nats
 from nats.aio.client import Client
 from nats.aio.msg import Msg
 
-from ontok.bank.account import Balance, Statement
-from ontok.bank.clerk import RulingConstructor
-from ontok.bank.config import BankConfig
-from ontok.bank.route import BalanceRoute, BalanceRouteConstructor, BankRoute
 from ontok.core import Goal, NodeId, Role
 from ontok.events import (
     Append,
@@ -47,6 +43,11 @@ from ontok.nats import (
     PushConsumer,
     ReadInterpreter,
 )
+
+from .account import Balance, Statement
+from .clerk import RulingConstructor
+from .config import BankConfig
+from .route import BalanceRoute, BalanceRouteConstructor, BankRoute
 
 
 def mint() -> NodeId:

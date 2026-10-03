@@ -9,8 +9,6 @@ import pytest
 from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 
-from ontok.bank import Amount, Deposited, Withdrawn
-from ontok.bank.main import append, mint, read
 from ontok.core import Instant, NodeId, Timestamp
 from ontok.events import (
     Append,
@@ -31,6 +29,8 @@ from ontok.events import (
 )
 from ontok.nats import Batch, DuplicateMessage, NatsConfig, PubAck, PublishReplyConstructor
 
+from .bank import Amount, Deposited, Withdrawn
+from .bank.main import append, mint, read
 from .world import BOOKS_BALANCED, TELLER
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]

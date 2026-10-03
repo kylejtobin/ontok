@@ -15,7 +15,7 @@ repos:
       - id: gitleaks
 
   - repo: https://github.com/kylejtobin/tca
-    rev: fc1c132de9c4f9c13111e5db4eaed358d30f45d5
+    rev: 928888100c80e67a3e96c7b3628915ef925ae1cc
     hooks:
       - id: smell-check
         pass_filenames: false
@@ -23,7 +23,6 @@ repos:
           - packages/python/ontok-core/src
           - packages/python/ontok-events/src
           - packages/python/ontok-nats/src
-          - packages/python/ontok-bank/src
 
   - repo: local
     hooks:

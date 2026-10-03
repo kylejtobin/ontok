@@ -39,3 +39,4 @@ ontok-events = { workspace = true }
 
 [tool.uv.build-backend]
 module-name = "ontok.nats"
+source-include = ["tests/**"]

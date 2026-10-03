@@ -4,13 +4,13 @@ import pytest
 from nats.aio.client import Client
 from nats.js.client import JetStreamContext
 
-from ontok.bank import HeldBalance, NoHeldBalance, TransactionConstructor
-from ontok.bank.main import append, lookup, persist, read, subscribe
 from ontok.events import Events, NoStream, ReadModelLookup, VersionMismatch
 from ontok.nats import EntryAck, EntryRefusal, NatsConfig, NoEntry
 
 from . import world as w
 from .acts import Bookkeeper, Clerk, balance_of
+from .bank import HeldBalance, NoHeldBalance, TransactionConstructor
+from .bank.main import append, lookup, persist, read, subscribe
 
 pytestmark = [pytest.mark.nats, pytest.mark.asyncio(loop_scope="session")]
 

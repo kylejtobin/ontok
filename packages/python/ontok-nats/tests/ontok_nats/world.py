@@ -3,7 +3,6 @@
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from ontok.bank import Amount, Balance, Deposited, Withdrawn
 from ontok.core import Goal, Instant, NodeId, Role, Timestamp
 from ontok.events import (
     Append,
@@ -23,6 +22,8 @@ from ontok.events import (
     Version,
     VersionMismatch,
 )
+
+from .bank import Amount, Balance, Deposited, Withdrawn
 
 OPENING = Instant(at=Timestamp(datetime(2026, 10, 2, 9, 0, tzinfo=UTC)))
 
