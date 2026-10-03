@@ -212,26 +212,7 @@ class EntryRefusal(BaseModel):
     )
 
 
-class EntryProviderRefusal(BaseModel):
-    """An entry and a reply that is no outcome of event sourcing."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    entry: NewEntry = Field(description="The entry.")
-    error: ApiError = Field(
-        validation_alias=AliasChoices("error", "reply"), description="The provider's refusal."
-    )
-
-
-Keeping = Annotated[
-    EntryAck | EntryRefusal | EntryProviderRefusal, Field(union_mode="left_to_right")
-]
+Keeping = Annotated[EntryAck | EntryRefusal, Field(union_mode="left_to_right")]
 KeepingConstructor: TypeAdapter[Keeping] = TypeAdapter(Keeping)
 
 

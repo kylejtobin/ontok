@@ -30,7 +30,6 @@ from ontok.nats.consumer import DurableConsumerRequest as DurableConsumerRequest
 from ontok.nats.consumer import EphemeralConsumerRequest as EphemeralConsumerRequest
 from ontok.nats.consumer import Filter as Filter
 from ontok.nats.consumer import FromBeginning as FromBeginning
-from ontok.nats.consumer import GivenUp as GivenUp
 from ontok.nats.consumer import MaxDeliver as MaxDeliver
 from ontok.nats.consumer import MaxDeliveriesAdvisory as MaxDeliveriesAdvisory
 from ontok.nats.consumer import Messages as Messages
@@ -65,7 +64,6 @@ from ontok.nats.kv import Deleted as Deleted
 from ontok.nats.kv import Entry as Entry
 from ontok.nats.kv import EntryAck as EntryAck
 from ontok.nats.kv import EntryInterpreter as EntryInterpreter
-from ontok.nats.kv import EntryProviderRefusal as EntryProviderRefusal
 from ontok.nats.kv import EntryRefusal as EntryRefusal
 from ontok.nats.kv import EntryReply as EntryReply
 from ontok.nats.kv import ExpectedHeaders as ExpectedHeaders
@@ -103,7 +101,6 @@ from ontok.nats.publish import OpeningClosingHeaders as OpeningClosingHeaders
 from ontok.nats.publish import OpeningHeaders as OpeningHeaders
 from ontok.nats.publish import OpeningOrBatchHeaders as OpeningOrBatchHeaders
 from ontok.nats.publish import Placed as Placed
-from ontok.nats.publish import ProviderRefusal as ProviderRefusal
 from ontok.nats.publish import PubAck as PubAck
 from ontok.nats.publish import PublishReply as PublishReply
 from ontok.nats.publish import PublishReplyConstructor as PublishReplyConstructor

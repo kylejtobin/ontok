@@ -466,31 +466,7 @@ class BatchDuplicate(BaseModel):
         return self.error
 
 
-class ProviderRefusal(BaseModel):
-    """A batch and a reply that is no outcome of event sourcing: a limit, a permission, or an
-    error the provider names and the pattern does not."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    batch: Batch = Field(description="The batch.")
-    error: ApiError = Field(
-        validation_alias=AliasChoices("error", "reply"), description="The provider's refusal."
-    )
-
-    @property
-    def outcome(self) -> ApiError:
-        return self.error
-
-
-Landing = Annotated[
-    BatchAck | BatchRefusal | BatchDuplicate | ProviderRefusal, Field(union_mode="left_to_right")
-]
+Landing = Annotated[BatchAck | BatchRefusal | BatchDuplicate, Field(union_mode="left_to_right")]
 LandingConstructor: TypeAdapter[Landing] = TypeAdapter(Landing)
 
 
@@ -513,7 +489,7 @@ class BatchReply(BaseModel):
         return LandingConstructor.validate_python(self, from_attributes=True)
 
     @property
-    def outcome(self) -> AppendOutcome | DuplicateMessage | ApiError:
+    def outcome(self) -> AppendOutcome | DuplicateMessage:
         return self.landing.outcome
 
 

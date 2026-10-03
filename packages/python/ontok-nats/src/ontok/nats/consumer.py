@@ -9,10 +9,7 @@ from nats.js.client import JetStreamContext
 from ontok.core import NodeId, PositiveDuration
 from ontok.events import (
     Attempt,
-    Delivery,
-    DispositionIdentity,
     Frontier,
-    Outcome,
     Position,
     Read,
     Subscription,
@@ -177,30 +174,6 @@ class MaxDeliveriesAdvisory(BaseModel):
     consumer: ConsumerName = Field(description="The consumer that gave up.")
     stream_seq: Sequence = Field(description="The message's sequence in the stream.")
     deliveries: NumDelivered = Field(description="How many times it was delivered.")
-
-
-class GivenUp(BaseModel):
-    """A Delivery the provider stopped delivering: the advisory and the Delivery it was about.
-    Its condition is parked, by the provider rather than the subscriber."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        strict=True,
-        validate_default=True,
-        revalidate_instances="never",
-    )
-
-    advisory: MaxDeliveriesAdvisory = Field(description="What the server said.")
-    delivery: Delivery = Field(description="The Delivery it gave up on.")
-
-    @property
-    def outcome(self) -> Outcome:
-        return Outcome.PARKED
-
-    @property
-    def identity(self) -> DispositionIdentity:
-        return DispositionIdentity(delivery=self.delivery.id, outcome=self.outcome)
 
 
 class Messages(RootModel[tuple[DeliveredMessage, ...]]):
