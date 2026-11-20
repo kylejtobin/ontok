@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "organizational-type-model"
+version = "0.1.0"
+description = "Declarative Pydantic types for organizational meaning and value."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+dependencies = ["pydantic>=2.13.4,<3"]
+
+[dependency-groups]
+dev = ["pytest>=9", "ruff>=0.17", "basedpyright>=1.40"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/organization_model"]
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+addopts = ["--import-mode=importlib"]
+testpaths = ["tests"]
+strict_config = true
+strict_markers = true
+strict_xfail = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "C4", "PIE", "RUF", "TC"]
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "pydantic.RootModel"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["organization_model"]
+
+[tool.basedpyright]
+include = ["src", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
