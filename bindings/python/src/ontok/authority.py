@@ -1,4 +1,4 @@
-"""Formally established grants held by an actor or organizational position."""
+"""Grants conferred by a formal basis upon a holder."""
 
 from typing import Literal
 
@@ -6,33 +6,23 @@ from pydantic import BaseModel
 
 from .decision import Decision
 from .rule import Permission, Requirement
-from .type import CONFIG
 
 
-class ActionPermission[Context, Action](Permission[Context, Action], frozen=True):
-    kind: Literal["action_permission"] = "action_permission"
+class ActionGrant[Context, Action](Permission[Context, Action]):
+    kind: Literal["action"] = "action"
 
 
-class DecisionPower[Scope: Decision[object]](BaseModel, frozen=True):
-    model_config = CONFIG
-    kind: Literal["decision_power"] = "decision_power"
-    scope: Scope
+class DecisionGrant[Choice: Decision](BaseModel):
+    kind: Literal["decision"] = "decision"
+    decisions: Choice
 
 
-class ObligationPower[Duty: Requirement[object, object]](BaseModel, frozen=True):
-    model_config = CONFIG
-    kind: Literal["obligation_power"] = "obligation_power"
+class ObligationGrant[Duty: Requirement](BaseModel):
+    kind: Literal["obligation"] = "obligation"
     imposable: Duty
 
 
-class Authority[
-    Holder,
-    Basis,
-    Grant: ActionPermission[object, object] | DecisionPower[Decision[object]] | ObligationPower[Requirement[object, object]],
-](BaseModel, frozen=True):
-    """States a grant and its formal basis; construction does not prove conferment."""
-
-    model_config = CONFIG
+class Authority[Holder, FormalBasis, Grant: ActionGrant | DecisionGrant | ObligationGrant](BaseModel):
     holder: Holder
-    established_by: Basis
+    established_by: FormalBasis
     grant: Grant

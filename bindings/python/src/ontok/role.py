@@ -1,22 +1,20 @@
-"""Responsibilities and the distinct relationship of participation."""
+"""Duties associated with participation, independent of occupancy."""
 
 from typing import Annotated
 
 from pydantic import BaseModel, Field, RootModel
 
 from .rule import Requirement
-from .type import CONFIG
 
 
-class Responsibility(RootModel[Requirement[object, object]], frozen=True):
-    """A required obligation, potentially toward an end rather than a method."""
+class Responsibility[Context, Obligation](RootModel[Requirement[Context, Obligation]]):
+    """A duty derived from a requirement, not a mandated performance method."""
 
 
-class Role(RootModel[Annotated[tuple[Responsibility, ...], Field(min_length=1)]], frozen=True):
-    """A role exists independently of anyone occupying it."""
+class Role(RootModel[Annotated[tuple[Responsibility, ...], Field(min_length=1)]]):
+    """One or more responsibilities; occupancy is a separate assertion."""
 
 
-class Participation[Occupant, AssignedRole: Role](BaseModel, frozen=True):
-    model_config = CONFIG
+class Participation[Occupant, Assigned: Role](BaseModel):
     occupant: Occupant
-    role: AssignedRole
+    role: Assigned

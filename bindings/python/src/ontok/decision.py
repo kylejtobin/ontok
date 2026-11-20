@@ -1,24 +1,17 @@
-"""Selections of a complete admissible context, rule and result case."""
+"""Selection of a complete admissible rule-and-result case."""
 
 from pydantic import BaseModel, RootModel
 
 from .outcome import Outcome
 from .rule import Rule
-from .type import CONFIG, State
 
 
-class DecisionCase[Context, ApplicableRule: Rule[object, object], Result: Outcome[State[object]]](
-    BaseModel, frozen=True
-):
-    """One inseparable admissible context, applicable rule and outcome."""
+class DecisionCase[Applicable: Rule, Result: Outcome](BaseModel):
+    """Context is already present in the rule; never copy it independently."""
 
-    model_config = CONFIG
-    context: Context
-    rule: ApplicableRule
+    rule: Applicable
     outcome: Result
 
 
-class Decision[Cases: DecisionCase[object, Rule[object, object], Outcome[State[object]]]](
-    RootModel[Cases], frozen=True
-):
-    """A concrete declaration supplies alternative complete cases; one is selected."""
+class Decision[Case: DecisionCase](RootModel[Case]):
+    """Declared Case may be a union of complete cases; construction selects one."""

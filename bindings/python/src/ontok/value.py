@@ -1,197 +1,136 @@
-"""Worth relative to a basis, expressed through eight independent dimensions."""
+"""Worth relative to a basis, expressed through independent dimensions."""
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, RootModel
 
 from .activity import Activity
 from .outcome import Outcome
 from .purpose import Purpose
 from .rule import Requirement
-from .type import Assessment, CONFIG, Interest, Need, State
+from .type import Interest, Need
 
 
-class Value[
-    Subject,
-    Basis: Need[object, object] | Interest[object, object] | Purpose,
-    Detail,
-](BaseModel, frozen=True):
-    model_config = CONFIG
+class Benefit[Detail](BaseModel):
+    direction: Literal["benefit"]
+    detail: Detail
+
+
+class Harm[Detail](BaseModel):
+    direction: Literal["harm"]
+    detail: Detail
+
+
+class Unchanged[Detail](BaseModel):
+    direction: Literal["unchanged"]
+    detail: Detail
+
+
+class Assessment[Detail](RootModel[Benefit[Detail] | Harm[Detail] | Unchanged[Detail]]):
+    """Value direction is assessed relative to the enclosing Value's basis."""
+
+
+class EconomicChange[Extent](BaseModel):
+    dimension: Literal["economic"] = "economic"
+    operation: Literal["earned", "saved", "preserved", "made_available", "lost", "spent"]
+    extent: Extent
+
+
+class TimeChange[Extent](BaseModel):
+    dimension: Literal["time"] = "time"
+    operation: Literal["saved", "gained", "made_available", "lost", "consumed"]
+    extent: Extent
+
+
+class QualityMeasure[End: Purpose, Obligation: Requirement, Evidence](BaseModel):
+    """Fitness, correctness, or reliability relative to its stated reference."""
+
+    dimension: Literal["quality"] = "quality"
+    reference: End | Obligation | Outcome
+    evidence: Evidence
+
+
+class RiskMeasure[Adverse: Outcome, Exposure](BaseModel):
+    dimension: Literal["risk"] = "risk"
+    adverse: Adverse
+    exposure: Exposure
+
+
+class CapabilityMeasure[Work: Activity, Ability](BaseModel):
+    dimension: Literal["capability"] = "capability"
+    activity: Work
+    ability: Ability
+
+
+class WelfareMeasure[Evidence](BaseModel):
+    dimension: Literal["human_welfare"] = "human_welfare"
+    aspect: Literal["satisfaction", "wellbeing", "safety", "fulfillment"]
+    evidence: Evidence
+
+
+class RelationshipMeasure[Evidence](BaseModel):
+    dimension: Literal["relationships"] = "relationships"
+    aspect: Literal["trust", "loyalty", "reputation", "strength"]
+    evidence: Evidence
+
+
+class ResourceMeasure[Evidence](BaseModel):
+    dimension: Literal["resources"] = "resources"
+    aspect: Literal["availability", "preservation"]
+    evidence: Evidence
+
+
+class Value[Subject, Basis: Need | Interest | Purpose, Detail](BaseModel):
+    """One subject, one basis, and one or more dimensional assessments."""
+
     subject: Subject
     relative_to: Basis
-    assessment: Assessment[Detail]
+    dimensions: Annotated[tuple[Assessment[Detail], ...], Field(min_length=1)]
 
 
-class FinancialChange[Amount](BaseModel, frozen=True):
-    model_config = CONFIG
-    operation: Literal["earned", "saved", "preserved", "made_available", "spent", "lost", "made_unavailable"]
-    extent: Amount
-
-
-class TemporalChange[Extent](BaseModel, frozen=True):
-    model_config = CONFIG
-    operation: Literal["saved", "gained", "made_available", "consumed", "lost"]
-    extent: Extent
-
-
-class Fitness[End: Purpose, Attainment](BaseModel, frozen=True):
-    model_config = CONFIG
-    purpose: End
-    attainment: Attainment
-
-
-class Correctness[Duty: Requirement[object, object], Conformity](BaseModel, frozen=True):
-    model_config = CONFIG
-    requirement: Duty
-    conformity: Conformity
-
-
-class Reliability[Context, Expected: Outcome[State[object]], Observation](BaseModel, frozen=True):
-    model_config = CONFIG
-    context: Context
-    expected: Expected
-    observation: Observation
-
-
-class Likelihood[Adverse: Outcome[State[object]], Extent](BaseModel, frozen=True):
-    model_config = CONFIG
-    adverse: Adverse
-    direction: Literal["reduced", "increased"]
-    extent: Extent
-
-
-class Consequence[Adverse: Outcome[State[object]], Extent](BaseModel, frozen=True):
-    model_config = CONFIG
-    adverse: Adverse
-    direction: Literal["reduced", "increased"]
-    extent: Extent
-
-
-class Exposure[Adverse: Outcome[State[object]], Evidence](BaseModel, frozen=True):
-    model_config = CONFIG
-    adverse: Adverse
-    operation: Literal["removed", "introduced"]
-    evidence: Evidence
-
-
-class Ability[Work: Activity[object, Outcome[State[object]] | Purpose], Evidence](BaseModel, frozen=True):
-    model_config = CONFIG
-    activity: Work
-    operation: Literal["gained", "strengthened", "weakened", "lost"]
-    evidence: Evidence
-
-
-class Satisfaction[Expectation, Appraisal](BaseModel, frozen=True):
-    model_config = CONFIG
-    expectation: Expectation
-    appraisal: Appraisal
-
-
-class Wellbeing[Condition](BaseModel, frozen=True):
-    model_config = CONFIG
-    condition: Condition
-
-
-class Safety[Threat, Protection](BaseModel, frozen=True):
-    model_config = CONFIG
-    threat: Threat
-    protection: Protection
-
-
-class Fulfillment[End: Purpose, Attainment](BaseModel, frozen=True):
-    model_config = CONFIG
-    purpose: End
-    attainment: Attainment
-
-
-class Trust[Conduct, Appraisal](BaseModel, frozen=True):
-    model_config = CONFIG
-    expected_conduct: Conduct
-    appraisal: Appraisal
-
-
-class Loyalty[Commitment, Appraisal](BaseModel, frozen=True):
-    model_config = CONFIG
-    commitment: Commitment
-    appraisal: Appraisal
-
-
-class Reputation[Audience, Standing](BaseModel, frozen=True):
-    model_config = CONFIG
-    audience: Audience
-    standing: Standing
-
-
-class RelationshipStrength[Appraisal](BaseModel, frozen=True):
-    model_config = CONFIG
-    appraisal: Appraisal
-
-
-class Availability[Accessible](BaseModel, frozen=True):
-    model_config = CONFIG
-    accessible: Accessible
-
-
-class Preservation[Retained](BaseModel, frozen=True):
-    model_config = CONFIG
-    retained: Retained
-
-
-class Economic[Subject, Basis: Need[object, object] | Interest[object, object] | Purpose, Change: FinancialChange[object]](
-    Value[Subject, Basis, Change], frozen=True
+class Economic[Subject, Basis: Need | Interest | Purpose, Extent](
+    Value[Subject, Basis, EconomicChange[Extent]]
 ):
-    dimension: Literal["economic"] = "economic"
+    """Money earned, saved, preserved, or made available."""
 
 
-class Time[Subject, Basis: Need[object, object] | Interest[object, object] | Purpose, Change: TemporalChange[object]](
-    Value[Subject, Basis, Change], frozen=True
+class Time[Subject, Basis: Need | Interest | Purpose, Extent](
+    Value[Subject, Basis, TimeChange[Extent]]
 ):
-    dimension: Literal["time"] = "time"
+    """Time saved, gained, or made available."""
 
 
-class Quality[
-    Subject,
-    Basis: Need[object, object] | Interest[object, object] | Purpose,
-    Detail: Fitness[Purpose, object] | Correctness[Requirement[object, object], object] | Reliability[object, Outcome[State[object]], object],
-](Value[Subject, Basis, Detail], frozen=True):
-    dimension: Literal["quality"] = "quality"
+class Quality[Subject, Basis: Need | Interest | Purpose, End: Purpose, Obligation: Requirement, Evidence](
+    Value[Subject, Basis, QualityMeasure[End, Obligation, Evidence]]
+):
+    """Fitness for purpose, correctness, and reliability."""
 
 
-class Risk[
-    Subject,
-    Basis: Need[object, object] | Interest[object, object] | Purpose,
-    Detail: Likelihood[Outcome[State[object]], object] | Consequence[Outcome[State[object]], object] | Exposure[Outcome[State[object]], object],
-](Value[Subject, Basis, Detail], frozen=True):
-    dimension: Literal["risk"] = "risk"
+class Risk[Subject, Basis: Need | Interest | Purpose, Adverse: Outcome, Exposure](
+    Value[Subject, Basis, RiskMeasure[Adverse, Exposure]]
+):
+    """Reduced exposure to uncertain adverse outcomes."""
 
 
-class Capability[
-    Subject,
-    Basis: Need[object, object] | Interest[object, object] | Purpose,
-    Detail: Ability[Activity[object, Outcome[State[object]] | Purpose], object],
-](Value[Subject, Basis, Detail], frozen=True):
-    dimension: Literal["capability"] = "capability"
+class Capability[Subject, Basis: Need | Interest | Purpose, Work: Activity, Ability](
+    Value[Subject, Basis, CapabilityMeasure[Work, Ability]]
+):
+    """Increased ability to accomplish something."""
 
 
-class HumanWelfare[
-    Subject,
-    Basis: Need[object, object] | Interest[object, object] | Purpose,
-    Detail: Satisfaction[object, object] | Wellbeing[object] | Safety[object, object] | Fulfillment[Purpose, object],
-](Value[Subject, Basis, Detail], frozen=True):
-    dimension: Literal["human_welfare"] = "human_welfare"
+class HumanWelfare[Subject, Basis: Need | Interest | Purpose, Evidence](
+    Value[Subject, Basis, WelfareMeasure[Evidence]]
+):
+    """Satisfaction, wellbeing, safety, and fulfillment."""
 
 
-class Relationships[
-    Subject,
-    Basis: Need[object, object] | Interest[object, object] | Purpose,
-    Detail: Trust[object, object] | Loyalty[object, object] | Reputation[object, object] | RelationshipStrength[object],
-](Value[Subject, Basis, Detail], frozen=True):
-    dimension: Literal["relationships"] = "relationships"
+class Relationships[Subject, Basis: Need | Interest | Purpose, Evidence](
+    Value[Subject, Basis, RelationshipMeasure[Evidence]]
+):
+    """Trust, loyalty, reputation, and relationship strength."""
 
 
-class Resources[
-    Subject,
-    Basis: Need[object, object] | Interest[object, object] | Purpose,
-    Detail: Availability[object] | Preservation[object],
-](Value[Subject, Basis, Detail], frozen=True):
-    dimension: Literal["resources"] = "resources"
+class Resources[Subject, Basis: Need | Interest | Purpose, Evidence](
+    Value[Subject, Basis, ResourceMeasure[Evidence]]
+):
+    """Availability and preservation of scarce assets or materials."""

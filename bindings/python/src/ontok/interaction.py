@@ -1,39 +1,31 @@
-"""Distinct forms of participant exchange."""
+"""Communication, transfer of responsibility, or coordination of work."""
 
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, RootModel
 
 from .role import Responsibility
-from .type import CONFIG
 
 
-class Communication[Sender, Recipients: tuple[object, ...], Content](BaseModel, frozen=True):
-    model_config = CONFIG
+class Communication[Sender, Recipient, Message](BaseModel):
     kind: Literal["communication"] = "communication"
     sender: Sender
-    recipients: Annotated[Recipients, Field(min_length=1)]
-    content: Content
+    recipient: Recipient
+    content: Message
 
 
-class ResponsibilityTransfer[Source, Destination, Duty: Responsibility](BaseModel, frozen=True):
-    model_config = CONFIG
+class ResponsibilityTransfer[Sender, Recipient, Duty: Responsibility](BaseModel):
     kind: Literal["responsibility_transfer"] = "responsibility_transfer"
-    source: Source
-    destination: Destination
+    sender: Sender
+    recipient: Recipient
     responsibility: Duty
 
 
-class Coordination[Participants: tuple[object, ...], Work](BaseModel, frozen=True):
-    model_config = CONFIG
+class Coordination[Participant, Work](BaseModel):
     kind: Literal["coordination"] = "coordination"
-    participants: Annotated[Participants, Field(min_length=2)]
+    participants: Annotated[tuple[Participant, ...], Field(min_length=2)]
     work: Work
 
 
-class Interaction[
-    Exchange: Communication[object, tuple[object, ...], object]
-    | ResponsibilityTransfer[object, object, Responsibility]
-    | Coordination[tuple[object, ...], object]
-](RootModel[Exchange], frozen=True):
-    """A concrete declaration selects a complete exchange form."""
+class Interaction[Exchange: Communication | ResponsibilityTransfer | Coordination](RootModel[Exchange]):
+    """A selected, complete exchange; specialize Exchange to its actual alternatives."""

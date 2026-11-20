@@ -1,49 +1,21 @@
-"""Semantic constituents shared by Ontok's foundational concepts."""
+"""Shared constituents; these do not add foundational Ontok concepts."""
 
-from typing import Literal
-
-from pydantic import BaseModel, ConfigDict, RootModel
-
-CONFIG = ConfigDict(frozen=True, strict=True, extra="forbid", validate_default=True, revalidate_instances="always")
+from pydantic import BaseModel, RootModel
 
 
-class State[Content](RootModel[Content], frozen=True):
-    """A condition whose content is established by a domain declaration."""
+class State[Content](RootModel[Content]):
+    """A condition; its content is supplied by a domain model."""
 
 
-class Need[Holder, Required](BaseModel, frozen=True):
+class Need[Holder, Requirement](BaseModel):
     """Something a holder requires."""
 
-    model_config = CONFIG
     holder: Holder
-    required: Required
+    required: Requirement
 
 
-class Interest[Holder, Concern](BaseModel, frozen=True):
-    """Something in which a holder has a stake."""
+class Interest[Holder, Concern](BaseModel):
+    """A holder's concern."""
 
-    model_config = CONFIG
     holder: Holder
     concern: Concern
-
-
-class Benefit[Detail](BaseModel, frozen=True):
-    model_config = CONFIG
-    kind: Literal["benefit"] = "benefit"
-    detail: Detail
-
-
-class Harm[Detail](BaseModel, frozen=True):
-    model_config = CONFIG
-    kind: Literal["harm"] = "harm"
-    detail: Detail
-
-
-class Unchanged[Detail](BaseModel, frozen=True):
-    model_config = CONFIG
-    kind: Literal["unchanged"] = "unchanged"
-    detail: Detail
-
-
-class Assessment[Detail](RootModel[Benefit[Detail] | Harm[Detail] | Unchanged[Detail]], frozen=True):
-    """Worth relative to a basis; change direction alone cannot establish worth."""

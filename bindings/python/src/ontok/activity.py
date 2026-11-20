@@ -1,15 +1,17 @@
-"""Units of work with correlated admitted inputs and defined outcomes."""
+"""Work whose admitted inputs determine defined outcomes."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 from .outcome import Outcome
 from .purpose import Purpose
-from .type import CONFIG, State
 
 
-class Activity[Inputs, Results: Outcome[State[object]] | Purpose](BaseModel, frozen=True):
-    """One whole admissible case; alternatives are unions of complete narrowings."""
+class ActivityCase[Inputs, Results: Outcome | Purpose](BaseModel):
+    """A whole admissible relationship: never mix inputs and outcomes of separate cases."""
 
-    model_config = CONFIG
     inputs: Inputs
     outcomes: Results
+
+
+class Activity[Case: ActivityCase](RootModel[Case]):
+    """Narrow to a union of complete ActivityCase models to declare alternatives."""
