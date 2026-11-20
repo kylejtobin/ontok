@@ -1,27 +1,38 @@
-"""Compositions of desired Outcomes."""
+"""Compositions of intended outcomes without independent goals."""
 
-from typing import Annotated
+from typing import Annotated, Union
 
 from pydantic import Field, RootModel
 
 from .outcome import Outcome
 
 
-class Together[Positions: tuple](RootModel[Positions]):
-    """Jointly required positions, not an ordering of their realization."""
+class Outcomes(RootModel[tuple[Union[Outcome, "Outcomes", "Alternative"], ...]]):
+    """Jointly required outcome positions, which may themselves contain compositions."""
 
-    root: Annotated[Positions, Field(min_length=2)]
+    root: Annotated[
+        tuple[Union[Outcome, "Outcomes", "Alternative"], ...],
+        Field(
+            min_length=1,
+            description=(
+                "One or more jointly required positions. Nested compositions and "
+                "alternatives occupy positions; cardinality is narrowed by the domain."
+            ),
+        ),
+    ]
 
 
-class Alternative[Selection: Outcome](RootModel[Selection]):
-    """One permitted Outcome chosen from alternatives in the declaration."""
+class Alternative(RootModel[Outcome | Outcomes]):
+    """One selected position from the alternatives permitted by a narrowing."""
+
+    root: Outcome | Outcomes = Field(
+        description="The selected Outcome or composition; permissible choices belong to the declaration."
+    )
 
 
-class Group[Members: tuple](RootModel[Members]):
-    """Nested group whose cardinality may be narrowed by a domain."""
+class Purpose(RootModel[Outcome | Outcomes | Alternative]):
+    """An intended organizational end expressed entirely by desired outcomes."""
 
-    root: Annotated[Members, Field(min_length=1)]
-
-
-class Purpose[End: Outcome | Together | Alternative | Group](RootModel[End]):
-    """An intended end stated solely through its Outcome composition."""
+    root: Outcome | Outcomes | Alternative = Field(
+        description="The desired Outcome, required composition, or admitted alternative."
+    )

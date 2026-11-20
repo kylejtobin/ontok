@@ -1,22 +1,26 @@
-"""An intended or resulting state, produced or maintained through work."""
+"""A state produced or maintained through organizational activity."""
 
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, Field, RootModel
 
 from .type import State
 
 
 class ProducedOutcome[Condition](BaseModel):
-    """A state brought about through work."""
+    """An outcome in which a state is brought about."""
 
-    state: State[Condition]
+    state: State[Condition] = Field(description="The state brought about through activity.")
 
 
 class MaintainedOutcome[Condition, Extent](BaseModel):
-    """A state held throughout a specified extent."""
+    """An outcome in which a state holds throughout a stated extent."""
 
-    state: State[Condition]
-    extent: Extent
+    state: State[Condition] = Field(description="The state maintained through activity.")
+    extent: Extent = Field(description="The domain-defined extent throughout which the state holds.")
 
 
-class Outcome[Form: ProducedOutcome | MaintainedOutcome](RootModel[Form]):
-    """Exactly one outcome form, independent of intention or occurrence."""
+class Outcome(RootModel[ProducedOutcome | MaintainedOutcome]):
+    """A produced or maintained state, regardless of intention or occurrence."""
+
+    root: ProducedOutcome | MaintainedOutcome = Field(
+        description="Exactly one produced or maintained form of the outcome."
+    )
