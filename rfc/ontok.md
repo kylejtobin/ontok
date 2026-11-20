@@ -133,6 +133,3 @@ The meaning of a model is established bottom-up, through its constituents, relat
 ## 6. Bindings
 
 Ontok defines the semantics. A binding expresses them in a particular language or representation, and no binding redefines them.
-
-- `bindings/python` expresses Ontok through native Pydantic types. Its generic declarations are authoring templates from which a domain declares concrete models. Its refund example, its scalar types, and its constituent types are the binding's, not additions to Ontok.
-- `bindings/rdf` is unfinished experimental work toward representing Ontok for graph use. It is not a supported or verified binding.
