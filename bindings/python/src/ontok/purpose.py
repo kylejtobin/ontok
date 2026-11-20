@@ -1,4 +1,4 @@
-"""Compositions of intended outcomes without independent goals."""
+"""Desired outcomes composed without a second independently stated goal."""
 
 from typing import Annotated, Union
 
@@ -7,32 +7,27 @@ from pydantic import Field, RootModel
 from .outcome import Outcome
 
 
-class Outcomes(RootModel[tuple[Union[Outcome, "Outcomes", "Alternative"], ...]]):
-    """Jointly required outcome positions, which may themselves contain compositions."""
+class Outcomes(RootModel[tuple[Union[Outcome, "Outcomes"], ...]]):
+    """Jointly required outcome positions; composition may be nested."""
 
     root: Annotated[
-        tuple[Union[Outcome, "Outcomes", "Alternative"], ...],
+        tuple[Union[Outcome, "Outcomes"], ...],
         Field(
             min_length=1,
             description=(
-                "One or more jointly required positions. Nested compositions and "
-                "alternatives occupy positions; cardinality is narrowed by the domain."
+                "The outcome positions required together; a domain may narrow each "
+                "position to alternatives and constrain the cardinality of a nested group."
             ),
         ),
     ]
 
 
-class Alternative(RootModel[Outcome | Outcomes]):
-    """One selected position from the alternatives permitted by a narrowing."""
+class Purpose[End: Outcome | Outcomes](RootModel[End]):
+    """An intended organizational end expressed through desired Outcomes."""
 
-    root: Outcome | Outcomes = Field(
-        description="The selected Outcome or composition; permissible choices belong to the declaration."
-    )
-
-
-class Purpose(RootModel[Outcome | Outcomes | Alternative]):
-    """An intended organizational end expressed entirely by desired outcomes."""
-
-    root: Outcome | Outcomes | Alternative = Field(
-        description="The desired Outcome, required composition, or admitted alternative."
+    root: End = Field(
+        description=(
+            "A desired Outcome or composition; alternatives are modeled by narrowing "
+            "this position to a union of complete admissible outcomes."
+        )
     )

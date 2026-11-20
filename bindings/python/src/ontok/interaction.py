@@ -1,6 +1,7 @@
-"""Complete forms of communication, responsibility transfer, and coordination."""
+"""Three structurally distinct forms of organizational exchange."""
 
-from typing import Annotated
+from enum import StrEnum
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -8,42 +9,63 @@ from .activity import Activity
 from .role import Responsibility
 
 
-class Communication[Sender, Recipient, Content](BaseModel):
-    """Content conveyed by a sender to one or more recipients."""
+class InteractionKind(StrEnum):
+    """The three forms of exchange defined by Ontok."""
 
-    sender: Sender = Field(description="The participant sending the communication.")
+    COMMUNICATION = "communication"
+    RESPONSIBILITY_TRANSFER = "responsibility_transfer"
+    COORDINATION = "coordination"
+
+
+class Communication[Sender, Recipient, Content](BaseModel):
+    """An exchange communicating content to one or more recipients."""
+
+    kind: Literal[InteractionKind.COMMUNICATION] = Field(
+        default=InteractionKind.COMMUNICATION,
+        description="Identifies a communication exchange.",
+    )
+    sender: Sender = Field(description="The participant conveying the content.")
     recipients: Annotated[
         tuple[Recipient, ...],
-        Field(min_length=1, description="The one or more recipients of the communication."),
+        Field(min_length=1, description="The participants receiving the content."),
     ]
-    content: Content = Field(description="The information communicated.")
+    content: Content = Field(description="The information conveyed.")
 
 
 class ResponsibilityTransfer[Source, Destination](BaseModel):
-    """A responsibility transferred from its source to its destination."""
+    """An exchange transferring one Responsibility."""
 
-    source: Source = Field(description="The participant transferring the responsibility.")
+    kind: Literal[InteractionKind.RESPONSIBILITY_TRANSFER] = Field(
+        default=InteractionKind.RESPONSIBILITY_TRANSFER,
+        description="Identifies a responsibility-transfer exchange.",
+    )
+    source: Source = Field(description="The participant from whom responsibility passes.")
     destination: Destination = Field(
-        description="The participant receiving the responsibility."
+        description="The participant to whom responsibility passes."
     )
     responsibility: Responsibility = Field(
-        description="The single Responsibility being transferred."
+        description="The Responsibility transferred, stated exactly once."
     )
 
 
 class Coordination[Participant](BaseModel):
-    """The coordination of work among two or more participants."""
+    """An exchange coordinating work between two or more participants."""
 
+    kind: Literal[InteractionKind.COORDINATION] = Field(
+        default=InteractionKind.COORDINATION,
+        description="Identifies a coordination exchange.",
+    )
     participants: Annotated[
         tuple[Participant, ...],
-        Field(min_length=2, description="The participants coordinating the work."),
+        Field(min_length=2, description="The participants coordinating work."),
     ]
-    work: Activity = Field(description="The Activity whose work the participants coordinate.")
+    work: Activity = Field(description="The Activity whose work is coordinated.")
 
 
 class Interaction(RootModel[Communication | ResponsibilityTransfer | Coordination]):
-    """An exchange, regardless of whether an Event has asserted its occurrence."""
+    """One complete exchange, without asserting that it occurred."""
 
     root: Communication | ResponsibilityTransfer | Coordination = Field(
-        description="Exactly one complete communication, responsibility transfer, or coordination."
+        discriminator="kind",
+        description="Communication, ResponsibilityTransfer, or Coordination.",
     )

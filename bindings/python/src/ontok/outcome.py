@@ -1,26 +1,47 @@
-"""A state produced or maintained through organizational activity."""
+"""Outcomes classified by the two ways activity affects a state."""
+
+from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field, RootModel
 
 from .type import State
 
 
-class ProducedOutcome[Condition](BaseModel):
-    """An outcome in which a state is brought about."""
+class OutcomeMode(StrEnum):
+    """Whether organizational work produces or maintains a state."""
 
-    state: State[Condition] = Field(description="The state brought about through activity.")
+    PRODUCED = "produced"
+    MAINTAINED = "maintained"
+
+
+class ProducedOutcome[Condition](BaseModel):
+    """An Outcome in which activity brings about a state."""
+
+    mode: Literal[OutcomeMode.PRODUCED] = Field(
+        default=OutcomeMode.PRODUCED,
+        description="Identifies an Outcome that produces its state.",
+    )
+    state: State[Condition] = Field(description="The state brought about by activity.")
 
 
 class MaintainedOutcome[Condition, Extent](BaseModel):
-    """An outcome in which a state holds throughout a stated extent."""
+    """An Outcome in which activity keeps a state true through an extent."""
 
-    state: State[Condition] = Field(description="The state maintained through activity.")
-    extent: Extent = Field(description="The domain-defined extent throughout which the state holds.")
+    mode: Literal[OutcomeMode.MAINTAINED] = Field(
+        default=OutcomeMode.MAINTAINED,
+        description="Identifies an Outcome that maintains its state.",
+    )
+    state: State[Condition] = Field(description="The state maintained by activity.")
+    extent: Extent = Field(
+        description="The domain-defined extent throughout which the state is maintained."
+    )
 
 
 class Outcome(RootModel[ProducedOutcome | MaintainedOutcome]):
-    """A produced or maintained state, regardless of intention or occurrence."""
+    """An Outcome in exactly one produced or maintained form."""
 
     root: ProducedOutcome | MaintainedOutcome = Field(
-        description="Exactly one produced or maintained form of the outcome."
+        discriminator="mode",
+        description="The produced or maintained state, independent of intent or occurrence.",
     )

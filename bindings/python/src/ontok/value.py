@@ -1,8 +1,9 @@
-"""Worth relative to a need, interest, or purpose across distinct dimensions."""
+"""Value assessments grouped by universal dimensions and relative worth."""
 
+from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, RootModel
+from pydantic import BaseModel, Field
 
 from .activity import Activity
 from .outcome import Outcome
@@ -11,45 +12,99 @@ from .rule import Requirement
 from .type import Interest, Need, State
 
 
-class Assessment[Detail](BaseModel):
-    """Worth relative to the enclosing Value's basis, not the sign of a change."""
+class ValueDimension(StrEnum):
+    """The eight dimensions through which organizational worth is expressed."""
 
-    direction: Literal["benefit", "harm", "unchanged"] = Field(
-        description="Whether this detail benefits, harms, or does not change worth relative to the basis."
+    ECONOMIC = "economic"
+    TIME = "time"
+    QUALITY = "quality"
+    RISK = "risk"
+    CAPABILITY = "capability"
+    HUMAN_WELFARE = "human_welfare"
+    RELATIONSHIPS = "relationships"
+    RESOURCES = "resources"
+
+
+class AssessmentDirection(StrEnum):
+    """How a dimensional change affects worth relative to the stated basis."""
+
+    BENEFIT = "benefit"
+    HARM = "harm"
+    UNCHANGED = "unchanged"
+
+
+class ChangeDirection(StrEnum):
+    """Whether a magnitude or ability increased or decreased."""
+
+    INCREASED = "increased"
+    DECREASED = "decreased"
+
+
+class ExposureDirection(StrEnum):
+    """Whether exposure to an adverse outcome was introduced or removed."""
+
+    INTRODUCED = "introduced"
+    REMOVED = "removed"
+
+
+class RiskChangeKind(StrEnum):
+    """The distinct aspects of exposure to an adverse outcome that can change."""
+
+    LIKELIHOOD = "likelihood"
+    CONSEQUENCE = "consequence"
+    EXPOSURE = "exposure"
+
+
+class Assessment[Detail](BaseModel):
+    """A dimension-specific judgment of worth under the enclosing Value's basis."""
+
+    dimension: ValueDimension = Field(
+        description="The universal dimension to which this assessment belongs."
     )
-    detail: Detail = Field(description="The dimension-specific basis for this assessment.")
+    direction: AssessmentDirection = Field(
+        description="Whether the detail benefits, harms, or leaves worth unchanged relative to the basis."
+    )
+    detail: Detail = Field(
+        description="The detail required by this dimension, independent of its worth."
+    )
 
 
 class FinancialChange[Nature, Extent](BaseModel):
-    """Money earned, saved, preserved, made available, or an adverse counterpart."""
+    """A financial change whose nature and extent are supplied by the domain."""
 
-    nature: Nature = Field(description="The domain-defined nature of the financial change.")
+    nature: Nature = Field(
+        description="How money was earned, saved, preserved, made available, or adversely changed."
+    )
     extent: Extent = Field(
-        description="The monetary or qualitative extent of the financial change."
+        description="The monetary or qualitative extent of that financial change."
     )
 
 
 class TemporalChange[Nature, Extent](BaseModel):
-    """Time saved, gained, made available, or an adverse counterpart."""
+    """A temporal change whose nature and extent are supplied by the domain."""
 
-    nature: Nature = Field(description="The domain-defined nature of the temporal change.")
+    nature: Nature = Field(
+        description="How time was saved, gained, made available, or adversely changed."
+    )
     extent: Extent = Field(
-        description="The duration or stated temporal condition describing its extent."
+        description="The duration or stated temporal condition of the change."
     )
 
 
 class Fitness[Attainment](BaseModel):
-    """Fitness for an organizational Purpose."""
+    """Fitness of the subject for accomplishing an intended Purpose."""
 
-    purpose: Purpose = Field(description="The Purpose against which fitness is assessed.")
-    attainment: Attainment = Field(description="The extent to which that Purpose is attained.")
+    purpose: Purpose = Field(description="The Purpose against which fitness is considered.")
+    attainment: Attainment = Field(
+        description="The extent or condition of attainment of that Purpose."
+    )
 
 
 class Correctness[Context, Target, Conformity](BaseModel):
-    """Conformity to a requirement rather than an arbitrary measurement."""
+    """Conformity of the subject to a binding requirement."""
 
     requirement: Requirement[Context, Target] = Field(
-        description="The required Rule against which correctness is assessed."
+        description="The required Rule against which correctness is considered."
     )
     conformity: Conformity = Field(
         description="The extent or condition of conformity to that requirement."
@@ -57,199 +112,224 @@ class Correctness[Context, Target, Conformity](BaseModel):
 
 
 class Reliability[Context, Observation](BaseModel):
-    """An expected Outcome assessed against its observation in context."""
+    """Whether an expected Outcome is attained in a specified context."""
 
     context: Context = Field(description="The context in which the Outcome is expected.")
-    expected: Outcome = Field(description="The Outcome expected in this context.")
+    expected: Outcome = Field(description="The Outcome expected in that context.")
     observation: Observation = Field(
         description="The observation of whether the expected Outcome was attained."
     )
 
 
 class LikelihoodChange[Extent](BaseModel):
-    """Change in the likelihood of an adverse Outcome."""
+    """Change in the likelihood of the adverse Outcome held by RiskDetail."""
 
-    direction: Literal["increased", "decreased"] = Field(
-        description="Whether likelihood increased or decreased."
+    kind: Literal[RiskChangeKind.LIKELIHOOD] = Field(
+        default=RiskChangeKind.LIKELIHOOD,
+        description="Identifies a change in likelihood.",
     )
-    extent: Extent = Field(description="The extent of the change in likelihood.")
+    direction: ChangeDirection = Field(
+        description="Whether the adverse Outcome became more or less likely."
+    )
+    extent: Extent = Field(description="The extent of the likelihood change.")
 
 
 class ConsequenceChange[Extent](BaseModel):
-    """Change in the consequence of an adverse Outcome."""
+    """Change in the consequence of the adverse Outcome held by RiskDetail."""
 
-    direction: Literal["increased", "decreased"] = Field(
-        description="Whether the adverse consequence increased or decreased."
+    kind: Literal[RiskChangeKind.CONSEQUENCE] = Field(
+        default=RiskChangeKind.CONSEQUENCE,
+        description="Identifies a change in consequence.",
     )
-    extent: Extent = Field(description="The extent of the change in consequence.")
+    direction: ChangeDirection = Field(
+        description="Whether the adverse Outcome became more or less consequential."
+    )
+    extent: Extent = Field(description="The extent of the consequence change.")
 
 
 class ExposureChange[Evidence](BaseModel):
-    """Introduction or removal of exposure to an adverse Outcome."""
+    """Introduction or removal of exposure to the adverse Outcome held by RiskDetail."""
 
-    direction: Literal["introduced", "removed"] = Field(
-        description="Whether exposure to the adverse Outcome was introduced or removed."
+    kind: Literal[RiskChangeKind.EXPOSURE] = Field(
+        default=RiskChangeKind.EXPOSURE,
+        description="Identifies a change in exposure.",
     )
-    evidence: Evidence = Field(description="Evidence supporting the change in exposure.")
+    direction: ExposureDirection = Field(
+        description="Whether exposure was introduced or removed."
+    )
+    evidence: Evidence = Field(description="Evidence supporting the exposure change.")
 
 
 class RiskDetail(BaseModel):
-    """An adverse Outcome and exactly one distinct form of change in risk."""
+    """One change in likelihood, consequence, or exposure to an adverse Outcome."""
 
-    adverse: Outcome = Field(description="The adverse Outcome to which this risk relates.")
+    adverse: Outcome = Field(description="The adverse Outcome whose risk changed.")
     change: LikelihoodChange | ConsequenceChange | ExposureChange = Field(
-        description="A likelihood, consequence, or exposure change concerning that Outcome."
+        discriminator="kind",
+        description="Exactly one change in likelihood, consequence, or exposure.",
     )
 
 
 class CapabilityChange[Evidence](BaseModel):
-    """A change in the ability to accomplish an Activity."""
+    """Change in the ability to perform an Activity."""
 
     activity: Activity = Field(description="The Activity whose accomplishment is affected.")
-    direction: Literal["increased", "decreased"] = Field(
-        description="Whether the ability to accomplish the Activity increased or decreased."
+    direction: ChangeDirection = Field(
+        description="Whether the ability to accomplish that Activity increased or decreased."
     )
     evidence: Evidence = Field(description="Evidence supporting the capability change.")
 
 
 class Satisfaction[Expectation, Appraisal](BaseModel):
-    """Appraisal relative to an expectation."""
+    """An appraisal of satisfaction against an expectation."""
 
-    expectation: Expectation = Field(description="The expectation to which satisfaction relates.")
-    appraisal: Appraisal = Field(description="The appraisal of satisfaction against that expectation.")
+    expectation: Expectation = Field(description="The expectation governing satisfaction.")
+    appraisal: Appraisal = Field(description="The appraisal relative to that expectation.")
 
 
 class Wellbeing[Condition](BaseModel):
-    """The wellbeing condition of the person or people valued."""
+    """The condition of people already identified by the Value's subject."""
 
     condition: State[Condition] = Field(
-        description="The condition of the person or people, whose identity is the Value subject."
+        description="The human wellbeing condition being assessed."
     )
 
 
 class Safety[Threat, Protection](BaseModel):
-    """Protection against a threat affecting human welfare."""
+    """Protection of people against a threat."""
 
-    threat: Threat = Field(description="The threat against which safety is assessed.")
+    threat: Threat = Field(description="The threat to the people concerned.")
     protection: Protection = Field(description="The protection against that threat.")
 
 
 class Fulfillment[Attainment](BaseModel):
-    """Attainment of a Purpose as a dimension of human welfare."""
+    """Attainment of a Purpose as a matter of human welfare."""
 
-    purpose: Purpose = Field(description="The Purpose whose fulfillment is assessed.")
-    attainment: Attainment = Field(description="The degree or condition of its attainment.")
+    purpose: Purpose = Field(description="The Purpose whose fulfillment matters.")
+    attainment: Attainment = Field(
+        description="The extent or condition of attainment of that Purpose."
+    )
 
 
 class Trust[Conduct, Appraisal](BaseModel):
-    """Trust in the relationship or parties identified by the Value subject."""
+    """Trust within the relationship identified by the Value's subject."""
 
-    expected_conduct: Conduct = Field(description="The conduct expected of the related party.")
+    expected_conduct: Conduct = Field(description="The conduct expected of the related parties.")
     appraisal: Appraisal = Field(description="The appraisal of trust in that conduct.")
 
 
 class Loyalty[Commitment, Appraisal](BaseModel):
-    """Loyalty in the relationship or parties identified by the Value subject."""
+    """Loyalty within the relationship identified by the Value's subject."""
 
-    commitment: Commitment = Field(description="The commitment underlying loyalty.")
-    appraisal: Appraisal = Field(description="The appraisal of that loyalty.")
+    commitment: Commitment = Field(description="The commitment on which loyalty is assessed.")
+    appraisal: Appraisal = Field(description="The appraisal of loyalty to that commitment.")
 
 
 class Reputation[Audience, Standing](BaseModel):
-    """Standing of the subject relationship or parties with an audience."""
+    """The subject's standing with an audience."""
 
-    audience: Audience = Field(description="The audience with whom reputation is held.")
+    audience: Audience = Field(description="The audience among whom reputation is held.")
     standing: Standing = Field(description="The subject's standing with that audience.")
 
 
-class RelationshipStrength[Appraisal](RootModel[Appraisal]):
-    """Strength of the relationship already identified by the Value subject."""
+class RelationshipStrength[Appraisal](BaseModel):
+    """Strength of the relationship identified by the enclosing Value."""
 
-    root: Appraisal = Field(description="The appraisal of the subject relationship's strength.")
-
-
-class Availability[Extent](RootModel[Extent]):
-    """Availability of the scarce resource identified by the Value subject."""
-
-    root: Extent = Field(description="The extent of the subject resource that is accessible.")
+    appraisal: Appraisal = Field(
+        description="The appraisal of the subject relationship's strength."
+    )
 
 
-class Preservation[Condition](RootModel[State[Condition]]):
-    """Preservation of the scarce resource identified by the Value subject."""
+class Availability[Extent](BaseModel):
+    """Availability of the scarce resource identified by the enclosing Value."""
 
-    root: State[Condition] = Field(
+    accessible: Extent = Field(description="The accessible extent of the subject resource.")
+
+
+class Preservation[Condition](BaseModel):
+    """Preservation of the scarce resource identified by the enclosing Value."""
+
+    retained: State[Condition] = Field(
         description="The condition retained for the subject resource."
     )
 
 
 class EconomicAssessment(Assessment[FinancialChange]):
-    """Economic change assessed relative to the shared Value basis."""
+    """A financial change and its economic worth."""
 
-    dimension: Literal["economic"] = Field(
-        description="Identifies the Economic dimension of this assessment."
+    dimension: Literal[ValueDimension.ECONOMIC] = Field(
+        default=ValueDimension.ECONOMIC,
+        description="Identifies the Economic dimension.",
     )
 
 
 class TimeAssessment(Assessment[TemporalChange]):
-    """Temporal change assessed relative to the shared Value basis."""
+    """A temporal change and its worth."""
 
-    dimension: Literal["time"] = Field(
-        description="Identifies the Time dimension of this assessment."
+    dimension: Literal[ValueDimension.TIME] = Field(
+        default=ValueDimension.TIME,
+        description="Identifies the Time dimension.",
     )
 
 
 class QualityAssessment(Assessment[Fitness | Correctness | Reliability]):
-    """Exactly one of fitness, correctness, or reliability."""
+    """Fitness, correctness, or reliability and its worth."""
 
-    dimension: Literal["quality"] = Field(
-        description="Identifies the Quality dimension of this assessment."
+    dimension: Literal[ValueDimension.QUALITY] = Field(
+        default=ValueDimension.QUALITY,
+        description="Identifies the Quality dimension.",
     )
 
 
 class RiskAssessment(Assessment[RiskDetail]):
-    """Likelihood, consequence, or exposure concerning an adverse Outcome."""
+    """A change in exposure to uncertain adverse outcomes and its worth."""
 
-    dimension: Literal["risk"] = Field(
-        description="Identifies the Risk dimension of this assessment."
+    dimension: Literal[ValueDimension.RISK] = Field(
+        default=ValueDimension.RISK,
+        description="Identifies the Risk dimension.",
     )
 
 
 class CapabilityAssessment(Assessment[CapabilityChange]):
-    """Change in ability to accomplish an Activity."""
+    """A change in organizational ability and its worth."""
 
-    dimension: Literal["capability"] = Field(
-        description="Identifies the Capability dimension of this assessment."
+    dimension: Literal[ValueDimension.CAPABILITY] = Field(
+        default=ValueDimension.CAPABILITY,
+        description="Identifies the Capability dimension.",
     )
 
 
 class HumanWelfareAssessment(Assessment[Satisfaction | Wellbeing | Safety | Fulfillment]):
-    """Exactly one form of human welfare."""
+    """One of four human welfare details and its worth."""
 
-    dimension: Literal["human_welfare"] = Field(
-        description="Identifies the Human Welfare dimension of this assessment."
+    dimension: Literal[ValueDimension.HUMAN_WELFARE] = Field(
+        default=ValueDimension.HUMAN_WELFARE,
+        description="Identifies the Human Welfare dimension.",
     )
 
 
 class RelationshipsAssessment(
     Assessment[Trust | Loyalty | Reputation | RelationshipStrength]
 ):
-    """Exactly one form of relationship value."""
+    """One of four relationship details and its worth."""
 
-    dimension: Literal["relationships"] = Field(
-        description="Identifies the Relationships dimension of this assessment."
+    dimension: Literal[ValueDimension.RELATIONSHIPS] = Field(
+        default=ValueDimension.RELATIONSHIPS,
+        description="Identifies the Relationships dimension.",
     )
 
 
 class ResourcesAssessment(Assessment[Availability | Preservation]):
-    """Availability or preservation of a scarce resource."""
+    """Availability or preservation of scarce resources and its worth."""
 
-    dimension: Literal["resources"] = Field(
-        description="Identifies the Resources dimension of this assessment."
+    dimension: Literal[ValueDimension.RESOURCES] = Field(
+        default=ValueDimension.RESOURCES,
+        description="Identifies the Resources dimension.",
     )
 
 
 class Value[Subject](BaseModel):
-    """One subject and basis supporting one or more independent dimensional assessments."""
+    """Worth of one subject relative to one basis in any mixture of dimensions."""
 
     subject: Subject = Field(description="The matter whose worth is being assessed.")
     relative_to: Need | Interest | Purpose = Field(
@@ -257,82 +337,85 @@ class Value[Subject](BaseModel):
     )
     assessments: Annotated[
         tuple[
-            EconomicAssessment
-            | TimeAssessment
-            | QualityAssessment
-            | RiskAssessment
-            | CapabilityAssessment
-            | HumanWelfareAssessment
-            | RelationshipsAssessment
-            | ResourcesAssessment,
+            Annotated[
+                EconomicAssessment
+                | TimeAssessment
+                | QualityAssessment
+                | RiskAssessment
+                | CapabilityAssessment
+                | HumanWelfareAssessment
+                | RelationshipsAssessment
+                | ResourcesAssessment,
+                Field(discriminator="dimension"),
+            ],
             ...,
         ],
         Field(
             min_length=1,
             description=(
-                "One or more dimension-specific assessments sharing this subject and basis, "
-                "without combining their extents into one quantity."
+                "Nonempty, dimension-specific judgments sharing this one subject and "
+                "basis without collapsing their distinct details into a single measure."
             ),
         ),
     ]
 
 
 class Economic[Subject](Value[Subject]):
-    """Economic Value, retaining the universal subject and basis."""
+    """Value narrowed to economic assessments."""
 
     assessments: Annotated[
         tuple[EconomicAssessment, ...],
-        Field(min_length=1, description="The subject's Economic assessments."),
+        Field(min_length=1, description="The subject's economic assessments."),
     ]
 
 
 class Time[Subject](Value[Subject]):
-    """Time Value, retaining the universal subject and basis."""
+    """Value narrowed to temporal assessments."""
 
     assessments: Annotated[
         tuple[TimeAssessment, ...],
-        Field(min_length=1, description="The subject's Time assessments."),
+        Field(min_length=1, description="The subject's time assessments."),
     ]
 
 
 class Quality[Subject](Value[Subject]):
-    """Quality Value, retaining the universal subject and basis."""
+    """Value narrowed to quality assessments."""
 
     assessments: Annotated[
         tuple[QualityAssessment, ...],
-        Field(min_length=1, description="The subject's fitness, correctness, or reliability assessments."),
+        Field(min_length=1, description="The subject's quality assessments."),
     ]
 
 
 class Risk[Subject](Value[Subject]):
-    """Risk Value, retaining the universal subject and basis."""
+    """Value narrowed to risk assessments."""
 
     assessments: Annotated[
         tuple[RiskAssessment, ...],
-        Field(min_length=1, description="The subject's Risk assessments."),
+        Field(min_length=1, description="The subject's risk assessments."),
     ]
 
 
 class Capability[Subject](Value[Subject]):
-    """Capability Value, retaining the universal subject and basis."""
+    """Value narrowed to capability assessments."""
 
     assessments: Annotated[
         tuple[CapabilityAssessment, ...],
-        Field(min_length=1, description="The subject's Capability assessments."),
+        Field(min_length=1, description="The subject's capability assessments."),
     ]
 
 
 class HumanWelfare[Subject](Value[Subject]):
-    """Human Welfare Value, retaining the universal subject and basis."""
+    """Value narrowed to human-welfare assessments."""
 
     assessments: Annotated[
         tuple[HumanWelfareAssessment, ...],
-        Field(min_length=1, description="The subject's Human Welfare assessments."),
+        Field(min_length=1, description="The subject's human-welfare assessments."),
     ]
 
 
 class Relationships[Subject](Value[Subject]):
-    """Relationships Value, with the relationship or related parties as its subject."""
+    """Value narrowed to relationships assessments."""
 
     assessments: Annotated[
         tuple[RelationshipsAssessment, ...],
@@ -341,7 +424,7 @@ class Relationships[Subject](Value[Subject]):
 
 
 class Resources[Subject](Value[Subject]):
-    """Resources Value, with a scarce asset or material as its subject."""
+    """Value narrowed to resource assessments."""
 
     assessments: Annotated[
         tuple[ResourcesAssessment, ...],

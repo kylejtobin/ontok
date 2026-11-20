@@ -1,25 +1,32 @@
-"""Admissible work relating its inputs to defined outcomes."""
+"""Complete admissible input/result cases defining organizational work."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 from .outcome import Outcome
 from .purpose import Outcomes, Purpose
 
 
-class Activity[Inputs](BaseModel):
-    """One complete admissible input/result relationship.
-
-    Different permissible input/result relationships are different narrowed
-    Activity models; alternatives are formed from those complete models.
-    """
+class ActivityCase[Inputs, Results: Outcome | Outcomes | Purpose](BaseModel):
+    """One permissible combination of inputs and their defined results."""
 
     inputs: Inputs | None = Field(
         default=None,
         description=(
-            "Admitted inputs, including other work or an Event asserting its result "
-            "when this activity depends on that work; absent when no inputs are required."
+            "The inputs admitted for this case, including preceding Activities or Events "
+            "when they establish dependencies; absent when the activity needs no input."
         ),
     )
-    outcomes: Outcome | Outcomes | Purpose = Field(
-        description="The Outcome, composition of Outcomes, or Purpose defined by this activity."
+    outcomes: Results = Field(
+        description="The Outcome, composition of Outcomes, or Purpose defined for these inputs."
+    )
+
+
+class Activity[Case: ActivityCase](RootModel[Case]):
+    """A unit of work defined by one complete admissible case."""
+
+    root: Case = Field(
+        description=(
+            "The admitted input/result case. An organization's specialization can "
+            "admit alternatives by declaring a union of complete cases."
+        )
     )

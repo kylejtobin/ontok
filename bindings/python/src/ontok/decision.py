@@ -1,4 +1,4 @@
-"""A determination constructed as one complete admissible case."""
+"""Decisions choose one complete admissible context/rule/outcome case."""
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -7,19 +7,19 @@ from .rule import Rule
 
 
 class DecisionCase[Context, Target](BaseModel):
-    """An applicable Rule and its resulting Outcome, bound as a complete case."""
+    """A single applicable Rule with its resulting Outcome."""
 
     rule: Rule[Context, Target] = Field(
-        description="The applicable Rule, including the context in which it governs this case."
+        description="The applicable Rule, which already carries its context and target."
     )
     outcome: Outcome = Field(
-        description="The resulting Outcome associated with this Rule and its context."
+        description="The Outcome selected under that Rule in its stated context."
     )
 
 
-class Decision(RootModel[DecisionCase]):
-    """One selected case; alternative complete cases belong to the domain declaration."""
+class Decision[Case: DecisionCase](RootModel[Case]):
+    """One selected complete case from the alternatives allowed by a declaration."""
 
-    root: DecisionCase = Field(
-        description="The single admissible DecisionCase selected by this Decision."
+    root: Case = Field(
+        description="The selected Rule/Outcome case, never separately mixed alternatives."
     )
