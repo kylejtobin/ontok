@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ontok-python"
 version = "0.1.0"
-description = "Declarative Pydantic types for organizational meaning and value."
+description = "The Python binding for Ontok, expressed in native Pydantic types."
 requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
@@ -15,7 +15,7 @@ dependencies = ["pydantic>=2.13.4,<3"]
 dev = ["pytest>=9", "ruff>=0.17", "basedpyright>=1.40"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/organization_model"]
+packages = ["src/ontok"]
 
 [tool.pytest.ini_options]
 minversion = "9.0"
@@ -37,7 +37,7 @@ select = ["E", "W", "F", "I", "UP", "B", "C4", "PIE", "RUF", "TC"]
 runtime-evaluated-base-classes = ["pydantic.BaseModel", "pydantic.RootModel"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["organization_model"]
+known-first-party = ["ontok"]
 
 [tool.basedpyright]
 include = ["src", "tests"]

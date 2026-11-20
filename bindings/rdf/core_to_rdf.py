@@ -413,7 +413,7 @@ SELECT $this WHERE {{
 def main()->None:
     ap=argparse.ArgumentParser()
     ap.add_argument('--output',type=Path,default=Path('rdf-schema'))
-    ap.add_argument('--modules',nargs='+',default=['organization_model.scalars','organization_model.work','organization_model.value','organization_model.examples'])
+    ap.add_argument('--modules',nargs='+',default=['ontok.scalars','ontok.work','ontok.value','ontok.examples'])
     args=ap.parse_args()
     types=models_in(args.modules)
     compiler=OntologyCompiler().compile(types)

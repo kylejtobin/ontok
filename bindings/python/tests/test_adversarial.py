@@ -5,8 +5,8 @@ from typing import Annotated, Literal
 import pytest
 from pydantic import BaseModel, Field, ValidationError
 
-from organization_model.scalars import MODEL_CONFIG, Nonempty
-from organization_model.work import (
+from ontok.scalars import MODEL_CONFIG, Nonempty
+from ontok.work import (
     ActionPermission,
     Activity,
     Authority,

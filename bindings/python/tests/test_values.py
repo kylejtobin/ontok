@@ -7,7 +7,7 @@ from decimal import Decimal
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from organization_model.examples import (
+from ontok.examples import (
     BusinessNeed,
     CapabilityAssessment,
     CustomerInterest,

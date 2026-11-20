@@ -6,8 +6,8 @@ from itertools import product
 import pytest
 from pydantic import ValidationError
 
-from organization_model import examples as e
-from organization_model.work import Activity
+from ontok import examples as e
+from ontok.work import Activity
 
 
 def goal() -> e.RefundPurpose:

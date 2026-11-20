@@ -1,75 +1,36 @@
-# Pydantic-to-RDF ontology compiler: inspection build
+# RDF export: unfinished experimental work
 
-## Goal
-Translate the supplied organizational modeling package to an OWL/RDFS TBox and
-SHACL instance-shape declarations while retaining the compositional distinctions
-of the source Pydantic v2 type system.
+This directory is not a supported Ontok binding. Nothing here is an authoritative or verified RDF representation of Ontok, and no generated graph is kept in the repository.
 
-## Inputs
-`core_to_rdf.py` directly inspects the original Python classes' resolved
-`__pydantic_core_schema__` and Python subclass lineage. It deliberately does
-not use JSON Schema as the authoritative source because some constraints do
-not survive that projection precisely (for example, strict Decimal input).
+Ontok defines the semantics (see `rfc/ontok.md`). An RDF binding would represent those semantics for graph use. It does not get to define them.
 
-## Artifacts
-- `ontology.ttl`: OWL classes, subclass hierarchy, scoped properties, property
-  restrictions, named variants and their logical unions where representable.
-- `shapes.ttl`: SHACL shapes for properties, required/min/max cardinality,
-  constrained literals, root-model payloads, correlated discriminated unions,
-  and fixed/variable tuple members encoded as RDF collections.
-- `typing.ttl`: RDF metadata recording generic type arguments, source Python
-  class identities, normalization, configuration, and strict scalar declarations.
-- `coverage.json`: type and statement counts.
+## What is here
 
-## RDF encoding agreement
-An instance of a Pydantic BaseModel/RootModel becomes an RDF resource with an
-`rdf:type` of its concrete generated class URI. Its fields become triples using
-that declaration's model-field predicate. `RootModel` has one `root` predicate.
-Tuples become RDF collections ordered with `rdf:first`/`rdf:rest`, ending at
-`rdf:nil`. Scalar types must be projected into the canonical RDF datatypes
-specified by the SHACL shapes, such as `xsd:decimal`, `xsd:integer`,
-`xsd:dateTime`, and `xsd:dayTimeDuration`.
+- `core_to_rdf.py`: an experimental compiler that walks the Pydantic core schema of the Python binding and emits OWL/RDFS, SHACL, and metadata graphs.
+- `verify_export.py`: structural smoke checks over the compiler's output. They confirm that named classes and shapes exist and that the Turtle and SPARQL parse. They are not conformance evidence and say nothing about whether the graph means what Ontok means.
 
-The code defines a *schema conversion*, not a serializer from actual Pydantic
-instances into RDF. A proper converter must implement that serializer before
-end-to-end validity parity can be established.
+## Known defects
 
-## What is actually verified
-- The script completes without ignoring an unrecognized Pydantic CoreSchema
-  node in the supplied package.
-- All 19 named concepts appear as OWL classes with SHACL target shapes.
-- The asserted Process/Activity, Economic/Value, RefundPurpose/Purpose lineage
-  paths exist.
-- SHACL alternatives are emitted as `sh:xone` for tagged unions.
-- All generated Turtle parses, and generated SPARQL selects parse.
+- Identifiers are derived from Python class paths. That is not a stable, language-independent identity for an Ontok concept.
+- The namespaces are `example.org` placeholders.
+- The compiler reflects whichever Python classes exist. It does not map the established Ontok concepts and their structural semantics.
+- There is no encoder from constructed instances to RDF.
+- No SHACL engine has been run against the shapes.
 
-## Not yet proven / not ready to assert full semantic equivalence
-- pySHACL (or equivalent SHACL Core + SHACL-SPARQL engine) was unavailable in
-  this runtime, so SHACL instance validation has not been run.
-- No canonical Pydantic-instance to RDF encoder exists yet, so positive and
-  negative instances have not been checked for validation parity.
-- XML Schema temporal/Decimal lexical and datatype comparison behavior requires
-  target-validator compatibility testing, as do Pydantic's whitespace
-  normalization and default materialization.
-- For full semantics, a domain-specific mapping must specify identity of RDF
-  instance resources, bnodes, and any external references; Pydantic model
-  definitions alone do not establish those identities.
-- `frozen` object-mutation semantics and Pydantic-specific coercion modes do
-  not have equivalent OWL class axioms; where relevant they should be retained
-  as source-language metadata and distinguished from RDF validation semantics.
+## Required before this is a supported binding
 
-**Do not describe these files as a proven lossless export.** Run differential
-property-based tests: for each concrete model, serialize valid and invalid
-cases, compare Pydantic validation with SHACL validation, and repair any
-mismatch in the converter's mapping rather than weakening the ontology.
+- Stable Ontok identities for the foundational concepts and relationships.
+- Preservation of inheritance, composition, cardinality, and correlated alternatives.
+- An explicit RDF instance representation.
+- Differential tests demonstrating that valid and invalid constructions behave consistently under Pydantic and SHACL.
 
-## Run
+A graph that parses is not evidence that the graph means the same thing. Generated artifacts stay out of the repository until these requirements are demonstrated.
+
+## Running the experiment
 
 ```bash
-PYTHONPATH=path/to/original/package/src python core_to_rdf.py --output rdf-schema
-PYTHONPATH=path/to/original/package/src python verify_export.py
+PYTHONPATH=bindings/python/src python bindings/rdf/core_to_rdf.py --output <directory>
+PYTHONPATH=bindings/python/src python bindings/rdf/verify_export.py <directory>
 ```
 
-Dependencies: `pydantic>=2.13`, `rdflib>=7`. For the future equivalence tests,
-use a SHACL validator that supports SHACL-SPARQL, plus the corresponding Pydantic
-and RDF instance encoding libraries.
+Dependencies: `pydantic>=2.13`, `rdflib>=7`.

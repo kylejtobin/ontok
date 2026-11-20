@@ -1,4 +1,4 @@
-"""The nineteen organizational concepts and their constituent modeling modules."""
+"""The Python binding for Ontok: the nineteen kinds expressed in native Pydantic types."""
 
 from .value import (
     Capability,

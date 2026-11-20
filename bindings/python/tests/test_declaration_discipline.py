@@ -11,11 +11,11 @@ from typing import TypeAliasType, TypedDict, TypeVar, cast, get_args, get_origin
 import pytest
 from pydantic import BaseModel
 
-import organization_model
-from organization_model.examples import CLOSED_MODELS
+import ontok
+from ontok.examples import CLOSED_MODELS
 
-assert organization_model.__file__ is not None
-PACKAGE = Path(organization_model.__file__).parent
+assert ontok.__file__ is not None
+PACKAGE = Path(ontok.__file__).parent
 PROJECT = Path(__file__).resolve().parents[1]
 DECLARATION_MODULES = ("scalars.py", "work.py", "value.py", "examples.py")
 SEMANTIC_TARGETS = (
@@ -134,8 +134,8 @@ def test_closed_examples_have_immutable_constituents() -> None:
 
 def test_all_nineteen_semantic_targets_are_public_once() -> None:
     for name in SEMANTIC_TARGETS:
-        assert organization_model.__all__.count(name) == 1, name
-        model = getattr(organization_model, name)
+        assert ontok.__all__.count(name) == 1, name
+        model = getattr(ontok, name)
         assert isinstance(model, type) and issubclass(model, BaseModel), name
 
 
@@ -159,11 +159,11 @@ class CheckerResult(TypedDict):
 
 def test_semantic_bounds_reject_invalid_type_declarations(tmp_path: Path) -> None:
     source = """from typing import Literal
-from organization_model.examples import (
+from ontok.examples import (
     BusinessNeed, Person, RefundPrerequisites, RefundPurpose, RefundService, SupportContext,
 )
-from organization_model.value import Benefit, Economic, Fitness
-from organization_model.work import Interaction, Permission, Process, Responsibility
+from ontok.value import Benefit, Economic, Fitness
+from ontok.work import Interaction, Permission, Process, Responsibility
 
 class WrongProcess(Process[RefundPrerequisites, Person], frozen=True):
     pass
