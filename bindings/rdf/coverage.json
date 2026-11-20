@@ -1,0 +1,20 @@
+{
+  "root_models": 128,
+  "core_schema_kinds": [
+    "any",
+    "decimal",
+    "default",
+    "definitions",
+    "int",
+    "literal",
+    "model",
+    "str",
+    "tagged-union",
+    "timedelta",
+    "tuple"
+  ],
+  "ontology_statements": 3426,
+  "shape_statements": 4678,
+  "metadata_statements": 916,
+  "warning": "RDF requires canonical literal typing and the documented collection encoding; semantic equivalence requires instance-level validation parity tests."
+}

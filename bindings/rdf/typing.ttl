@@ -1,0 +1,1280 @@
+@prefix org1: <https://example.org/organizational-ontology#> .
+@prefix pyd: <https://example.org/pydantic-semantics#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+org1:class%2Forganization_model.examples.ApprovedReview pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ApprovedReview\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ApprovedReview" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ApprovedReview" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ApprovedState pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ApprovedState\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ApprovedState" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ApprovedState" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.BusinessNeed pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"BusinessNeed\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.BusinessNeed" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.BusinessNeed" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.CapabilityAssessment pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"CapabilityAssessment\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.CapabilityAssessment" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.CapabilityAssessment" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ContinuousService pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ContinuousService\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ContinuousService" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ContinuousService" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.examples.CustomerInformed pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"CustomerInformed\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.CustomerInformed" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.CustomerInformed" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.CustomerInterest pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"CustomerInterest\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.CustomerInterest" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.CustomerInterest" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.CustomerLoss pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"CustomerLoss\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.CustomerLoss" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.CustomerLoss" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.CustomerRelationship pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"CustomerRelationship\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.CustomerRelationship" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.CustomerRelationship" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.Dollars pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Dollars\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.Dollars" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.Dollars" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.EconomicAssessment pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"EconomicAssessment\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.EconomicAssessment" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.EconomicAssessment" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.Eligible pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Eligible\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.Eligible" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.Eligible" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.Expired pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Expired\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.Expired" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.Expired" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ExpiredReview pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ExpiredReview\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ExpiredReview" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ExpiredReview" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ExpiredState pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ExpiredState\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ExpiredState" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ExpiredState" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.GainedAbility pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"GainedAbility\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.GainedAbility" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.GainedAbility" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.GroupedPurpose pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"GroupedPurpose\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.GroupedPurpose" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.GroupedPurpose" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.examples.IncreasedConsequence pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"IncreasedConsequence\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.IncreasedConsequence" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.IncreasedConsequence" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.IncreasedLikelihood pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"IncreasedLikelihood\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.IncreasedLikelihood" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.IncreasedLikelihood" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.IntroducedExposure pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"IntroducedExposure\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.IntroducedExposure" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.IntroducedExposure" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.LossOutcome pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"LossOutcome\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.LossOutcome" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.LossOutcome" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.LostAbility pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"LostAbility\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.LostAbility" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.LostAbility" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.MissingReceipt pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"MissingReceipt\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.MissingReceipt" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.MissingReceipt" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.MissingReceiptReview pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"MissingReceiptReview\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.MissingReceiptReview" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.MissingReceiptReview" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.MissingReceiptState pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"MissingReceiptState\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.MissingReceiptState" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.MissingReceiptState" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.NoticeReady pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"NoticeReady\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.NoticeReady" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.NoticeReady" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.NoticeValidity pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"NoticeValidity\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.NoticeValidity" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.NoticeValidity" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.NotificationOutcome pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"NotificationOutcome\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.NotificationOutcome" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.NotificationOutcome" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.Organization pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Organization\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.Organization" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.Organization" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.Person pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Person\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.Person" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.Person" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.PolicyRecord pyd:declaredType "organization_model.examples.PolicyRecord" .
+
+org1:class%2Forganization_model.examples.PrepareNotice pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"PrepareNotice\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.PrepareNotice" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.PrepareNotice" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.QualityAssessment pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"QualityAssessment\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.QualityAssessment" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.QualityAssessment" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ReceiptMessage pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ReceiptMessage\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ReceiptMessage" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ReceiptMessage" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ReducedConsequence pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ReducedConsequence\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ReducedConsequence" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ReducedConsequence" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ReducedLikelihood pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ReducedLikelihood\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ReducedLikelihood" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ReducedLikelihood" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RefundAction pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundAction\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundAction" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundAction" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RefundAuthority pyd:declaredType "organization_model.examples.RefundAuthority" .
+
+org1:class%2Forganization_model.examples.RefundDecision pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundDecision\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundDecision" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundDecision" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.examples.RefundEvent pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundEvent\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundEvent" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundEvent" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RefundIssued pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundIssued\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundIssued" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundIssued" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RefundOutcome pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundOutcome\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundOutcome" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundOutcome" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RefundPrerequisites pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundPrerequisites\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundPrerequisites" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundPrerequisites" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RefundProcess pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundProcess\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundProcess" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundProcess" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RefundPurpose pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundPurpose\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundPurpose" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundPurpose" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.examples.RefundService pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RefundService\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RefundService" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RefundService" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RelationshipAssessment pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RelationshipAssessment\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RelationshipAssessment" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RelationshipAssessment" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RemovedExposure pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RemovedExposure\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RemovedExposure" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RemovedExposure" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ResourceAssessment pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ResourceAssessment\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ResourceAssessment" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ResourceAssessment" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.RiskAssessment pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RiskAssessment\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.RiskAssessment" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.RiskAssessment" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ServiceAvailable pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ServiceAvailable\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ServiceAvailable" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ServiceAvailable" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ServiceInteraction pyd:declaredType "organization_model.examples.ServiceInteraction" .
+
+org1:class%2Forganization_model.examples.ServiceMaintenance pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ServiceMaintenance\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ServiceMaintenance" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ServiceMaintenance" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.SoftwareParticipant pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"SoftwareParticipant\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.SoftwareParticipant" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.SoftwareParticipant" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.StaffHours pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"StaffHours\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.StaffHours" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.StaffHours" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.StrengthenedAbility pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"StrengthenedAbility\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.StrengthenedAbility" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.StrengthenedAbility" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.SupplierCancellation pyd:declaredType "organization_model.examples.SupplierCancellation" .
+
+org1:class%2Forganization_model.examples.SupplierEvent pyd:declaredType "organization_model.examples.SupplierEvent" .
+
+org1:class%2Forganization_model.examples.SupportCapacity pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"SupportCapacity\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.SupportCapacity" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.SupportCapacity" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.SupportContext pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"SupportContext\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.SupportContext" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.SupportContext" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.SupportParticipation pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"SupportParticipation\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.SupportParticipation" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.SupportParticipation" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.SupportRequirement pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"SupportRequirement\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.SupportRequirement" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.SupportRequirement" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.SupportResponsibility pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"SupportResponsibility\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.SupportResponsibility" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.SupportResponsibility" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.examples.SupportRole pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"SupportRole\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.SupportRole" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.SupportRole" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.examples.TimeAssessment pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"TimeAssessment\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.TimeAssessment" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.TimeAssessment" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.ValueProfile pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ValueProfile\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.ValueProfile" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.ValueProfile" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.examples.WeakenedAbility pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"WeakenedAbility\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.WeakenedAbility" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.WeakenedAbility" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.examples.WelfareAssessment pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"WelfareAssessment\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.examples.WelfareAssessment" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.examples.WelfareAssessment" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.scalars.Money pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Money\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.scalars.Money" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.scalars.Money" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.scalars.Quantity pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Quantity\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.scalars.Quantity" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.scalars.Quantity" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.AbilityChange pyd:declaredType "organization_model.value.AbilityChange" .
+
+org1:class%2Forganization_model.value.Availability pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Availability\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Availability" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Availability" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Availability%5BStaffHours%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Availability[StaffHours]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.StaffHours'>\"]" ;
+    pyd:pythonClass "organization_model.value.Availability[StaffHours]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Benefit" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Benefit" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit%5BCapabilityBenefits%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit[CapabilityBenefits]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"CapabilityBenefits\"]" ;
+    pyd:pythonClass "organization_model.value.Benefit[CapabilityBenefits]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit%5BFinancialChange%5BDollars%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit[FinancialChange[Dollars]]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.value.FinancialChange[Dollars]'>\"]" ;
+    pyd:pythonClass "organization_model.value.Benefit[FinancialChange[Dollars]]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit%5BQualityBenefits%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit[QualityBenefits]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"QualityBenefits\"]" ;
+    pyd:pythonClass "organization_model.value.Benefit[QualityBenefits]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit%5BRelationshipBenefits%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit[RelationshipBenefits]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"RelationshipBenefits\"]" ;
+    pyd:pythonClass "organization_model.value.Benefit[RelationshipBenefits]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit%5BResourceBenefits%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit[ResourceBenefits]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"ResourceBenefits\"]" ;
+    pyd:pythonClass "organization_model.value.Benefit[ResourceBenefits]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit%5BRiskBenefits%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit[RiskBenefits]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"RiskBenefits\"]" ;
+    pyd:pythonClass "organization_model.value.Benefit[RiskBenefits]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit%5BTimeChange%5BDuration%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit[TimeChange[Duration]]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.value.TimeChange[Duration]'>\"]" ;
+    pyd:pythonClass "organization_model.value.Benefit[TimeChange[Duration]]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Benefit%5BWelfareBenefits%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Benefit[WelfareBenefits]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"WelfareBenefits\"]" ;
+    pyd:pythonClass "organization_model.value.Benefit[WelfareBenefits]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Capability pyd:declaredType "organization_model.value.Capability" .
+
+org1:class%2Forganization_model.value.ConsequenceChange pyd:declaredType "organization_model.value.ConsequenceChange" .
+
+org1:class%2Forganization_model.value.Correctness pyd:declaredType "organization_model.value.Correctness" .
+
+org1:class%2Forganization_model.value.Correctness%5BSupportRequirement%2C%20Literal%5B%27conforming%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Correctness[SupportRequirement, Literal['conforming']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.SupportRequirement'>\", \"typing.Literal['conforming']\"]" ;
+    pyd:pythonClass "organization_model.value.Correctness[SupportRequirement, Literal['conforming']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Correctness%5BSupportRequirement%2C%20Literal%5B%27nonconforming%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Correctness[SupportRequirement, Literal['nonconforming']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.SupportRequirement'>\", \"typing.Literal['nonconforming']\"]" ;
+    pyd:pythonClass "organization_model.value.Correctness[SupportRequirement, Literal['nonconforming']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Economic pyd:declaredType "organization_model.value.Economic" .
+
+org1:class%2Forganization_model.value.ExposureChange pyd:declaredType "organization_model.value.ExposureChange" .
+
+org1:class%2Forganization_model.value.FinancialChange pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"FinancialChange\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.FinancialChange" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.FinancialChange" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.FinancialChange%5BDollars%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"FinancialChange[Dollars]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.Dollars'>\"]" ;
+    pyd:pythonClass "organization_model.value.FinancialChange[Dollars]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Fitness pyd:declaredType "organization_model.value.Fitness" .
+
+org1:class%2Forganization_model.value.Fitness%5BRefundPurpose%2C%20Literal%5B%27met%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Fitness[RefundPurpose, Literal['met']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.RefundPurpose'>\", \"typing.Literal['met']\"]" ;
+    pyd:pythonClass "organization_model.value.Fitness[RefundPurpose, Literal['met']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Fitness%5BRefundPurpose%2C%20Literal%5B%27unmet%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Fitness[RefundPurpose, Literal['unmet']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.RefundPurpose'>\", \"typing.Literal['unmet']\"]" ;
+    pyd:pythonClass "organization_model.value.Fitness[RefundPurpose, Literal['unmet']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Fulfillment pyd:declaredType "organization_model.value.Fulfillment" .
+
+org1:class%2Forganization_model.value.Fulfillment%5BRefundPurpose%2C%20Literal%5B%27fulfilled%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Fulfillment[RefundPurpose, Literal['fulfilled']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.RefundPurpose'>\", \"typing.Literal['fulfilled']\"]" ;
+    pyd:pythonClass "organization_model.value.Fulfillment[RefundPurpose, Literal['fulfilled']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Fulfillment%5BRefundPurpose%2C%20Literal%5B%27unfulfilled%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Fulfillment[RefundPurpose, Literal['unfulfilled']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.RefundPurpose'>\", \"typing.Literal['unfulfilled']\"]" ;
+    pyd:pythonClass "organization_model.value.Fulfillment[RefundPurpose, Literal['unfulfilled']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Harm" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Harm" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm%5BCapabilityHarms%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm[CapabilityHarms]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"CapabilityHarms\"]" ;
+    pyd:pythonClass "organization_model.value.Harm[CapabilityHarms]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm%5BFinancialChange%5BDollars%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm[FinancialChange[Dollars]]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.value.FinancialChange[Dollars]'>\"]" ;
+    pyd:pythonClass "organization_model.value.Harm[FinancialChange[Dollars]]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm%5BQualityHarms%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm[QualityHarms]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"QualityHarms\"]" ;
+    pyd:pythonClass "organization_model.value.Harm[QualityHarms]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm%5BRelationshipHarms%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm[RelationshipHarms]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"RelationshipHarms\"]" ;
+    pyd:pythonClass "organization_model.value.Harm[RelationshipHarms]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm%5BResourceHarms%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm[ResourceHarms]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"ResourceHarms\"]" ;
+    pyd:pythonClass "organization_model.value.Harm[ResourceHarms]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm%5BRiskHarms%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm[RiskHarms]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"RiskHarms\"]" ;
+    pyd:pythonClass "organization_model.value.Harm[RiskHarms]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm%5BTimeChange%5BDuration%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm[TimeChange[Duration]]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.value.TimeChange[Duration]'>\"]" ;
+    pyd:pythonClass "organization_model.value.Harm[TimeChange[Duration]]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Harm%5BWelfareHarms%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Harm[WelfareHarms]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"WelfareHarms\"]" ;
+    pyd:pythonClass "organization_model.value.Harm[WelfareHarms]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.HumanWelfare pyd:declaredType "organization_model.value.HumanWelfare" .
+
+org1:class%2Forganization_model.value.Interest pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Interest\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Interest" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Interest" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.LikelihoodChange pyd:declaredType "organization_model.value.LikelihoodChange" .
+
+org1:class%2Forganization_model.value.Loyalty pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Loyalty\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Loyalty" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Loyalty" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Loyalty%5BRefundPurpose%2C%20Literal%5B%27commitment_strengthened%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Loyalty[RefundPurpose, Literal['commitment_strengthened']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.RefundPurpose'>\", \"typing.Literal['commitment_strengthened']\"]" ;
+    pyd:pythonClass "organization_model.value.Loyalty[RefundPurpose, Literal['commitment_strengthened']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Loyalty%5BRefundPurpose%2C%20Literal%5B%27commitment_weakened%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Loyalty[RefundPurpose, Literal['commitment_weakened']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.RefundPurpose'>\", \"typing.Literal['commitment_weakened']\"]" ;
+    pyd:pythonClass "organization_model.value.Loyalty[RefundPurpose, Literal['commitment_weakened']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Need pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Need\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Need" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Need" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Preservation pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Preservation\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Preservation" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Preservation" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Preservation%5BLiteral%5B%27capacity_depleted%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Preservation[Literal['capacity_depleted']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"typing.Literal['capacity_depleted']\"]" ;
+    pyd:pythonClass "organization_model.value.Preservation[Literal['capacity_depleted']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Preservation%5BLiteral%5B%27capacity_preserved%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Preservation[Literal['capacity_preserved']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"typing.Literal['capacity_preserved']\"]" ;
+    pyd:pythonClass "organization_model.value.Preservation[Literal['capacity_preserved']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Quality pyd:declaredType "organization_model.value.Quality" .
+
+org1:class%2Forganization_model.value.RelationshipStrength pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RelationshipStrength\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.RelationshipStrength" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.RelationshipStrength" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.RelationshipStrength%5BLiteral%5B%27strengthened%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RelationshipStrength[Literal['strengthened']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"typing.Literal['strengthened']\"]" ;
+    pyd:pythonClass "organization_model.value.RelationshipStrength[Literal['strengthened']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.RelationshipStrength%5BLiteral%5B%27weakened%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"RelationshipStrength[Literal['weakened']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"typing.Literal['weakened']\"]" ;
+    pyd:pythonClass "organization_model.value.RelationshipStrength[Literal['weakened']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Relationships pyd:declaredType "organization_model.value.Relationships" .
+
+org1:class%2Forganization_model.value.Reliability pyd:declaredType "organization_model.value.Reliability" .
+
+org1:class%2Forganization_model.value.Reliability%5BSupportContext%2C%20RefundOutcome%2C%20Probability%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Reliability[SupportContext, RefundOutcome, Probability]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.SupportContext'>\", \"<class 'organization_model.examples.RefundOutcome'>\", \"Probability\"]" ;
+    pyd:pythonClass "organization_model.value.Reliability[SupportContext, RefundOutcome, Probability]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Reputation pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Reputation\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Reputation" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Reputation" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Reputation%5BNonempty%5Borganization_model.examples.Person%5D%2C%20Literal%5B%27distrusted%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Reputation[Nonempty[organization_model.examples.Person], Literal['distrusted']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"Nonempty[organization_model.examples.Person]\", \"typing.Literal['distrusted']\"]" ;
+    pyd:pythonClass "organization_model.value.Reputation[Nonempty[organization_model.examples.Person], Literal['distrusted']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Reputation%5BNonempty%5Borganization_model.examples.Person%5D%2C%20Literal%5B%27trusted%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Reputation[Nonempty[organization_model.examples.Person], Literal['trusted']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"Nonempty[organization_model.examples.Person]\", \"typing.Literal['trusted']\"]" ;
+    pyd:pythonClass "organization_model.value.Reputation[Nonempty[organization_model.examples.Person], Literal['trusted']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Resources pyd:declaredType "organization_model.value.Resources" .
+
+org1:class%2Forganization_model.value.Risk pyd:declaredType "organization_model.value.Risk" .
+
+org1:class%2Forganization_model.value.Safety pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Safety\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Safety" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Safety" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Safety%5BLiteral%5B%27workplace_injury%27%5D%2C%20Literal%5B%27hazard_present%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Safety[Literal['workplace_injury'], Literal['hazard_present']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"typing.Literal['workplace_injury']\", \"typing.Literal['hazard_present']\"]" ;
+    pyd:pythonClass "organization_model.value.Safety[Literal['workplace_injury'], Literal['hazard_present']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Safety%5BLiteral%5B%27workplace_injury%27%5D%2C%20Literal%5B%27hazard_removed%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Safety[Literal['workplace_injury'], Literal['hazard_removed']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"typing.Literal['workplace_injury']\", \"typing.Literal['hazard_removed']\"]" ;
+    pyd:pythonClass "organization_model.value.Safety[Literal['workplace_injury'], Literal['hazard_removed']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Satisfaction pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Satisfaction\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Satisfaction" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Satisfaction" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Satisfaction%5BCustomerInterest%2C%20Literal%5B%27satisfied%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Satisfaction[CustomerInterest, Literal['satisfied']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.CustomerInterest'>\", \"typing.Literal['satisfied']\"]" ;
+    pyd:pythonClass "organization_model.value.Satisfaction[CustomerInterest, Literal['satisfied']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Satisfaction%5BCustomerInterest%2C%20Literal%5B%27unsatisfied%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Satisfaction[CustomerInterest, Literal['unsatisfied']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.CustomerInterest'>\", \"typing.Literal['unsatisfied']\"]" ;
+    pyd:pythonClass "organization_model.value.Satisfaction[CustomerInterest, Literal['unsatisfied']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Time pyd:declaredType "organization_model.value.Time" .
+
+org1:class%2Forganization_model.value.TimeChange pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"TimeChange\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.TimeChange" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.TimeChange" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.TimeChange%5BDuration%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"TimeChange[Duration]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"Duration\"]" ;
+    pyd:pythonClass "organization_model.value.TimeChange[Duration]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Trust pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Trust\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Trust" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Trust" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Trust%5BRefundPurpose%2C%20Literal%5B%27confidence_increased%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Trust[RefundPurpose, Literal['confidence_increased']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.RefundPurpose'>\", \"typing.Literal['confidence_increased']\"]" ;
+    pyd:pythonClass "organization_model.value.Trust[RefundPurpose, Literal['confidence_increased']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Trust%5BRefundPurpose%2C%20Literal%5B%27confidence_reduced%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Trust[RefundPurpose, Literal['confidence_reduced']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.RefundPurpose'>\", \"typing.Literal['confidence_reduced']\"]" ;
+    pyd:pythonClass "organization_model.value.Trust[RefundPurpose, Literal['confidence_reduced']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Unchanged pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Unchanged\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Unchanged" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Unchanged" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Unchanged%5BFinancialChange%5BDollars%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Unchanged[FinancialChange[Dollars]]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.value.FinancialChange[Dollars]'>\"]" ;
+    pyd:pythonClass "organization_model.value.Unchanged[FinancialChange[Dollars]]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Unchanged%5BPreservation%5BLiteral%5B%27capacity_preserved%27%5D%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Unchanged[Preservation[Literal['capacity_preserved']]]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.value.Preservation[Literal['capacity_preserved']]'>\"]" ;
+    pyd:pythonClass "organization_model.value.Unchanged[Preservation[Literal['capacity_preserved']]]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Unchanged%5BTimeChange%5BDuration%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Unchanged[TimeChange[Duration]]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.value.TimeChange[Duration]'>\"]" ;
+    pyd:pythonClass "organization_model.value.Unchanged[TimeChange[Duration]]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Value pyd:declaredType "organization_model.value.Value" .
+
+org1:class%2Forganization_model.value.Wellbeing pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Wellbeing\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.value.Wellbeing" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.value.Wellbeing" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Wellbeing%5BLiteral%5B%27diminished%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Wellbeing[Literal['diminished']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"typing.Literal['diminished']\"]" ;
+    pyd:pythonClass "organization_model.value.Wellbeing[Literal['diminished']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.value.Wellbeing%5BLiteral%5B%27improved%27%5D%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Wellbeing[Literal['improved']]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"typing.Literal['improved']\"]" ;
+    pyd:pythonClass "organization_model.value.Wellbeing[Literal['improved']]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.ActionPermission pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ActionPermission\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.ActionPermission" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.ActionPermission" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Activity pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Activity\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Activity" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Activity" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Authority pyd:declaredType "organization_model.work.Authority" .
+
+org1:class%2Forganization_model.work.Communication pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Communication\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Communication" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Communication" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Coordination pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Coordination\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Coordination" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Coordination" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Decision pyd:declaredType "organization_model.work.Decision" .
+
+org1:class%2Forganization_model.work.DecisionPower pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"DecisionPower\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.DecisionPower" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.DecisionPower" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Event pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Event\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Event" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Event" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Interaction pyd:declaredType "organization_model.work.Interaction" .
+
+org1:class%2Forganization_model.work.MaintainedOutcome pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"MaintainedOutcome\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.MaintainedOutcome" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.MaintainedOutcome" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.ObligationPower pyd:declaredType "organization_model.work.ObligationPower" .
+
+org1:class%2Forganization_model.work.Outcome pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Outcome\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Outcome" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Outcome" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Participation pyd:declaredType "organization_model.work.Participation" .
+
+org1:class%2Forganization_model.work.Permission pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Permission\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Permission" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Permission" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Permission%5BEligible%2C%20RefundAction%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Permission[Eligible, RefundAction]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.Eligible'>\", \"<class 'organization_model.examples.RefundAction'>\"]" ;
+    pyd:pythonClass "organization_model.work.Permission[Eligible, RefundAction]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Process pyd:declaredType "organization_model.work.Process" .
+
+org1:class%2Forganization_model.work.ProducedOutcome pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ProducedOutcome\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.ProducedOutcome" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.ProducedOutcome" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.ProducedOutcome%5BApprovedState%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ProducedOutcome[ApprovedState]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.ApprovedState'>\"]" ;
+    pyd:pythonClass "organization_model.work.ProducedOutcome[ApprovedState]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.ProducedOutcome%5BExpiredState%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ProducedOutcome[ExpiredState]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.ExpiredState'>\"]" ;
+    pyd:pythonClass "organization_model.work.ProducedOutcome[ExpiredState]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.ProducedOutcome%5BMissingReceiptState%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ProducedOutcome[MissingReceiptState]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.MissingReceiptState'>\"]" ;
+    pyd:pythonClass "organization_model.work.ProducedOutcome[MissingReceiptState]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.ProducedOutcome%5BNoticeReady%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"ProducedOutcome[NoticeReady]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.NoticeReady'>\"]" ;
+    pyd:pythonClass "organization_model.work.ProducedOutcome[NoticeReady]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Prohibition pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Prohibition\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Prohibition" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Prohibition" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Prohibition%5BExpired%2C%20RefundAction%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Prohibition[Expired, RefundAction]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.Expired'>\", \"<class 'organization_model.examples.RefundAction'>\"]" ;
+    pyd:pythonClass "organization_model.work.Prohibition[Expired, RefundAction]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Prohibition%5BMissingReceipt%2C%20RefundAction%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Prohibition[MissingReceipt, RefundAction]\", \"validate_default\": true}" ;
+    pyd:genericArguments "[\"<class 'organization_model.examples.MissingReceipt'>\", \"<class 'organization_model.examples.RefundAction'>\"]" ;
+    pyd:pythonClass "organization_model.work.Prohibition[MissingReceipt, RefundAction]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Purpose pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Purpose\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Purpose" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Purpose" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.work.Requirement pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Requirement\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Requirement" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Requirement" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Requirement%5Bobject%2C%20object%5D pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Requirement[object, object]\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Requirement[object, object]" ;
+    pyd:genericArguments "[\"<class 'object'>\", \"<class 'object'>\"]" ;
+    pyd:pythonClass "organization_model.work.Requirement[object, object]" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Responsibility pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Responsibility\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Responsibility" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Responsibility" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.work.ResponsibilityTransfer pyd:declaredType "organization_model.work.ResponsibilityTransfer" .
+
+org1:class%2Forganization_model.work.Role pyd:configuration "{\"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Role\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Role" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Role" ;
+    pyd:rootModel true .
+
+org1:class%2Forganization_model.work.Rule pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Rule\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Rule" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Rule" ;
+    pyd:rootModel false .
+
+org1:class%2Forganization_model.work.Validity pyd:configuration "{\"extra_fields_behavior\": \"forbid\", \"revalidate_instances\": \"always\", \"strict\": true, \"title\": \"Validity\", \"validate_default\": true}" ;
+    pyd:declaredType "organization_model.work.Validity" ;
+    pyd:genericArguments "[]" ;
+    pyd:pythonClass "organization_model.work.Validity" ;
+    pyd:rootModel false .
+
+org1:shape%2Forganization_model.examples.ApprovedReview pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ApprovedState pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.BusinessNeed pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.CapabilityAssessment pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.CapabilityAssessment%2Ffield%2Fassessment pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.examples.CustomerInformed pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.CustomerInterest pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.CustomerLoss pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.CustomerRelationship pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.Dollars pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.Dollars%2Ffield%2Famount pyd:strict true .
+
+org1:shape%2Forganization_model.examples.EconomicAssessment pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.EconomicAssessment%2Ffield%2Fassessment pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.examples.Eligible pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.Eligible%2Ffield%2Fdays_since_purchase pyd:strict false .
+
+org1:shape%2Forganization_model.examples.Expired pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.Expired%2Ffield%2Fdays_since_purchase pyd:strict false .
+
+org1:shape%2Forganization_model.examples.ExpiredReview pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ExpiredState pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.GainedAbility pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.IncreasedConsequence pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.IncreasedLikelihood pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.IncreasedLikelihood%2Ffield%2Fextent pyd:strict true .
+
+org1:shape%2Forganization_model.examples.IntroducedExposure pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.LossOutcome pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.LostAbility pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.MissingReceipt pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.MissingReceipt%2Ffield%2Fdays_since_purchase pyd:strict false .
+
+org1:shape%2Forganization_model.examples.MissingReceiptReview pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.MissingReceiptState pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.NoticeReady pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.NoticeValidity pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.NotificationOutcome pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.Organization pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.Organization%2Ffield%2Fname pyd:normalization "strip_whitespace" ;
+    pyd:strict true .
+
+org1:shape%2Forganization_model.examples.Person pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.Person%2Ffield%2Fname pyd:normalization "strip_whitespace" ;
+    pyd:strict true .
+
+org1:shape%2Forganization_model.examples.PrepareNotice pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.QualityAssessment pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.QualityAssessment%2Ffield%2Fassessment pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.examples.ReceiptMessage pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ReceiptMessage%2Ffield%2Fmessage pyd:normalization "strip_whitespace" ;
+    pyd:strict true .
+
+org1:shape%2Forganization_model.examples.ReducedConsequence pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ReducedLikelihood pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ReducedLikelihood%2Ffield%2Fextent pyd:strict true .
+
+org1:shape%2Forganization_model.examples.RefundAction pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RefundDecision%2Ffield%2Froot pyd:discriminator "case" .
+
+org1:shape%2Forganization_model.examples.RefundEvent pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RefundIssued pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RefundOutcome pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RefundPrerequisites pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RefundProcess pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RefundService pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RelationshipAssessment pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RelationshipAssessment%2Ffield%2Fassessment pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.examples.RemovedExposure pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ResourceAssessment pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ResourceAssessment%2Ffield%2Fassessment pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.examples.RiskAssessment pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.RiskAssessment%2Ffield%2Fassessment pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.examples.ServiceAvailable pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ServiceMaintenance pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.ServiceMaintenance%2Ffield%2Fthroughout pyd:strict true .
+
+org1:shape%2Forganization_model.examples.SoftwareParticipant pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.SoftwareParticipant%2Ffield%2Fname pyd:normalization "strip_whitespace" ;
+    pyd:strict true .
+
+org1:shape%2Forganization_model.examples.StaffHours pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.StaffHours%2Ffield%2Fmagnitude pyd:strict true .
+
+org1:shape%2Forganization_model.examples.StrengthenedAbility pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.SupportCapacity pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.SupportContext pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.SupportParticipation pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.SupportParticipation%2Ffield%2Foccupant pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.examples.SupportRequirement pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.TimeAssessment pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.TimeAssessment%2Ffield%2Fassessment pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.examples.ValueProfile%2Ffield%2Froot%2Fitem pyd:discriminator "dimension" .
+
+org1:shape%2Forganization_model.examples.WeakenedAbility pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.WelfareAssessment pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.examples.WelfareAssessment%2Ffield%2Fassessment pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.scalars.Money pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.scalars.Money%2Ffield%2Famount pyd:strict true .
+
+org1:shape%2Forganization_model.scalars.Quantity pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.scalars.Quantity%2Ffield%2Fmagnitude pyd:strict true .
+
+org1:shape%2Forganization_model.value.Availability pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Availability%5BStaffHours%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BCapabilityBenefits%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BCapabilityBenefits%5D%2Ffield%2Fdetail pyd:discriminator "operation" .
+
+org1:shape%2Forganization_model.value.Benefit%5BFinancialChange%5BDollars%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BQualityBenefits%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BQualityBenefits%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Benefit%5BRelationshipBenefits%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BRelationshipBenefits%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Benefit%5BResourceBenefits%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BResourceBenefits%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Benefit%5BRiskBenefits%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BRiskBenefits%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Benefit%5BTimeChange%5BDuration%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BWelfareBenefits%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Benefit%5BWelfareBenefits%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Correctness%5BSupportRequirement%2C%20Literal%5B%27conforming%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Correctness%5BSupportRequirement%2C%20Literal%5B%27nonconforming%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.FinancialChange pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.FinancialChange%5BDollars%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Fitness%5BRefundPurpose%2C%20Literal%5B%27met%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Fitness%5BRefundPurpose%2C%20Literal%5B%27unmet%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Fulfillment%5BRefundPurpose%2C%20Literal%5B%27fulfilled%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Fulfillment%5BRefundPurpose%2C%20Literal%5B%27unfulfilled%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BCapabilityHarms%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BCapabilityHarms%5D%2Ffield%2Fdetail pyd:discriminator "operation" .
+
+org1:shape%2Forganization_model.value.Harm%5BFinancialChange%5BDollars%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BQualityHarms%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BQualityHarms%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Harm%5BRelationshipHarms%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BRelationshipHarms%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Harm%5BResourceHarms%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BResourceHarms%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Harm%5BRiskHarms%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BRiskHarms%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Harm%5BTimeChange%5BDuration%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BWelfareHarms%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Harm%5BWelfareHarms%5D%2Ffield%2Fdetail pyd:discriminator "kind" .
+
+org1:shape%2Forganization_model.value.Interest pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Loyalty pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Loyalty%5BRefundPurpose%2C%20Literal%5B%27commitment_strengthened%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Loyalty%5BRefundPurpose%2C%20Literal%5B%27commitment_weakened%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Need pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Preservation pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Preservation%5BLiteral%5B%27capacity_depleted%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Preservation%5BLiteral%5B%27capacity_preserved%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.RelationshipStrength pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.RelationshipStrength%5BLiteral%5B%27strengthened%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.RelationshipStrength%5BLiteral%5B%27weakened%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Reliability%5BSupportContext%2C%20RefundOutcome%2C%20Probability%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Reliability%5BSupportContext%2C%20RefundOutcome%2C%20Probability%5D%2Ffield%2Fobservation pyd:strict true .
+
+org1:shape%2Forganization_model.value.Reputation pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Reputation%5BNonempty%5Borganization_model.examples.Person%5D%2C%20Literal%5B%27distrusted%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Reputation%5BNonempty%5Borganization_model.examples.Person%5D%2C%20Literal%5B%27trusted%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Safety pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Safety%5BLiteral%5B%27workplace_injury%27%5D%2C%20Literal%5B%27hazard_present%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Safety%5BLiteral%5B%27workplace_injury%27%5D%2C%20Literal%5B%27hazard_removed%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Satisfaction pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Satisfaction%5BCustomerInterest%2C%20Literal%5B%27satisfied%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Satisfaction%5BCustomerInterest%2C%20Literal%5B%27unsatisfied%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.TimeChange pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.TimeChange%5BDuration%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.TimeChange%5BDuration%5D%2Ffield%2Fextent pyd:strict true .
+
+org1:shape%2Forganization_model.value.Trust pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Trust%5BRefundPurpose%2C%20Literal%5B%27confidence_increased%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Trust%5BRefundPurpose%2C%20Literal%5B%27confidence_reduced%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Unchanged pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Unchanged%5BFinancialChange%5BDollars%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Unchanged%5BPreservation%5BLiteral%5B%27capacity_preserved%27%5D%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Unchanged%5BTimeChange%5BDuration%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Wellbeing pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Wellbeing%5BLiteral%5B%27diminished%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.value.Wellbeing%5BLiteral%5B%27improved%27%5D%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.ActionPermission pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Activity pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Communication pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Coordination pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.DecisionPower pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Event pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.MaintainedOutcome pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Outcome pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Permission pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Permission%5BEligible%2C%20RefundAction%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.ProducedOutcome pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.ProducedOutcome%5BApprovedState%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.ProducedOutcome%5BExpiredState%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.ProducedOutcome%5BMissingReceiptState%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.ProducedOutcome%5BNoticeReady%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Prohibition pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Prohibition%5BExpired%2C%20RefundAction%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Prohibition%5BMissingReceipt%2C%20RefundAction%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Requirement pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Requirement%5Bobject%2C%20object%5D pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Rule pyd:extraPolicy "forbid" .
+
+org1:shape%2Forganization_model.work.Validity pyd:extraPolicy "forbid" .
+

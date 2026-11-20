@@ -3,7 +3,7 @@ requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
-name = "organizational-type-model"
+name = "ontok-python"
 version = "0.1.0"
 description = "Declarative Pydantic types for organizational meaning and value."
 requires-python = ">=3.12"

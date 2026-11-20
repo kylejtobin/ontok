@@ -4,7 +4,7 @@ requires-python = ">=3.12"
 
 [manifest]
 members = [
-    "organizational-type-model",
+    "ontok-python",
 ]
 
 [[package]]
@@ -63,9 +63,9 @@ wheels = [
 ]
 
 [[package]]
-name = "organizational-type-model"
+name = "ontok-python"
 version = "0.1.0"
-source = { editable = "packages/python/organizational-type-model" }
+source = { editable = "bindings/python" }
 dependencies = [
     { name = "pydantic" },
 ]
