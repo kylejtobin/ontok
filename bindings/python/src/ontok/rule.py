@@ -1,4 +1,4 @@
-"""Contextual normative constraints."""
+"""Constraints whose force applies to a target in a context."""
 
 from typing import Literal
 

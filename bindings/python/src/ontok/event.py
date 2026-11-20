@@ -1,4 +1,4 @@
-"""Assertions of occurrences, not independent evidence that they happened."""
+"""Assertions of occurrences, without inferring truth or requiring a timestamp."""
 
 from pydantic import BaseModel
 

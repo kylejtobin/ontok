@@ -1,4 +1,4 @@
-"""Selection of a complete admissible rule-and-result case."""
+"""A determination selecting one complete admissible case."""
 
 from pydantic import BaseModel, RootModel
 
@@ -6,12 +6,12 @@ from .outcome import Outcome
 from .rule import Rule
 
 
-class DecisionCase[Applicable: Rule, Result: Outcome](BaseModel):
-    """Context is already present in the rule; never copy it independently."""
+class DecisionCase[Context, Target, Result: Outcome](BaseModel):
+    """The applicable Rule supplies context; it is never copied separately."""
 
-    rule: Applicable
+    rule: Rule[Context, Target]
     outcome: Result
 
 
-class Decision[Case: DecisionCase](RootModel[Case]):
-    """Declared Case may be a union of complete cases; construction selects one."""
+class Decision[Selected: DecisionCase](RootModel[Selected]):
+    """The declaration specifies alternatives; construction selects one case."""

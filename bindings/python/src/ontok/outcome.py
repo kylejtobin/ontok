@@ -1,20 +1,22 @@
-"""States produced or maintained through organizational work."""
+"""An intended or resulting state, produced or maintained through work."""
 
-from typing import Literal
-
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 from .type import State
 
 
-class Outcome[Condition](BaseModel):
+class ProducedOutcome[Condition](BaseModel):
+    """A state brought about through work."""
+
     state: State[Condition]
-    mode: Literal["produced", "maintained"]
 
 
-class ProducedOutcome[Condition](Outcome[Condition]):
-    mode: Literal["produced"] = "produced"
+class MaintainedOutcome[Condition, Extent](BaseModel):
+    """A state held throughout a specified extent."""
+
+    state: State[Condition]
+    extent: Extent
 
 
-class MaintainedOutcome[Condition](Outcome[Condition]):
-    mode: Literal["maintained"] = "maintained"
+class Outcome[Form: ProducedOutcome | MaintainedOutcome](RootModel[Form]):
+    """Exactly one outcome form, independent of intention or occurrence."""

@@ -1,24 +1,18 @@
-"""Composition of activities and their dependencies toward one Purpose."""
+"""Activities composed toward a Purpose, specializing Activity."""
 
 from typing import Annotated
 
-from pydantic import BaseModel, Field, RootModel
+from pydantic import Field, RootModel
 
 from .activity import Activity, ActivityCase
 from .purpose import Purpose
 
 
-class Sequence(RootModel[Annotated[tuple[Activity, ...], Field(min_length=2)]]):
-    """Activities whose order establishes sequential dependencies."""
+class Activities[Members: tuple](RootModel[Members]):
+    """Joint Activity positions; alternatives can occupy individual positions."""
+
+    root: Annotated[Members, Field(min_length=1)]
 
 
-class Concurrent(RootModel[Annotated[tuple[Activity, ...], Field(min_length=2)]]):
-    """Activities whose composition does not impose a sequential dependency."""
-
-
-class ProcessWork[Arrangement: Sequence | Concurrent | Activity](RootModel[Arrangement]):
-    """A work arrangement, which may be narrowed to a nested arrangement."""
-
-
-class Process[Work: ProcessWork, End: Purpose](Activity[ActivityCase[Work, End]]):
-    """Specialized Activity: composition as inputs, single Purpose as outcome."""
+class Process[Work: Activities, End: Purpose](Activity[ActivityCase[Work, End]]):
+    """Its Activity composition is its input and its Purpose its sole result."""

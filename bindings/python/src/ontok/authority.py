@@ -1,28 +1,29 @@
-"""Grants conferred by a formal basis upon a holder."""
-
-from typing import Literal
+"""Formally established powers granted to a holder."""
 
 from pydantic import BaseModel
 
-from .decision import Decision
+from .activity import Activity
+from .outcome import Outcome
 from .rule import Permission, Requirement
 
 
-class ActionGrant[Context, Action](Permission[Context, Action]):
-    kind: Literal["action"] = "action"
+class ActionGrant[Context, Work: Activity](Permission[Context, Work]):
+    """Permission to perform work, not an assertion that it was performed."""
 
 
-class DecisionGrant[Choice: Decision](BaseModel):
-    kind: Literal["decision"] = "decision"
-    decisions: Choice
+class DecisionGrant[Scope](BaseModel):
+    """Power to decide within a scope, not a Decision already made."""
+
+    scope: Scope
 
 
-class ObligationGrant[Duty: Requirement](BaseModel):
-    kind: Literal["obligation"] = "obligation"
-    imposable: Duty
+class ObligationGrant[Context, End: Activity | Outcome](BaseModel):
+    """Power to create the specified required obligation."""
+
+    obligation: Requirement[Context, End]
 
 
-class Authority[Holder, FormalBasis, Grant: ActionGrant | DecisionGrant | ObligationGrant](BaseModel):
+class Authority[Holder, Basis, Grant: ActionGrant | DecisionGrant | ObligationGrant](BaseModel):
     holder: Holder
-    established_by: FormalBasis
+    established_by: Basis
     grant: Grant

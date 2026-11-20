@@ -1,21 +1,21 @@
-"""Shared constituents; these do not add foundational Ontok concepts."""
+"""Semantic constituents shared across Ontok's foundational concepts."""
 
 from pydantic import BaseModel, RootModel
 
 
 class State[Content](RootModel[Content]):
-    """A condition; its content is supplied by a domain model."""
+    """A condition; domains determine what content expresses it."""
 
 
-class Need[Holder, Requirement](BaseModel):
-    """Something a holder requires."""
+class Need[Holder, Required](BaseModel):
+    """A holder and the condition the holder requires."""
 
     holder: Holder
-    required: Requirement
+    required: State[Required]
 
 
 class Interest[Holder, Concern](BaseModel):
-    """A holder's concern."""
+    """A holder and the concern or stake of that holder."""
 
     holder: Holder
     concern: Concern

@@ -1,4 +1,7 @@
-"""Worth relative to a basis, expressed through independent dimensions."""
+"""Worth assessed relative to a need, interest, or purpose.
+
+One subject and basis are shared by one or more dimension-specific assessments.
+"""
 
 from typing import Annotated, Literal
 
@@ -8,7 +11,7 @@ from .activity import Activity
 from .outcome import Outcome
 from .purpose import Purpose
 from .rule import Requirement
-from .type import Interest, Need
+from .type import Interest, Need, State
 
 
 class Benefit[Detail](BaseModel):
@@ -27,110 +30,202 @@ class Unchanged[Detail](BaseModel):
 
 
 class Assessment[Detail](RootModel[Benefit[Detail] | Harm[Detail] | Unchanged[Detail]]):
-    """Value direction is assessed relative to the enclosing Value's basis."""
+    """Benefit, harm, or no change relative to the enclosing Value's basis."""
 
 
-class EconomicChange[Extent](BaseModel):
-    dimension: Literal["economic"] = "economic"
-    operation: Literal["earned", "saved", "preserved", "made_available", "lost", "spent"]
+class FinancialChange[Extent](BaseModel):
+    change: Literal[
+        "earned", "saved", "preserved", "made_available",
+        "lost", "spent", "depleted", "made_unavailable",
+    ]
     extent: Extent
 
 
-class TimeChange[Extent](BaseModel):
-    dimension: Literal["time"] = "time"
-    operation: Literal["saved", "gained", "made_available", "lost", "consumed"]
+class TemporalChange[Extent](BaseModel):
+    change: Literal[
+        "saved", "gained", "made_available", "lost", "spent", "made_unavailable"
+    ]
     extent: Extent
 
 
-class QualityMeasure[End: Purpose, Obligation: Requirement, Evidence](BaseModel):
-    """Fitness, correctness, or reliability relative to its stated reference."""
+class Fitness[Attainment](BaseModel):
+    purpose: Purpose
+    attainment: Attainment
 
-    dimension: Literal["quality"] = "quality"
-    reference: End | Obligation | Outcome
+
+class Correctness[Context, Target, Conformity](BaseModel):
+    requirement: Requirement[Context, Target]
+    conformity: Conformity
+
+
+class Reliability[Context, Expected: Outcome, Observation](BaseModel):
+    context: Context
+    expected: Expected
+    observation: Observation
+
+
+class LikelihoodChange[Extent](BaseModel):
+    direction: Literal["increased", "decreased"]
+    extent: Extent
+
+
+class ConsequenceChange[Extent](BaseModel):
+    direction: Literal["increased", "decreased"]
+    extent: Extent
+
+
+class ExposureChange[Evidence](BaseModel):
+    direction: Literal["introduced", "removed"]
     evidence: Evidence
 
 
-class RiskMeasure[Adverse: Outcome, Exposure](BaseModel):
-    dimension: Literal["risk"] = "risk"
+class RiskDetail[
+    Adverse: Outcome,
+    Change: LikelihoodChange | ConsequenceChange | ExposureChange,
+](BaseModel):
     adverse: Adverse
-    exposure: Exposure
+    change: Change
 
 
-class CapabilityMeasure[Work: Activity, Ability](BaseModel):
-    dimension: Literal["capability"] = "capability"
+class CapabilityChange[Work: Activity, Evidence](BaseModel):
     activity: Work
-    ability: Ability
-
-
-class WelfareMeasure[Evidence](BaseModel):
-    dimension: Literal["human_welfare"] = "human_welfare"
-    aspect: Literal["satisfaction", "wellbeing", "safety", "fulfillment"]
+    direction: Literal["increased", "decreased"]
     evidence: Evidence
 
 
-class RelationshipMeasure[Evidence](BaseModel):
-    dimension: Literal["relationships"] = "relationships"
-    aspect: Literal["trust", "loyalty", "reputation", "strength"]
-    evidence: Evidence
+class Satisfaction[Expectation, Appraisal](BaseModel):
+    expectation: Expectation
+    appraisal: Appraisal
 
 
-class ResourceMeasure[Evidence](BaseModel):
-    dimension: Literal["resources"] = "resources"
-    aspect: Literal["availability", "preservation"]
-    evidence: Evidence
+class Wellbeing[Condition](BaseModel):
+    condition: State[Condition]
 
 
-class Value[Subject, Basis: Need | Interest | Purpose, Detail](BaseModel):
-    """One subject, one basis, and one or more dimensional assessments."""
+class Safety[Threat, Protection](BaseModel):
+    threat: Threat
+    protection: Protection
+
+
+class Fulfillment[Attainment](BaseModel):
+    purpose: Purpose
+    attainment: Attainment
+
+
+class Trust[Conduct, Appraisal](BaseModel):
+    expected_conduct: Conduct
+    appraisal: Appraisal
+
+
+class Loyalty[Commitment, Appraisal](BaseModel):
+    commitment: Commitment
+    appraisal: Appraisal
+
+
+class Reputation[Audience, Standing](BaseModel):
+    audience: Audience
+    standing: Standing
+
+
+class RelationshipStrength[Appraisal](RootModel[Appraisal]):
+    """Appraisal of the strength of the subject relationship."""
+
+
+class Availability[Extent](RootModel[Extent]):
+    """Accessible extent of the subject resource."""
+
+
+class Preservation[Condition](RootModel[State[Condition]]):
+    """Condition retained for the subject resource."""
+
+
+class Value[
+    Subject,
+    Basis: Need | Interest | Purpose,
+    Detail: (
+        FinancialChange
+        | TemporalChange
+        | Fitness
+        | Correctness
+        | Reliability
+        | RiskDetail
+        | CapabilityChange
+        | Satisfaction
+        | Wellbeing
+        | Safety
+        | Fulfillment
+        | Trust
+        | Loyalty
+        | Reputation
+        | RelationshipStrength
+        | Availability
+        | Preservation
+    ),
+](BaseModel):
+    """Domain-specific details can be specialized without duplicating the basis."""
 
     subject: Subject
     relative_to: Basis
-    dimensions: Annotated[tuple[Assessment[Detail], ...], Field(min_length=1)]
+    assessments: Annotated[tuple[Assessment[Detail], ...], Field(min_length=1)]
 
 
 class Economic[Subject, Basis: Need | Interest | Purpose, Extent](
-    Value[Subject, Basis, EconomicChange[Extent]]
+    Value[Subject, Basis, FinancialChange[Extent]]
 ):
-    """Money earned, saved, preserved, or made available."""
+    """Economic benefit or harm assessed through a financial change."""
 
 
 class Time[Subject, Basis: Need | Interest | Purpose, Extent](
-    Value[Subject, Basis, TimeChange[Extent]]
+    Value[Subject, Basis, TemporalChange[Extent]]
 ):
-    """Time saved, gained, or made available."""
+    """Time benefit or harm assessed through a temporal change."""
 
 
-class Quality[Subject, Basis: Need | Interest | Purpose, End: Purpose, Obligation: Requirement, Evidence](
-    Value[Subject, Basis, QualityMeasure[End, Obligation, Evidence]]
-):
-    """Fitness for purpose, correctness, and reliability."""
+class Quality[
+    Subject,
+    Basis: Need | Interest | Purpose,
+    Aspect: Fitness | Correctness | Reliability,
+](Value[Subject, Basis, Aspect]):
+    """Fitness, correctness, or reliability."""
 
 
-class Risk[Subject, Basis: Need | Interest | Purpose, Adverse: Outcome, Exposure](
-    Value[Subject, Basis, RiskMeasure[Adverse, Exposure]]
-):
-    """Reduced exposure to uncertain adverse outcomes."""
+class Risk[
+    Subject,
+    Basis: Need | Interest | Purpose,
+    Adverse: Outcome,
+    Change: LikelihoodChange | ConsequenceChange | ExposureChange,
+](Value[Subject, Basis, RiskDetail[Adverse, Change]]):
+    """Likelihood, consequence, or exposure concerning an adverse Outcome."""
 
 
-class Capability[Subject, Basis: Need | Interest | Purpose, Work: Activity, Ability](
-    Value[Subject, Basis, CapabilityMeasure[Work, Ability]]
-):
-    """Increased ability to accomplish something."""
+class Capability[
+    Subject,
+    Basis: Need | Interest | Purpose,
+    Work: Activity,
+    Evidence,
+](Value[Subject, Basis, CapabilityChange[Work, Evidence]]):
+    """Change in the ability to accomplish an Activity."""
 
 
-class HumanWelfare[Subject, Basis: Need | Interest | Purpose, Evidence](
-    Value[Subject, Basis, WelfareMeasure[Evidence]]
-):
-    """Satisfaction, wellbeing, safety, and fulfillment."""
+class HumanWelfare[
+    Subject,
+    Basis: Need | Interest | Purpose,
+    Aspect: Satisfaction | Wellbeing | Safety | Fulfillment,
+](Value[Subject, Basis, Aspect]):
+    """Satisfaction, wellbeing, safety, or fulfillment."""
 
 
-class Relationships[Subject, Basis: Need | Interest | Purpose, Evidence](
-    Value[Subject, Basis, RelationshipMeasure[Evidence]]
-):
-    """Trust, loyalty, reputation, and relationship strength."""
+class Relationships[
+    Subject,
+    Basis: Need | Interest | Purpose,
+    Aspect: Trust | Loyalty | Reputation | RelationshipStrength,
+](Value[Subject, Basis, Aspect]):
+    """The relationship or parties being valued are the subject, stated once."""
 
 
-class Resources[Subject, Basis: Need | Interest | Purpose, Evidence](
-    Value[Subject, Basis, ResourceMeasure[Evidence]]
-):
-    """Availability and preservation of scarce assets or materials."""
+class Resources[
+    Subject,
+    Basis: Need | Interest | Purpose,
+    Aspect: Availability | Preservation,
+](Value[Subject, Basis, Aspect]):
+    """Availability or preservation of a scarce subject resource."""

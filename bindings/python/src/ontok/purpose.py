@@ -1,4 +1,4 @@
-"""Desired outcomes, jointly required or declared as alternatives."""
+"""Compositions of desired Outcomes."""
 
 from typing import Annotated
 
@@ -7,13 +7,21 @@ from pydantic import Field, RootModel
 from .outcome import Outcome
 
 
-class Together(RootModel[Annotated[tuple[Outcome, ...], Field(min_length=2)]]):
-    """Outcomes all required for the same intended end."""
+class Together[Positions: tuple](RootModel[Positions]):
+    """Jointly required positions, not an ordering of their realization."""
+
+    root: Annotated[Positions, Field(min_length=2)]
 
 
-class Alternative[Choice: Outcome](RootModel[Choice]):
-    """Selects one outcome from alternatives declared in Choice."""
+class Alternative[Selection: Outcome](RootModel[Selection]):
+    """One permitted Outcome chosen from alternatives in the declaration."""
 
 
-class Purpose[Composition: Outcome | Together | Alternative](RootModel[Composition]):
-    """Intended organizational end; a concrete declaration fixes the composition."""
+class Group[Members: tuple](RootModel[Members]):
+    """Nested group whose cardinality may be narrowed by a domain."""
+
+    root: Annotated[Members, Field(min_length=1)]
+
+
+class Purpose[End: Outcome | Together | Alternative | Group](RootModel[End]):
+    """An intended end stated solely through its Outcome composition."""
