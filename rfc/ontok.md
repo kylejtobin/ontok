@@ -43,32 +43,40 @@ The nineteen definitions establish what Ontok must be able to represent. They ar
 
 Each definition requires certain constituents and relationships to be expressible. How a constituent is represented belongs to the binding.
 
-**Outcome.** A state, and whether it is produced or maintained. Whether an Outcome is intended or has occurred is not part of the Outcome. The kind that contains it supplies that: inside a Purpose it is intended, and inside an Event it is asserted to have occurred. An intended result and an occurred result are therefore one kind of thing in two places.
+**Outcome.** An Outcome has a state and exactly one way that state relates to work: produced, when the state is brought about, or maintained, when the state holds throughout a stated extent. A maintained Outcome requires that extent; a produced Outcome does not universally require one. Whether an Outcome is intended or has occurred is not part of the Outcome. A Purpose intends it; an Event may assert its occurrence. Both use the same Outcome kind.
 
-**Purpose.** A composition of desired Outcomes, distinguishing Outcomes that are required together from Outcomes that are alternatives.
+**Purpose.** A composition of one or more desired Outcomes, without a second independently stated goal. Outcomes required together occupy jointly required positions. When any one of several Outcomes suffices at a position, those Outcomes are alternatives at that position. A group of like Outcomes may occupy a position as a nested composition with stated cardinality.
 
-**Activity.** The inputs it admits and the outcomes related to them. Where particular inputs lead to particular outcomes, each admissible case is stated as a whole.
+**Activity.** Its admitted inputs and defined results form a complete admissible case. An Activity may have no inputs. Its results may be an Outcome, a composition of Outcomes, or a Purpose. When only certain results follow from particular inputs, each permitted input/result combination is a separate complete case, and those cases are alternatives. Work on which an Activity depends, or an Event asserting that work's Outcome, is among its inputs. Dependencies between Activities are not expressed by an independent order or sequence.
 
-**Process.** Activities composed, with the dependencies among them, toward a Purpose. The Purpose is stated once. A Process does not hold a second, independent goal.
+**Process.** A specialization of Activity whose inputs are a composition of Activities and whose result is a Purpose. That Purpose is stated once, as the Process result; a separate goal is not permitted. The composition distinguishes Activities required together from alternatives where one suffices. Dependencies between Activities are expressed through the dependent Activity's inputs, including an Event asserting a prior Outcome where applicable. A composition of jointly required Activities does not by itself imply ordering or simultaneous execution.
 
 **Rule.** A context, a target, and a force. The force is one of valid, permitted, required, or prohibited.
 
-**Role.** Responsibilities, associated with participation in work. Who occupies a Role is a separate fact from the Role. The occupant can be a person, a program, or no one yet.
+**Role.** A composition of one or more Responsibilities associated with participation in work. A Responsibility is a Rule whose force is required and whose target is work or an Outcome, including a maintained Outcome. It may require an end without prescribing the Activity that achieves it. A Role does not contain its occupant: a separate Participation associates an occupant with the Role. A Role may remain unoccupied, and an occupant may be a person or a program.
 
-**Authority.** A holder, the formal basis that establishes it, and what it grants. A grant to perform actions, a grant to make decisions, and a grant to create obligations are distinct.
+**Authority.** A holder, the formal basis establishing authority, and exactly one grant. The grant is one of: permission to perform stated work, expressed by a Rule whose force is permitted; power to make Decisions within a stated scope, not an already made Decision; or power to create a stated obligation, expressed by a Rule whose force is required. None of these grants asserts that the permitted action, Decision, or obligation creation has occurred.
 
-**Decision.** Complete admissible cases, and one case selected. A complete case binds its context, the rule that applies, and the result, so a context from one case cannot be combined with a result from another. The permissible alternatives belong to the declaration of the Decision. A constructed Decision is one admissible selection. There is no independently populated list of alternatives that could contradict that selection.
+**Decision.** A selection of exactly one admissible complete case from alternatives specified by its declaration. Each case binds the context, applicable Rule, and resulting Outcome together. Where the Rule already states the applicable context, that fact is not independently restated in a way that could disagree with the Rule. A result from one case cannot be combined with a Rule or context from another. A constructed Decision contains the selected case, not an independent list of alternatives or a separate selection flag.
 
 **Event.** The occurrence that is asserted. An Event establishes what is claimed to have happened. It is not independent proof that the occurrence happened. Its effect on work is expressed by the work that depends on it. An exact time is not universal to Events.
 
-**Interaction.** The participants in their positions, the content, and the direction or coordination structure of the exchange.
+**Interaction.** Exactly one of three complete exchanges: communication, with a sender, one or more recipients, and communicated content; responsibility transfer, with a source, a destination, and the Responsibility transferred stated once; or coordination, with at least two participants and the work coordinated. Participant positions express the direction or coordination of the exchange. The same participant may occupy more than one position when permitted by the narrowed kind. An Event may assert that an Interaction occurred; the Interaction itself does not assert occurrence.
 
-**Value.** The subject that is valued, the basis of its worth, and an assessment on one or more dimensions.
+**Value.** The worth of a subject relative to one basis, which is a Need, an Interest, or a Purpose, stated through one or more dimension-specific assessments. The subject and basis are stated once, including when several dimensions are assessed. Each assessment states exactly one of benefit, harm, or no change relative to that basis, with the detail required by its dimension. A single-dimension Value is specialized by its dimension; multidimensional Value composes such assessments without collapsing them into one quantity or restating their shared subject and basis. The direction of a change does not by itself determine its worth: the same change can benefit one basis and harm another.
 
-- The basis is a need, an interest, or a purpose.
-- Benefit and harm are determined relative to that basis. The direction of a measurement is not its value: the same change can be a benefit relative to one basis and a harm relative to another.
-- An assessment can find benefit, harm, or no change.
-- Value on several dimensions is a composition of assessments. The dimensions are never collapsed into one number.
+The eight dimensions specify the following distinct assessment details:
+
+- **Economic.** A financial change (money earned, saved, preserved, or made available, or its opposite), together with its monetary or stated qualitative extent.
+- **Time.** A temporal change (time saved, gained, or made available, or its opposite), together with its duration or stated temporal condition.
+- **Quality.** Exactly one of: fitness, relating a Purpose to its attainment; correctness, relating a required Rule to conformity with it; or reliability, relating a context, the Outcome expected in that context, and the observation of whether it was attained.
+- **Risk.** The adverse Outcome concerned and exactly one of: a change in its likelihood with its extent; a change in its consequence with its extent; or removal or introduction of exposure to it, with supporting evidence.
+- **Capability.** The Activity concerned, an increase or decrease in the ability to accomplish it, and evidence for that change.
+- **Human Welfare.** Exactly one of: satisfaction, with an expectation and appraisal; wellbeing, with the condition of the people concerned; safety, with a threat and protection against it; or fulfillment, with a Purpose and its attainment.
+- **Relationships.** The subject is the relationship or related parties. The assessment details are exactly one of: trust, with expected conduct and appraisal; loyalty, with a commitment and appraisal; reputation, with an audience and standing; or relationship strength, with its appraisal.
+- **Resources.** The subject is the scarce asset or material concerned. The assessment details are either availability, with the accessible extent, or preservation, with the condition retained.
+
+Where a detail's subject or basis is already established by the enclosing Value, it is not stated again as an independent, potentially contradictory fact.
 
 **Relationships among the kinds.**
 
